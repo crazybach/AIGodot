@@ -1,0 +1,22 @@
+; Engine configuration file.
+; Created from the command line for a CLI-only Godot sample project.
+
+config_version=5
+
+[application]
+
+config/name="CLI Platform Animation Test"
+run/main_scene="res://Main.tscn"
+config/features=PackedStringArray("4.6")
+
+[display]
+
+window/size/viewport_width=1280
+window/size/viewport_height=720
+window/size/mode=0
+window/stretch/mode="canvas_items"
+window/stretch/aspect="keep"
+
+[rendering]
+
+textures/canvas_textures/default_texture_filter=0
