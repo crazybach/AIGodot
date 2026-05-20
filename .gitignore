@@ -8,6 +8,8 @@
 # Export credentials and local build output.
 export.cfg
 export_credentials.cfg
+build/*_export_templates.tpz
+.godot_local/
 *.tmp
 
 # Generated translations and Mono artifacts.
