@@ -21,7 +21,8 @@ For this asset style, split rendering into two categories:
 | Content | Geometry | Reason |
 | --- | --- | --- |
 | Flat floor, lava, grass, floor decals | Diamond quad: 4 vertices, 2 triangles | Matches the opaque footprint and avoids shading transparent rectangle corners |
-| Doors, walls, pillars, chests, characters | Rectangular sprite quad, y-sorted | Artwork extends vertically outside the floor diamond |
+| Raised block top surfaces | Diamond quad when the top is extracted cleanly | Keeps the top-plane fill-rate win |
+| Raised block sides, doors, walls, pillars, tombs, chests, characters | Rectangular sprite quad, y-sorted | Artwork extends vertically outside the floor diamond |
 
 Do not model every cell as independent triangle tiles. A diamond quad already
 renders as two triangles. Four triangular sub-tiles add authoring and neighbor
@@ -49,19 +50,50 @@ than exposing the whole PNG as one uniform grid.
 
 ## Optimized Static Floor
 
-The right side of the sample builds one `ArrayMesh` surface:
+The right side of the sample builds one `ArrayMesh` surface for the floor and
+then draws raised blocks/tombs as sorted height sprites:
 
 - Each floor cell contributes four diamond vertices and six indices.
 - UV points use the diamond's top, right, bottom, and left points in the
   original texture region.
 - Multiple terrain variants can still use one texture and one mesh surface.
-- Tall props should remain regular `Sprite2D` quads above the floor mesh after
-  being extracted into clean non-overlapping atlas regions.
+- Thick blocks and tombs remain regular `Sprite2D` quads above the floor mesh
+  in this source-atlas demo because the PNG stores them as complete 64 x 64
+  sprites, not as separate top and side pieces.
+- The sample uses 7 height overlays. Conceptually that is 7 rectangular quads,
+  28 vertices, and 14 triangles. In Godot's 2D renderer these are separate
+  `Sprite2D` CanvasItems; actual draw submissions depend on texture/material
+  state, batching, and sorting.
+- Red rectangles in the scene outline those thick/tall overlay quads.
 
 This does not reduce vertices compared with a rectangular quad. It reduces
 transparent-pixel overdraw and can reduce draw submission overhead for a
 static floor. Chunk a large map into rebuildable pieces, such as `16 x 16` or
 `32 x 32` cells, instead of rebuilding one whole-world mesh after edits.
+
+## Thick Tiles
+
+The diamond method does not magically remove the height problem. A thick tile
+has at least two visual layers:
+
+1. The top walkable diamond.
+2. The vertical side faces or tall art that can overlap actors and lower cells.
+
+There are two practical solutions:
+
+| Method | How it works | When to use |
+| --- | --- | --- |
+| Full raised sprite overlay | Draw the ground/top batch first, then draw the complete 64 x 64 raised block sprite sorted by cell diagonal or screen `y` | Fastest to author with this loose source sheet |
+| Split top and side art | Put the top diamond into the batch mesh, then draw only the side faces as ordered quads | Best fill-rate optimization, but requires repacking/cutting art into top and side regions |
+
+For a Diablo-like game, the usual production compromise is:
+
+- Static flat floors: batched diamond mesh or `TileMapLayer`.
+- Static raised terrain: either full raised sprites, or split top/side chunks if
+  a profiler shows too much overdraw.
+- Interactive objects and actors: normal sprites with `y` sorting.
+- Collision/navigation: logical map cells, not render geometry. A raised block
+  can mark its cell blocked even if its sprite overlaps neighboring pixels.
 
 ## Regions Used
 
@@ -73,9 +105,10 @@ walkable terrain:
 | Content | Regions |
 | --- | --- |
 | Floor top variants: gray stone, brown, grass, lava | `(128, 32, 64, 32)`, `(320, 32, 64, 32)`, `(384, 32, 64, 32)`, `(448, 32, 64, 32)` |
+| Full raised blocks | `(64, 0, 64, 64)`, `(512, 0, 64, 64)`, `(576, 0, 64, 64)`, `(640, 0, 64, 64)` |
+| Tomb-like raised props | `(768, 32, 64, 64)`, `(832, 32, 64, 64)` |
 
 For production, crop and pad chosen source regions into a regular texture atlas
 to avoid filter bleeding and to make terrain setup comfortable in the editor.
-The doors and raised blocks in the source sheet overlap adjacent image regions,
-so this floor-only comparison intentionally does not crop them as standalone
-props.
+The source sheet is tight and loose-packed, so some tall props should be
+recut/padded before shipping.
