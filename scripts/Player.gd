@@ -1,152 +1,287 @@
 class_name Player
 extends CharacterBody2D
 
-const GRID_COLUMNS := 8
-const GRID_ROWS := 6
-const MOVE_SPEED := 250.0
-const JUMP_VELOCITY := -520.0
-const GRAVITY := 1600.0
-const WORLD_LEFT := 48.0
-const WORLD_RIGHT := 1232.0
+## Movement
+const MOVE_SPEED := 200.0
+const SPRINT_MULTIPLIER := 1.5
 
-const ANIMATIONS := {
-	"idle": {"start": 0, "end": 7, "fps": 8.0, "loop": true},
-	"left_walk": {"start": 8, "end": 15, "fps": 10.0, "loop": true},
-	"right_walk": {"start": 16, "end": 23, "fps": 10.0, "loop": true},
-	"jump": {"start": 24, "end": 27, "fps": 8.0, "loop": true},
-	"block": {"start": 28, "end": 35, "fps": 10.0, "loop": true},
-	"attack": {"start": 36, "end": 47, "fps": 16.0, "loop": false},
-}
+## Combat
+const MAX_HEALTH := 100.0
+const MAX_AMMO := 30
+const RELOAD_TIME := 1.5
+const FIRE_RATE := 0.15
+const BULLET_SPEED := 600.0
+const BULLET_DAMAGE := 25.0
 
-var sprite: Sprite2D
-var character_sheet: Texture2D
-var current_animation := "idle"
+## Scale: character ≈0.5m vs scene ≈50m → sprite scaled to ~28 units wide
+const SPRITE_SCALE := 0.1
+
+## Animation (2DPIXX Soldier spritesheet strips — 4 frames each, 275x275)
+const FRAME_WIDTH := 275
+const FRAME_HEIGHT := 275
+const WALK_FRAMES := 4
+const SHOOT_FRAMES := 4
+const ANIM_FPS := 8.0
+
+## Signals
+signal died
+signal health_changed(current: float, maximum: float)
+signal ammo_changed(current: int, maximum: int)
+
+## State
+var health := MAX_HEALTH
+var ammo := MAX_AMMO
+var is_reloading := false
+var reload_elapsed := 0.0
+var fire_cooldown := 0.0
+var is_alive := true
+
+## Sprites
+var sprite_walk: Sprite2D
+var sprite_shoot: Sprite2D
+var sprite_hit: Sprite2D
+var active_sprite: Sprite2D
 var frame_index := 0
 var frame_elapsed := 0.0
-var lock_remaining := 0.0
-var facing_left := false
-var was_attack_pressed := false
+var facing_angle := 0.0
+
+## Crosshair
+var crosshair: Sprite2D
+var shoot_flash_timer: Timer
+var damage_flash_timer: Timer
 
 
 func _ready() -> void:
-	character_sheet = load("res://assets/characters/Character_processed.png")
-	_build_sprite()
+	_build_sprites()
 	_build_collision()
-	_set_animation("idle", true)
+	_build_crosshair()
+	z_index = 10
 
 
 func _physics_process(delta: float) -> void:
+	if not is_alive:
+		return
+
 	_update_movement(delta)
-	_update_animation_state(delta)
-	_advance_animation(delta)
+	_update_aim()
+	_update_shooting(delta)
+	_update_reload(delta)
+	_update_animation(delta)
 
 
-func _build_sprite() -> void:
-	sprite = Sprite2D.new()
-	sprite.name = "AnimatedCharacter"
-	sprite.texture = character_sheet
-	sprite.region_enabled = true
-	sprite.centered = true
-	sprite.position = Vector2(0.0, -70.0)
-	sprite.scale = Vector2(1.35, 1.35)
-	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	add_child(sprite)
+func _build_sprites() -> void:
+	var walk_tex := load("res://assets/prototype/2dpixx/soldier_walk.png")
+	var shoot_tex := load("res://assets/prototype/2dpixx/soldier_shoot.png")
+
+	sprite_walk = Sprite2D.new()
+	sprite_walk.name = "WalkSprite"
+	sprite_walk.texture = walk_tex
+	sprite_walk.region_enabled = true
+	sprite_walk.centered = true
+	sprite_walk.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	sprite_walk.region_rect = Rect2(0, 0, FRAME_WIDTH, FRAME_HEIGHT)
+	sprite_walk.scale = Vector2(SPRITE_SCALE, SPRITE_SCALE)
+	add_child(sprite_walk)
+
+	sprite_shoot = Sprite2D.new()
+	sprite_shoot.name = "ShootSprite"
+	sprite_shoot.texture = shoot_tex
+	sprite_shoot.region_enabled = true
+	sprite_shoot.centered = true
+	sprite_shoot.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	sprite_shoot.region_rect = Rect2(0, 0, FRAME_WIDTH, FRAME_HEIGHT)
+	sprite_shoot.visible = false
+	sprite_shoot.scale = Vector2(SPRITE_SCALE, SPRITE_SCALE)
+	add_child(sprite_shoot)
+
+	active_sprite = sprite_walk
 
 
 func _build_collision() -> void:
 	var collision := CollisionShape2D.new()
 	collision.name = "BodyCollision"
-
-	var shape := RectangleShape2D.new()
-	shape.size = Vector2(58.0, 132.0)
+	var shape := CircleShape2D.new()
+	shape.radius = 14.0
 	collision.shape = shape
-	collision.position = Vector2(0.0, -66.0)
 	add_child(collision)
 
 
+func _build_crosshair() -> void:
+	crosshair = Sprite2D.new()
+	crosshair.name = "Crosshair"
+	crosshair.texture = _make_crosshair_texture()
+	crosshair.centered = true
+	crosshair.z_index = 100
+	crosshair.scale = Vector2(0.5, 0.5)
+	add_child(crosshair)
+
+
+func _make_crosshair_texture() -> Texture2D:
+	var img := Image.create(32, 32, false, Image.FORMAT_RGBA8)
+	img.fill(Color(0, 0, 0, 0))
+	# Cross lines
+	for x in range(12, 20):
+		img.set_pixel(x, 15, Color.RED)
+		img.set_pixel(x, 16, Color.RED)
+	for y in range(12, 20):
+		img.set_pixel(15, y, Color.RED)
+		img.set_pixel(16, y, Color.RED)
+	return ImageTexture.create_from_image(img)
+
+
 func _update_movement(delta: float) -> void:
-	if not is_on_floor():
-		velocity.y += GRAVITY * delta
+	var input_dir := Vector2(
+		Input.get_axis("move_left", "move_right"),
+		Input.get_axis("move_up", "move_down")
+	).normalized()
 
-	var input_axis := 0.0
-	if Input.is_key_pressed(KEY_A) or Input.is_key_pressed(KEY_LEFT):
-		input_axis -= 1.0
-	if Input.is_key_pressed(KEY_D) or Input.is_key_pressed(KEY_RIGHT):
-		input_axis += 1.0
+	var speed := MOVE_SPEED
+	if Input.is_action_pressed("sprint"):
+		speed *= SPRINT_MULTIPLIER
 
-	velocity.x = input_axis * MOVE_SPEED
-	if input_axis != 0.0:
-		facing_left = input_axis < 0.0
-
-	if is_on_floor() and (Input.is_key_pressed(KEY_W) or Input.is_key_pressed(KEY_SPACE) or Input.is_key_pressed(KEY_UP)):
-		velocity.y = JUMP_VELOCITY
-
+	velocity = input_dir * speed
 	move_and_slide()
-	position.x = clamp(position.x, WORLD_LEFT, WORLD_RIGHT)
 
 
-func _update_animation_state(delta: float) -> void:
-	var attack_pressed := Input.is_key_pressed(KEY_J)
-	var block_pressed := Input.is_key_pressed(KEY_K)
-	var moving_left := Input.is_key_pressed(KEY_A) or Input.is_key_pressed(KEY_LEFT)
-	var moving_right := Input.is_key_pressed(KEY_D) or Input.is_key_pressed(KEY_RIGHT)
-
-	if lock_remaining > 0.0:
-		lock_remaining -= delta
-	elif attack_pressed and not was_attack_pressed:
-		_start_one_shot_animation("attack")
-	elif block_pressed:
-		_set_animation("block")
-	elif not is_on_floor():
-		_set_animation("jump")
-	elif moving_left and not moving_right:
-		_set_animation("left_walk")
-	elif moving_right and not moving_left:
-		_set_animation("right_walk")
-	else:
-		_set_animation("idle")
-
-	sprite.flip_h = facing_left and current_animation in ["idle", "jump", "block", "attack"]
-	was_attack_pressed = attack_pressed
+func _update_aim() -> void:
+	var mouse_pos := get_global_mouse_position()
+	crosshair.global_position = mouse_pos
+	facing_angle = get_angle_to(mouse_pos)
+	active_sprite.rotation = facing_angle
 
 
-func _start_one_shot_animation(animation_name: String) -> void:
-	var data: Dictionary = ANIMATIONS[animation_name]
-	var frame_count := int(data["end"]) - int(data["start"]) + 1
-	lock_remaining = frame_count / float(data["fps"])
-	_set_animation(animation_name, true)
+func _update_shooting(delta: float) -> void:
+	fire_cooldown = max(0.0, fire_cooldown - delta)
 
-
-func _set_animation(animation_name: String, restart := false) -> void:
-	if current_animation == animation_name and not restart:
+	if is_reloading:
 		return
 
-	current_animation = animation_name
-	var data: Dictionary = ANIMATIONS[current_animation]
-	frame_index = int(data["start"])
+	# Manual reload via R key
+	if Input.is_action_just_pressed("reload"):
+		_start_reload()
+		return
+
+	if Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT) and fire_cooldown <= 0.0:
+		if ammo > 0:
+			_shoot()
+		else:
+			_start_reload()
+
+
+func _shoot() -> void:
+	ammo -= 1
+	fire_cooldown = FIRE_RATE
+	ammo_changed.emit(ammo, MAX_AMMO)
+
+	var bullet := _create_bullet()
+	get_parent().add_child(bullet)
+
+	# Flash shoot sprite briefly — cancel any previous flash timer
+	if shoot_flash_timer:
+		shoot_flash_timer.timeout.disconnect(_return_to_walk_sprite)
+		shoot_flash_timer.queue_free()
+	sprite_shoot.visible = true
+	sprite_walk.visible = false
+	active_sprite = sprite_shoot
+	frame_index = 0
 	frame_elapsed = 0.0
-	_apply_frame()
+	shoot_flash_timer = get_tree().create_timer(0.15)
+	shoot_flash_timer.timeout.connect(_return_to_walk_sprite)
+
+	if ammo <= 0:
+		_start_reload()
 
 
-func _advance_animation(delta: float) -> void:
-	var data: Dictionary = ANIMATIONS[current_animation]
-	var frame_time := 1.0 / float(data["fps"])
+func _create_bullet() -> Node2D:
+	var BulletScript = load("res://scripts/Bullet.gd")
+	var bullet = BulletScript.new()
+	bullet.name = "Bullet"
+	bullet.global_position = global_position
+	bullet.direction = Vector2.RIGHT.rotated(facing_angle)
+	bullet.speed = BULLET_SPEED
+	bullet.damage = BULLET_DAMAGE
+	bullet.shooter = self
+	return bullet
+
+
+func _return_to_walk_sprite() -> void:
+	if not is_alive:
+		return
+	sprite_shoot.visible = false
+	sprite_walk.visible = true
+	active_sprite = sprite_walk
+
+
+func _start_reload() -> void:
+	if is_reloading or ammo == MAX_AMMO:
+		return
+	is_reloading = true
+	reload_elapsed = 0.0
+
+
+func _update_reload(delta: float) -> void:
+	if not is_reloading:
+		return
+	reload_elapsed += delta
+	if reload_elapsed >= RELOAD_TIME:
+		is_reloading = false
+		ammo = MAX_AMMO
+		ammo_changed.emit(ammo, MAX_AMMO)
+
+
+func _update_animation(delta: float) -> void:
+	var tex := active_sprite.texture
+	if tex == null:
+		return
+
+	var total_frames := WALK_FRAMES
+	if active_sprite == sprite_shoot:
+		total_frames = SHOOT_FRAMES
+
+	var is_moving := velocity.length() > 10.0
+	var fps := ANIM_FPS if is_moving else ANIM_FPS * 0.5
+	var frame_time := 1.0 / fps
 	frame_elapsed += delta
 
-	while frame_elapsed >= frame_time:
+	if frame_elapsed >= frame_time:
 		frame_elapsed -= frame_time
-		frame_index += 1
-		if frame_index > int(data["end"]):
-			if bool(data["loop"]):
-				frame_index = int(data["start"])
-			else:
-				frame_index = int(data["end"])
-		_apply_frame()
+		frame_index = (frame_index + 1) % total_frames
+		var x := frame_index * FRAME_WIDTH
+		active_sprite.region_rect = Rect2(x, 0, FRAME_WIDTH, FRAME_HEIGHT)
 
 
-func _apply_frame() -> void:
-	var texture_size := Vector2(character_sheet.get_width(), character_sheet.get_height())
-	var frame_size := Vector2(texture_size.x / GRID_COLUMNS, texture_size.y / GRID_ROWS)
-	var column := frame_index % GRID_COLUMNS
-	var row := int(frame_index / GRID_COLUMNS)
-	sprite.region_rect = Rect2(Vector2(column, row) * frame_size, frame_size)
+func take_damage(amount: float) -> void:
+	if not is_alive:
+		return
+	health = max(0.0, health - amount)
+	health_changed.emit(health, MAX_HEALTH)
+
+	# Flash red — cancel previous flash timer, guard with is_alive
+	if damage_flash_timer:
+		damage_flash_timer.timeout.disconnect(_reset_damage_flash)
+		damage_flash_timer.queue_free()
+	modulate = Color.RED
+	damage_flash_timer = get_tree().create_timer(0.1)
+	damage_flash_timer.timeout.connect(_reset_damage_flash)
+
+	if health <= 0.0:
+		_die()
+
+
+func _reset_damage_flash() -> void:
+	if is_alive:
+		modulate = Color.WHITE
+
+
+func _die() -> void:
+	is_alive = false
+	died.emit()
+	visible = false
+	crosshair.visible = false
+	collision_layer = 0
+	collision_mask = 0
+
+
+func heal(amount: float) -> void:
+	health = min(MAX_HEALTH, health + amount)
+	health_changed.emit(health, MAX_HEALTH)
