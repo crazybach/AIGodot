@@ -16,6 +16,7 @@ const WORLD_BOTTOM := 800.0
 ## References
 var player: Player
 var camera: Camera2D
+var hud: Node
 var enemy_spawn_timer: Timer
 var enemies_alive: Array = []
 var wave_delay_active := false
@@ -229,7 +230,7 @@ func _spawn_player() -> void:
 
 func _build_hud() -> void:
 	var HudClass := preload("res://scripts/HUD.gd")
-	var hud := HudClass.new()
+	hud = HudClass.new()
 	hud.name = "HUD"
 	hud.game_manager = self
 	add_child(hud)
@@ -252,7 +253,6 @@ func _start_wave() -> void:
 	enemy_spawn_timer.start()
 
 	# Update HUD
-	var hud := get_node_or_null("HUD")
 	if hud:
 		hud.update_wave(wave_number)
 
@@ -266,28 +266,23 @@ func _spawn_enemy() -> void:
 		return
 
 	enemies_remaining -= 1
+
+	# Pick type based on wave
+	var type: int = 0  # ZOMBIE
+	if wave_number >= 3 and randf() < 0.35:
+		type = 1  # ROBOT
+
 	var enemy = _create_enemy()
-	add_child(enemy)
+	add_child(enemy)  # _ready fires → components built
+	enemy.setup(type, player)  # now safe: components exist
+	enemy.died.connect(_on_enemy_died)
 	enemies_alive.append(enemy)
 
 
 func _create_enemy():
 	var enemy := EnemyClass.new()
 	enemy.name = "Enemy"
-
-	# Pick type based on wave
-	var type: int
-	if wave_number >= 3 and randf() < 0.35:
-		type = 1  # ROBOT
-	else:
-		type = 0  # ZOMBIE
-
-	# Spawn at random position inside world bounds
-	var spawn_pos := _get_spawn_position()
-	enemy.position = spawn_pos
-	enemy.setup(type, player)
-	enemy.died.connect(_on_enemy_died.bind(enemy))
-
+	enemy.position = _get_spawn_position()
 	return enemy
 
 
@@ -311,13 +306,12 @@ func _get_spawn_position() -> Vector2:
 	return pos
 
 
-func _on_enemy_died(enemy: Node) -> void:
+func _on_enemy_died(creature: Creature) -> void:
 	# Remove from tracking array
-	enemies_alive.erase(enemy)
+	enemies_alive.erase(creature)
 
 	# Increment score
 	score += 1
-	var hud := get_node_or_null("HUD")
 	if hud:
 		hud.update_score(score)
 
@@ -333,28 +327,22 @@ func _on_enemy_died(enemy: Node) -> void:
 		delay.start()
 
 
-func _on_player_died() -> void:
+func _on_player_died(_creature: Creature) -> void:
 	state = GameState.GAME_OVER
 
-	var hud := get_node_or_null("HUD")
 	if hud:
 		hud.show_game_over(score, wave_number)
 
 
 func _on_player_health_changed(current: float, maximum: float) -> void:
-	var hud := get_node_or_null("HUD")
 	if hud:
 		hud.update_health(current, maximum)
 
 
 func _on_player_ammo_changed(current: int, maximum: int) -> void:
-	var hud := get_node_or_null("HUD")
 	if hud:
 		hud.update_ammo(current, maximum)
 
 
-func _process(delta: float) -> void:
-	# Clean up freed-but-not-erased entries (failsafe for edge cases)
-	for i in range(enemies_alive.size() - 1, -1, -1):
-		if not is_instance_valid(enemies_alive[i]):
-			enemies_alive.remove_at(i)
+func _process(_delta: float) -> void:
+	pass  # Deaths handled event-driven in _on_enemy_died

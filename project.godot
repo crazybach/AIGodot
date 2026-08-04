@@ -1,5 +1,10 @@
 ; Engine configuration file.
-; Top-Down Survival Game Demo
+; It's best edited using the editor UI and not directly,
+; since the parameters that go here are not all obvious.
+;
+; Format:
+;   [section] ; section goes between []
+;   param=value ; assign values to parameters
 
 config_version=5
 
@@ -9,26 +14,11 @@ config/name="City Survival - ZERO Sievert-like Demo"
 run/main_scene="res://Main.tscn"
 config/features=PackedStringArray("4.6")
 
-[autoload]
-
-; No autoloads for now — GameManager is on the Main scene
-
 [display]
 
 window/size/viewport_width=1280
 window/size/viewport_height=720
-window/size/mode=0
 window/stretch/mode="canvas_items"
-window/stretch/aspect="keep"
-
-[rendering]
-
-textures/canvas_textures/default_texture_filter=0
-quality/2d/use_pixel_snap=true
-
-[physics]
-
-common/max_physics_steps_per_frame=8
 
 [input]
 
@@ -66,3 +56,8 @@ sprint={
 "events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":-1,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":4194325,"physical_keycode":0,"key_label":0,"unicode":0,"location":0,"echo":false,"script":null)
 ]
 }
+
+[rendering]
+
+textures/canvas_textures/default_texture_filter=0
+quality/2d/use_pixel_snap=true
