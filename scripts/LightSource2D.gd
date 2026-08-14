@@ -1,37 +1,47 @@
 class_name LightSource2D
-extends Node2D
-## Reusable 2D point light with procedural pixel-art attenuation,
-## distance falloff, and flicker/shimmer animation.
+extends Component
+## Attachable light component for any Creature or plain Node2D object.
 ##
-## Attach to ANY Node2D (player, bullet, item, campfire, muzzle flash...) to
-## make it emit light. It auto-registers with the global LightingManager so
-## other entities (e.g. enemies) can query whether a position is illuminated.
+## Integrates with the Creature component system: add it on a character or
+## enemy via Creature._add_component(LightSource2D.new()), or attach it to any
+## object with object.add_child(light). It auto-registers with the global
+## LightingManager so other entities can query whether a position is lit.
 ##
-## Example:
-##     var torch := LightSource2D.new()
-##     torch.setup({"range": 180.0, "color": Color(1.0, 0.8, 0.5), "energy": 1.4})
-##     add_child(torch)
+## Light types:
+##   POINT - omnidirectional light (lantern, campfire, muzzle flash)
+##   SPOT  - directional cone light (flashlight, headlight, searchlight)
+##
+## Example (point light on a creature):
+##     var l := LightSource2D.new()
+##     l.setup({"type": LightSource2D.LightType.POINT, "range": 200.0})
+##     _add_component(l)
+
+
+enum LightType { POINT, SPOT }
 
 
 ## ---------- Configuration (also settable via setup()) ----------
+@export var light_type: LightType = LightType.POINT
 @export var light_color := Color(1.0, 0.92, 0.78)   # warm lantern white
 @export var range := 220.0                          # world radius in pixels
 @export var energy := 1.3
+@export var spot_angle := 30.0                      # SPOT only: cone half-angle (degrees)
 @export var flicker_enabled := true
 @export var flicker_amount := 0.14                  # 0..1 energy wobble
 @export var flicker_speed := 11.0
 @export var shimmer_enabled := true
 @export var shimmer_amount := 0.05
 @export var shimmer_speed := 1.8
+@export var movement_response := 0.0                # 0=off; speed-based flicker added
 @export var pixel_steps := 26                       # falloff quantisation (0 = smooth)
 @export var falloff_power := 2.2                    # >1 softer, <1 harsher edge
 @export var cast_shadows := false
 @export var shadow_filter := 0                      # 0 hard, 1 PCF5, 2 PCF13
-@export var auto_day_night := false               # auto-off during day/dusk, on during night/dawn
+@export var auto_day_night := false                 # auto-off day/dusk, on night/dawn
 
 
 ## ---------- Runtime ----------
-var point_light: PointLight2D
+var light_node: Light2D
 var lighting: LightingManager
 var _base_energy := 1.0
 var _time := 0.0
@@ -61,13 +71,16 @@ func _exit_tree() -> void:
 		lighting.unregister_light(self)
 
 
-## Programmatic configuration -- call BEFORE add_child().
+## Programmatic configuration -- call BEFORE add_child() / _add_component().
 func setup(cfg: Dictionary) -> void:
+	light_type = cfg.get("type", light_type)
 	light_color = cfg.get("color", light_color)
 	range = cfg.get("range", range)
 	energy = cfg.get("energy", energy)
+	spot_angle = cfg.get("spot_angle", spot_angle)
 	flicker_enabled = cfg.get("flicker", flicker_enabled)
 	shimmer_enabled = cfg.get("shimmer", shimmer_enabled)
+	movement_response = cfg.get("movement_response", movement_response)
 	pixel_steps = cfg.get("pixel_steps", pixel_steps)
 	falloff_power = cfg.get("falloff_power", falloff_power)
 	cast_shadows = cfg.get("cast_shadows", cast_shadows)
@@ -75,31 +88,37 @@ func setup(cfg: Dictionary) -> void:
 
 
 func _build_light() -> void:
-	point_light = PointLight2D.new()
-	point_light.name = "PointLight"
-	point_light.texture = _make_attenuation_texture()
-	point_light.texture_scale = range / (TEX_SIZE * 0.5)
-	point_light.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	point_light.color = light_color
-	point_light.energy = energy
-	point_light.shadow_enabled = cast_shadows
-	point_light.shadow_filter = shadow_filter
-	add_child(point_light)
+	# Both types use PointLight2D; a spotlight is a point light masked by a
+	# cone-shaped texture (Godot 4 has no dedicated SpotLight2D node).
+	var pl := PointLight2D.new()
+	pl.texture = _make_point_texture() if light_type == LightType.POINT else _make_spot_texture()
+	pl.texture_scale = range / (TEX_SIZE * 0.5)
+	pl.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	pl.color = light_color
+	pl.energy = energy
+	pl.shadow_enabled = cast_shadows
+	pl.shadow_filter = shadow_filter
+	pl.name = "LightNode"
+	light_node = pl
+	add_child(light_node)
 
 
 func _process(delta: float) -> void:
 	_time += delta
 	_update_active()
-	point_light.enabled = _active
+	light_node.enabled = _active
 	if not _active:
-		point_light.energy = 0.0
+		light_node.energy = 0.0
 		return
 	var e := _base_energy
 	if flicker_enabled:
 		e += _base_energy * flicker_amount * _noise.get_noise_1d(_time * flicker_speed)
 	if shimmer_enabled:
 		e += _base_energy * shimmer_amount * sin(_time * shimmer_speed * TAU)
-	point_light.energy = max(0.0, e)
+	if movement_response > 0.0 and creature:
+		var speed_factor: float = min(creature.velocity.length() / 200.0, 1.0)
+		e += _base_energy * movement_response * speed_factor * _noise.get_noise_1d(_time * flicker_speed * 2.0)
+	light_node.energy = max(0.0, e)
 
 
 func _update_active() -> void:
@@ -109,20 +128,29 @@ func _update_active() -> void:
 		_active = true
 
 
-## 0..1 illumination contribution at world position pos (distance-attenuated).
+## 0..1 illumination contribution at world position pos (attenuated by
+## distance for point lights, and distance + cone angle for spotlights).
 func illumination_at(pos: Vector2) -> float:
 	if not _active:
 		return 0.0
-	var d := global_position.distance_to(pos) / range
-	if d >= 1.0:
+	var to_pos := pos - global_position
+	var d := to_pos.length()
+	if d >= range:
 		return 0.0
-	return pow(clamp(1.0 - d, 0.0, 1.0), falloff_power)
+	if light_type == LightType.SPOT:
+		var forward := Vector2.RIGHT.rotated(global_rotation)
+		var ang: float = abs(forward.angle_to(to_pos.normalized()))
+		var half := deg_to_rad(spot_angle)
+		if ang > half:
+			return 0.0
+		var dist := pow(clamp(1.0 - d / range, 0.0, 1.0), falloff_power)
+		var ang_falloff := pow(clamp(1.0 - ang / half, 0.0, 1.0), 1.5)
+		return dist * ang_falloff
+	return pow(clamp(1.0 - d / range, 0.0, 1.0), falloff_power)
 
 
-## Procedural radial-falloff texture, quantised into bands for a retro
-## pixel-light look. Alpha (brightness) fades from center to edge -- this
-## texture IS the light's attenuation curve.
-func _make_attenuation_texture() -> Texture2D:
+## Radial falloff texture for point lights.
+func _make_point_texture() -> Texture2D:
 	var img := Image.create(TEX_SIZE, TEX_SIZE, false, Image.FORMAT_RGBA8)
 	var center := TEX_SIZE / 2.0
 	var radius := TEX_SIZE / 2.0
@@ -132,5 +160,27 @@ func _make_attenuation_texture() -> Texture2D:
 			var a := pow(clamp(1.0 - d, 0.0, 1.0), falloff_power)
 			if pixel_steps > 0:
 				a = round(a * pixel_steps) / pixel_steps
+			img.set_pixel(x, y, Color(1.0, 1.0, 1.0, a))
+	return ImageTexture.create_from_image(img)
+
+
+## Cone falloff texture for spotlights (points along +X; rotate the node to aim).
+func _make_spot_texture() -> Texture2D:
+	var img := Image.create(TEX_SIZE, TEX_SIZE, false, Image.FORMAT_RGBA8)
+	var center := TEX_SIZE / 2.0
+	var radius := TEX_SIZE / 2.0
+	var half := deg_to_rad(spot_angle)
+	for y in TEX_SIZE:
+		for x in TEX_SIZE:
+			var rel := Vector2(x - center, y - center)
+			var d := rel.length() / radius
+			var ang := atan2(rel.y, rel.x)
+			var a := 0.0
+			if d < 1.0 and abs(ang) <= half:
+				var dist := pow(clamp(1.0 - d, 0.0, 1.0), falloff_power)
+				var ang_falloff := pow(clamp(1.0 - abs(ang) / half, 0.0, 1.0), 1.5)
+				a = dist * ang_falloff
+				if pixel_steps > 0:
+					a = round(a * pixel_steps) / pixel_steps
 			img.set_pixel(x, y, Color(1.0, 1.0, 1.0, a))
 	return ImageTexture.create_from_image(img)

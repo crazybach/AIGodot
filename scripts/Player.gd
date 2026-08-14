@@ -80,13 +80,15 @@ func _build_light() -> void:
 	light_source = LightSource2D.new()
 	light_source.name = "PlayerLight"
 	light_source.setup({
+		"type": LightSource2D.LightType.POINT,
 		"range": 240.0,
 		"color": Color(1.0, 0.88, 0.66),
 		"energy": 1.6,
 		"cast_shadows": true,
 		"auto_day_night": true,
+		"movement_response": 0.12,
 	})
-	add_child(light_source)
+	_add_component(light_source)
 
 
 ## ── Per-frame ──────────────────────────────────────────────────
