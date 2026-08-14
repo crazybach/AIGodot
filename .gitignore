@@ -21,3 +21,9 @@ mono_crash.*.json
 # Local OS/editor noise.
 .DS_Store
 Thumbs.db
+
+# Local tooling config.
+.claude/
+
+# Prototype assets (downloaded separately, see ASSETS.md).
+assets/prototype/
