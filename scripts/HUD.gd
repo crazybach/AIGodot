@@ -14,6 +14,8 @@ var game_over_panel: ColorRect
 var game_over_label: Label
 var reload_indicator: Label
 var controls_label: Label
+var crosshair: Sprite2D
+var time_label: Label
 
 
 func _ready() -> void:
@@ -22,6 +24,8 @@ func _ready() -> void:
 	_build_ammo_display()
 	_build_wave_display()
 	_build_controls_hint()
+	_build_time_indicator()
+	_build_crosshair()
 	_build_game_over_panel()
 
 
@@ -97,6 +101,38 @@ func _build_controls_hint() -> void:
 	controls_label.add_theme_font_size_override("font_size", 13)
 	controls_label.add_theme_color_override("font_color", Color(0.5, 0.5, 0.5, 0.8))
 	add_child(controls_label)
+
+
+func _build_time_indicator() -> void:
+	time_label = Label.new()
+	time_label.name = "TimeLabel"
+	time_label.position = Vector2(1160, 20)
+	time_label.text = "TIME: DAY"
+	time_label.add_theme_font_size_override("font_size", 16)
+	time_label.add_theme_color_override("font_color", Color(1.0, 0.9, 0.5))
+	add_child(time_label)
+
+
+func _build_crosshair() -> void:
+	crosshair = Sprite2D.new()
+	crosshair.name = "Crosshair"
+	crosshair.texture = _make_crosshair_texture()
+	crosshair.centered = true
+	crosshair.z_index = 200
+	crosshair.scale = Vector2(0.5, 0.5)
+	add_child(crosshair)
+
+
+func _make_crosshair_texture() -> Texture2D:
+	var img := Image.create(32, 32, false, Image.FORMAT_RGBA8)
+	img.fill(Color(0, 0, 0, 0))
+	for x in range(12, 20):
+		img.set_pixel(x, 15, Color.RED)
+		img.set_pixel(x, 16, Color.RED)
+	for y in range(12, 20):
+		img.set_pixel(15, y, Color.RED)
+		img.set_pixel(16, y, Color.RED)
+	return ImageTexture.create_from_image(img)
 
 
 func _build_game_over_panel() -> void:
@@ -179,3 +215,23 @@ func _process(delta: float) -> void:
 			reload_indicator.text = ""
 	elif not game_manager or not game_manager.player or not game_manager.player.is_alive:
 		reload_indicator.text = ""
+
+	_update_crosshair()
+	_update_time_label()
+
+
+func _update_crosshair() -> void:
+	if crosshair:
+		crosshair.position = get_viewport().get_mouse_position()
+
+
+func _update_time_label() -> void:
+	if not time_label:
+		return
+	var phase := "DAY"
+	var night := false
+	if game_manager and game_manager.lighting:
+		phase = String(game_manager.lighting.phase_name())
+		night = game_manager.lighting.darkness > 0.5
+	time_label.text = "TIME: " + phase
+	time_label.add_theme_color_override("font_color", Color(0.4, 0.6, 1.0) if night else Color(1.0, 0.9, 0.5))

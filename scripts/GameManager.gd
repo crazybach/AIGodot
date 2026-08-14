@@ -17,9 +17,11 @@ const WORLD_BOTTOM := 800.0
 var player: Player
 var camera: Camera2D
 var hud: Node
+var lighting: LightingManager
 var enemy_spawn_timer: Timer
 var enemies_alive: Array = []
 var wave_delay_active := false
+var night_surge_elapsed := 0.0
 
 ## Preload enemy script
 const EnemyClass := preload("res://scripts/Enemy.gd")
@@ -27,11 +29,18 @@ const BulletClass := preload("res://scripts/Bullet.gd")
 
 
 func _ready() -> void:
+	_build_lighting()
 	_build_camera()
 	_build_level()
 	_spawn_player()
 	_build_hud()
 	_start_wave()
+
+
+func _build_lighting() -> void:
+	lighting = LightingManager.new()
+	lighting.name = "Lighting"
+	add_child(lighting)
 
 
 func _build_camera() -> void:
@@ -155,6 +164,20 @@ func _create_building(def: Dictionary) -> void:
 	building.color = def["color"]
 	add_child(building)
 
+	# Light occluder — buildings cast shadows from dynamic lights at night
+	var occluder := LightOccluder2D.new()
+	occluder.name = "ShadowOccluder"
+	var poly := OccluderPolygon2D.new()
+	poly.closed = true
+	poly.polygon = PackedVector2Array([
+		Vector2(0, 0),
+		Vector2(def["w"], 0),
+		Vector2(def["w"], def["h"]),
+		Vector2(0, def["h"]),
+	])
+	occluder.occluder = poly
+	building.add_child(occluder)
+
 	# Building outline
 	var outline := ColorRect.new()
 	outline.name = def["name"] + "_Outline"
@@ -242,12 +265,12 @@ func _start_wave() -> void:
 
 	wave_delay_active = false
 	wave_number += 1
-	enemies_remaining = 4 + wave_number * 2
+	enemies_remaining = 8 + wave_number * 4
 
 	# Spawn enemies with a slight delay between each
 	enemy_spawn_timer = Timer.new()
 	enemy_spawn_timer.name = "EnemySpawnTimer"
-	enemy_spawn_timer.wait_time = 0.8
+	enemy_spawn_timer.wait_time = 0.3
 	enemy_spawn_timer.timeout.connect(_spawn_enemy)
 	add_child(enemy_spawn_timer)
 	enemy_spawn_timer.start()
@@ -266,12 +289,17 @@ func _spawn_enemy() -> void:
 		return
 
 	enemies_remaining -= 1
+	_spawn_one_enemy(_pick_enemy_type())
 
+
+func _pick_enemy_type() -> int:
 	# Pick type based on wave
-	var type: int = 0  # ZOMBIE
 	if wave_number >= 3 and randf() < 0.35:
-		type = 1  # ROBOT
+		return 1  # ROBOT
+	return 0  # ZOMBIE
 
+
+func _spawn_one_enemy(type: int) -> void:
 	var enemy = _create_enemy()
 	add_child(enemy)  # _ready fires → components built
 	enemy.setup(type, player)  # now safe: components exist
@@ -344,5 +372,13 @@ func _on_player_ammo_changed(current: int, maximum: int) -> void:
 		hud.update_ammo(current, maximum)
 
 
-func _process(_delta: float) -> void:
-	pass  # Deaths handled event-driven in _on_enemy_died
+func _process(delta: float) -> void:
+	# Night surge: keep spawning extra enemies while it's dark.
+	if lighting and lighting.phase == LightingManager.Phase.NIGHT and state == GameState.PLAYING:
+		night_surge_elapsed += delta
+		if night_surge_elapsed >= 1.5:
+			night_surge_elapsed = 0.0
+			if enemies_alive.size() < 30:
+				_spawn_one_enemy(_pick_enemy_type())
+	else:
+		night_surge_elapsed = 0.0

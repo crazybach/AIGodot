@@ -23,7 +23,7 @@ var sprite_shoot: Sprite2D
 var active_sprite: Sprite2D
 var frame_index := 0
 var frame_elapsed := 0.0
-var crosshair: Sprite2D
+var light_source: LightSource2D
 var _shoot_flash_timer  # SceneTreeTimer — no Timer type annotation (mismatch)
 
 
@@ -47,13 +47,12 @@ func _setup_creature() -> void:
 	# Build visuals
 	_build_sprites()
 	build_collision(14.0)
-	_build_crosshair()
+	_build_light()
 	z_index = 10
 
 
 func _on_death() -> void:
 	visible = false
-	crosshair.visible = false
 	super._on_death()
 
 
@@ -77,26 +76,17 @@ func _build_sprites() -> void:
 	active_sprite = sprite_walk
 
 
-func _build_crosshair() -> void:
-	crosshair = Sprite2D.new()
-	crosshair.name = "Crosshair"
-	crosshair.texture = _make_crosshair_texture()
-	crosshair.centered = true
-	crosshair.z_index = 100
-	crosshair.scale = Vector2(0.5, 0.5)
-	add_child(crosshair)
-
-
-func _make_crosshair_texture() -> Texture2D:
-	var img := Image.create(32, 32, false, Image.FORMAT_RGBA8)
-	img.fill(Color(0, 0, 0, 0))
-	for x in range(12, 20):
-		img.set_pixel(x, 15, Color.RED)
-		img.set_pixel(x, 16, Color.RED)
-	for y in range(12, 20):
-		img.set_pixel(15, y, Color.RED)
-		img.set_pixel(16, y, Color.RED)
-	return ImageTexture.create_from_image(img)
+func _build_light() -> void:
+	light_source = LightSource2D.new()
+	light_source.name = "PlayerLight"
+	light_source.setup({
+		"range": 240.0,
+		"color": Color(1.0, 0.88, 0.66),
+		"energy": 1.6,
+		"cast_shadows": true,
+		"auto_day_night": true,
+	})
+	add_child(light_source)
 
 
 ## ── Per-frame ──────────────────────────────────────────────────
@@ -116,7 +106,6 @@ func _physics_process(delta: float) -> void:
 
 func _update_aim() -> void:
 	var mouse_pos := get_global_mouse_position()
-	crosshair.global_position = mouse_pos
 	facing_angle = get_angle_to(mouse_pos)
 	active_sprite.rotation = facing_angle
 

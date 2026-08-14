@@ -1,18 +1,16 @@
 param(
-    [string]$GodotExe = "D:\workspace\GodotRuntime\Godot_v4.6.2-stable_win64_console.exe",
+    [string]$GodotExe = "D:\workspacep\GodotRuntime\Godot_v4.6.2-stable_win64_console.exe",
     [string]$Preset = "Web",
     [string]$Output = "build\web\index.html",
     [switch]$VerboseGodot
 )
 
-$ErrorActionPreference = "Stop"
-
-$root = (Resolve-Path ".").Path
+$root = (Resolve-Path "." -ErrorAction Stop).Path
 $env:APPDATA = Join-Path $root ".godot_local\Roaming"
 $env:LOCALAPPDATA = Join-Path $root ".godot_local\Local"
 
-New-Item -ItemType Directory -Force $env:APPDATA, $env:LOCALAPPDATA | Out-Null
-New-Item -ItemType Directory -Force (Split-Path $Output -Parent) | Out-Null
+New-Item -ItemType Directory -Force $env:APPDATA, $env:LOCALAPPDATA -ErrorAction Stop | Out-Null
+New-Item -ItemType Directory -Force (Split-Path $Output -Parent) -ErrorAction Stop | Out-Null
 
 $godotArgs = @()
 if ($VerboseGodot) {

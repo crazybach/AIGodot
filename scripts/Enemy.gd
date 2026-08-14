@@ -28,6 +28,8 @@ var patrol_timer := 0.0
 var attack_damage := 15.0
 var attack_cooldown := 1.0
 var attack_elapsed := 0.0
+var lighting: LightingManager
+var _visibility := 1.0
 
 ## ── Visual ─────────────────────────────────────────────────────
 var enemy_sprite: Sprite2D
@@ -71,6 +73,9 @@ func _setup_creature() -> void:
 
 	# Connect health bar to HealthComponent
 	health_comp.health_changed.connect(_update_health_bar)
+
+	# Global lighting (for night-time visibility)
+	lighting = get_tree().get_first_node_in_group("lighting") as LightingManager
 
 
 func _on_death() -> void:
@@ -177,6 +182,17 @@ func _physics_process(delta: float) -> void:
 	attack_elapsed += delta
 	_update_behavior(delta)
 	super._physics_process(delta)   # runs component ticks (Movement moves + slides)
+	_update_visibility()
+
+
+## ── Lighting visibility ────────────────────────────────────────
+
+func _update_visibility() -> void:
+	var target := 1.0
+	if lighting:
+		target = lighting.visibility_for(global_position)
+	_visibility = lerp(_visibility, target, 0.25)
+	modulate.a = _visibility
 
 
 ## ── AI behavior ────────────────────────────────────────────────
