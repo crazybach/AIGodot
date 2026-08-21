@@ -29,6 +29,7 @@ const BulletClass := preload("res://scripts/Bullet.gd")
 
 
 func _ready() -> void:
+	get_tree().auto_accept_quit = false
 	_build_lighting()
 	_build_camera()
 	_build_level()
@@ -163,6 +164,17 @@ func _create_building(def: Dictionary) -> void:
 	building.position = Vector2(def["x"], def["y"])
 	building.color = def["color"]
 	add_child(building)
+
+	# Solid collision — the player/enemies can't walk through buildings.
+	var body := StaticBody2D.new()
+	body.name = "BuildingBody"
+	body.position = Vector2(def["x"] + def["w"] / 2.0, def["y"] + def["h"] / 2.0)
+	var collision := CollisionShape2D.new()
+	var rect := RectangleShape2D.new()
+	rect.size = Vector2(def["w"], def["h"])
+	collision.shape = rect
+	body.add_child(collision)
+	add_child(body)
 
 	# Light occluder — buildings cast shadows from dynamic lights at night
 	var occluder := LightOccluder2D.new()
@@ -373,6 +385,11 @@ func _on_player_ammo_changed(current: int, maximum: int) -> void:
 
 
 func _process(delta: float) -> void:
+	# Quit on Esc (window X is intentionally ignored so the sandbox can't close us).
+	if Input.is_action_just_pressed("ui_cancel"):
+		get_tree().quit()
+		return
+
 	# Night surge: keep spawning extra enemies while it's dark.
 	if lighting and lighting.phase == LightingManager.Phase.NIGHT and state == GameState.PLAYING:
 		night_surge_elapsed += delta
