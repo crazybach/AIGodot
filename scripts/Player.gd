@@ -24,6 +24,7 @@ var active_sprite: Sprite2D
 var frame_index := 0
 var frame_elapsed := 0.0
 var light_source: LightSource2D
+var ui_input_blocked := false
 var _shoot_flash_timer  # SceneTreeTimer — no Timer type annotation (mismatch)
 
 
@@ -42,7 +43,22 @@ func _setup_creature() -> void:
 	health_comp = _add_component(HealthComponent.new()) as HealthComponent
 	health_comp.configure(100.0, Color.RED, 0.1)
 
+	inventory_comp = _add_component(InventoryComponent.new()) as InventoryComponent
+	inventory_comp.name = "BackpackInventory"
+	inventory_comp.slot_capacity = 24
+	inventory_comp.weight_capacity = 32.0
+
+	equipment_comp = _add_component(EquipmentComponent.new()) as EquipmentComponent
+	equipment_comp.name = "BodyEquipment"
+	equipment_comp.equipment_changed.connect(_on_equipment_changed)
+	ItemCatalog.starting_loadout(inventory_comp)
+	_bind_starter_hotbar()
+	# Move the starter pistol out of the backpack into the right-hand slot.
+	equipment_comp.equip_from_inventory(inventory_comp, inventory_comp.find_first(&"service_pistol"))
+
 	combat_comp = _add_component(CombatComponent.new()) as CombatComponent
+	_configure_equipped_launcher()
+	_apply_equipment_modifiers()
 
 	# Build visuals
 	_build_sprites()
@@ -115,6 +131,10 @@ func _update_aim() -> void:
 ## ── Shooting & reload ──────────────────────────────────────────
 
 func _update_shooting(_delta: float) -> void:
+	# UI controls use the same mouse button as shooting. Do not let a click on
+	# the backpack or quickbar leak through into world combat.
+	if ui_input_blocked or get_viewport().gui_get_hovered_control() != null:
+		return
 	if combat_comp.is_reloading:
 		return
 
@@ -130,6 +150,129 @@ func _update_shooting(_delta: float) -> void:
 			_flash_shoot_sprite()
 		else:
 			combat_comp.start_reload()
+
+
+## Public UI/gameplay hooks. A future loot panel can call these with a selected
+## inventory index without knowing the item component implementation.
+func use_inventory_slot(index: int) -> bool:
+
+	if inventory_comp == null or health_comp == null:
+		return false
+	if index < 0 or index >= inventory_comp.slots.size() or inventory_comp.slots[index] == null:
+		return false
+	var stack: ItemStack = inventory_comp.slots[index]
+	var consumable := stack.definition.get_component(ConsumableComponent) as ConsumableComponent
+	if consumable == null:
+		return false
+	heal(consumable.health_restore)
+	inventory_comp.consume_at(index)
+	return true
+
+
+func equip_inventory_slot(index: int) -> bool:
+
+	if equipment_comp == null or inventory_comp == null:
+		return false
+	return equipment_comp.equip_from_inventory(inventory_comp, index)
+
+
+func activate_inventory_slot(index: int, throw_item := false) -> bool:
+
+	if inventory_comp == null or index < 0 or index >= inventory_comp.slots.size():
+		return false
+	var stack: ItemStack = inventory_comp.slots[index]
+	if stack == null:
+		return false
+	if throw_item:
+		return throw_inventory_slot(index)
+	if stack.definition.get_component(EquippableComponent):
+		return equip_inventory_slot(index)
+	if stack.definition.get_component(ConsumableComponent):
+		return use_inventory_slot(index)
+	if stack.definition.get_component(ProjectileComponent):
+		return throw_inventory_slot(index)
+	return false
+
+
+func activate_hotbar_slot(index: int, throw_item := false) -> bool:
+
+	if inventory_comp == null or index < 0 or index >= inventory_comp.hotbar_slots.size():
+		return false
+	return activate_inventory_slot(inventory_comp.hotbar_slots[index], throw_item)
+
+
+func set_ui_input_blocked(blocked: bool) -> void:
+
+	ui_input_blocked = blocked
+
+
+func _bind_starter_hotbar() -> void:
+
+	var item_ids: Array[StringName] = [
+		&"field_medkit", &"canned_beans", &"bottled_water", &"apple", &"smoke_grenade",
+		&"warding_salt", &"flashlight", &"canvas_backpack"
+	]
+	for index in item_ids.size():
+		inventory_comp.set_hotbar_slot(index, inventory_comp.find_first(item_ids[index]))
+
+
+func throw_inventory_slot(index: int) -> bool:
+
+	if inventory_comp == null or index < 0 or index >= inventory_comp.slots.size():
+		return false
+	var stack: ItemStack = inventory_comp.slots[index]
+	if stack == null:
+		return false
+	var projectile := stack.definition.get_component(ProjectileComponent) as ProjectileComponent
+	# Launcher ammunition is loaded by CombatComponent rather than thrown by hand.
+	if projectile == null or stack.definition.get_component(LauncherComponent):
+		return false
+	var thrown := inventory_comp.consume_at(index)
+	if thrown == null:
+		return false
+	var bullet := Bullet.new()
+	bullet.name = "Thrown " + thrown.definition.display_name
+	bullet.global_position = global_position
+	bullet.direction = Vector2.RIGHT.rotated(facing_angle)
+	bullet.speed = projectile.speed
+	bullet.damage = projectile.damage
+	bullet.lifetime = projectile.range / max(projectile.speed, 1.0)
+	bullet.shooter = self
+	get_parent().add_child(bullet)
+	return true
+
+
+func _on_equipment_changed() -> void:
+
+	_configure_equipped_launcher()
+	_apply_equipment_modifiers()
+
+
+func _apply_equipment_modifiers() -> void:
+
+	if equipment_comp == null:
+		return
+	# The base backpack is never reduced, so removing gear cannot delete items.
+	if inventory_comp:
+		inventory_comp.slot_capacity = 24 + int(equipment_comp.modifier_total(&"inventory_slots"))
+		inventory_comp.weight_capacity = 32.0 + equipment_comp.modifier_total(&"weight_capacity")
+		if inventory_comp.slots.size() < inventory_comp.slot_capacity:
+			inventory_comp.slots.resize(inventory_comp.slot_capacity)
+	if movement_comp:
+		movement_comp.base_speed = MovementComponent.DEFAULT_MOVE_SPEED * (1.0 + equipment_comp.modifier_total(&"move_speed"))
+
+
+func take_damage(amount: float) -> void:
+
+	var armor := equipment_comp.modifier_total(&"armor") if equipment_comp else 0.0
+	super.take_damage(max(1.0, amount - armor))
+
+
+func _configure_equipped_launcher() -> void:
+
+	if combat_comp == null or equipment_comp == null:
+		return
+	combat_comp.configure_from_item(equipment_comp.get_launcher())
 
 
 func _flash_shoot_sprite() -> void:

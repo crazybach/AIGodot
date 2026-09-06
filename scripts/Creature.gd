@@ -26,6 +26,8 @@ var facing_angle := 0.0
 var health_comp: HealthComponent
 var combat_comp: CombatComponent
 var movement_comp: MovementComponent
+var inventory_comp: InventoryComponent
+var equipment_comp: EquipmentComponent
 
 var _components: Array[Component] = []
 

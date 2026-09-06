@@ -29,7 +29,7 @@ const BulletClass := preload("res://scripts/Bullet.gd")
 
 
 func _ready() -> void:
-	get_tree().auto_accept_quit = false
+	get_tree().auto_accept_quit = true
 	_build_lighting()
 	_build_camera()
 	_build_level()
@@ -269,6 +269,11 @@ func _build_hud() -> void:
 	hud.name = "HUD"
 	hud.game_manager = self
 	add_child(hud)
+	# The player exists before the HUD, so synchronize its component state now.
+	if player and player.health_comp:
+		hud.update_health(player.health_comp.health, player.health_comp.max_health)
+	if player and player.combat_comp:
+		hud.update_ammo(player.combat_comp.ammo, player.combat_comp.max_ammo)
 
 
 func _start_wave() -> void:
@@ -385,7 +390,7 @@ func _on_player_ammo_changed(current: int, maximum: int) -> void:
 
 
 func _process(delta: float) -> void:
-	# Quit on Esc (window X is intentionally ignored so the sandbox can't close us).
+	# Also allow quitting with Esc.
 	if Input.is_action_just_pressed("ui_cancel"):
 		get_tree().quit()
 		return
