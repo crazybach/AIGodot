@@ -4,7 +4,6 @@ extends RefCounted
 
 const ASSET_ROOT := "res://assets/ui/dark_dwellers/"
 const PANEL_TEXTURE := "20251029darkDwellers9SlicesA.png"
-const INNER_PANEL_TEXTURE := "20251029darkDwellers9SlicesE.png"
 const HEADER_TEXTURE := "20251117darkDwellersHeaderA.png"
 const EMPTY_SLOT_TEXTURE := "20251124emptyFrameA1-Sheet.png"
 
@@ -17,10 +16,10 @@ const MUTED := Color("#777091")
 const DANGER := Color("#d55758")
 
 
-static func panel_style(inner := false) -> StyleBoxTexture:
+static func panel_style() -> StyleBoxTexture:
 
 	var style := StyleBoxTexture.new()
-	style.texture = load(ASSET_ROOT + (INNER_PANEL_TEXTURE if inner else PANEL_TEXTURE))
+	style.texture = load(ASSET_ROOT + PANEL_TEXTURE)
 	style.texture_margin_left = 28.0
 	style.texture_margin_right = 28.0
 	style.texture_margin_top = 28.0
@@ -68,6 +67,7 @@ static func equipment_frame(slot: StringName) -> String:
 		&"left_hand": return "20251124shieldFrameA1-Sheet.png"
 		&"right_hand": return "20251124weaponFrameA1-Sheet.png"
 		&"accessory_1", &"accessory_2": return "20251124ringFrameA1-Sheet.png"
+		&"backpack": return EMPTY_SLOT_TEXTURE  # No dedicated frame asset yet; reuse the generic empty frame.
 		_: return EMPTY_SLOT_TEXTURE
 
 

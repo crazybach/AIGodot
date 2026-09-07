@@ -81,12 +81,12 @@ func _window_top_bar(window_title: String, key_hint: String, close_action: Calla
 	return bar
 
 
-func _build_equipment_window() -> Panel:
+func _build_window(window_name: String, position: Vector2, size: Vector2, separation: int) -> Dictionary:
 
 	var panel := Panel.new()
-	panel.name = "CharacterWindow"
-	panel.position = Vector2(50, 38)
-	panel.size = Vector2(500, 570)
+	panel.name = window_name
+	panel.position = position
+	panel.size = size
 	panel.mouse_filter = Control.MOUSE_FILTER_STOP
 	panel.add_theme_stylebox_override("panel", SurvivalUI.panel_style())
 	var margin := MarginContainer.new()
@@ -97,8 +97,16 @@ func _build_equipment_window() -> Panel:
 	margin.add_theme_constant_override("margin_bottom", 16)
 	panel.add_child(margin)
 	var content := VBoxContainer.new()
-	content.add_theme_constant_override("separation", 5)
+	content.add_theme_constant_override("separation", separation)
 	margin.add_child(content)
+	return {"panel": panel, "content": content}
+
+
+func _build_equipment_window() -> Panel:
+
+	var chrome := _build_window("CharacterWindow", Vector2(50, 38), Vector2(500, 570), 5)
+	var panel: Panel = chrome["panel"]
+	var content: VBoxContainer = chrome["content"]
 	content.add_child(_window_top_bar("CHARACTER", "[ C ]", close_character))
 	content.add_child(SurvivalUI.make_header("BODY EQUIPMENT"))
 	equipment_area = Control.new()
@@ -133,22 +141,9 @@ func _build_equipment_window() -> Panel:
 
 func _build_backpack_window() -> Panel:
 
-	var panel := Panel.new()
-	panel.name = "BackpackWindow"
-	panel.position = Vector2(578, 38)
-	panel.size = Vector2(650, 570)
-	panel.mouse_filter = Control.MOUSE_FILTER_STOP
-	panel.add_theme_stylebox_override("panel", SurvivalUI.panel_style())
-	var margin := MarginContainer.new()
-	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	margin.add_theme_constant_override("margin_left", 18)
-	margin.add_theme_constant_override("margin_right", 18)
-	margin.add_theme_constant_override("margin_top", 16)
-	margin.add_theme_constant_override("margin_bottom", 16)
-	panel.add_child(margin)
-	var content := VBoxContainer.new()
-	content.add_theme_constant_override("separation", 6)
-	margin.add_child(content)
+	var chrome := _build_window("BackpackWindow", Vector2(578, 38), Vector2(650, 570), 6)
+	var panel: Panel = chrome["panel"]
+	var content: VBoxContainer = chrome["content"]
 	content.add_child(_window_top_bar("BACKPACK", "[ I ]", close_backpack))
 	content.add_child(SurvivalUI.make_header("FIELD INVENTORY"))
 	var capacity_row := HBoxContainer.new()
@@ -213,6 +208,8 @@ func _build_backpack_window() -> Panel:
 
 func toggle_character() -> void:
 
+	if equipment_window == null:
+		return
 	equipment_window.visible = not equipment_window.visible
 	if equipment_window.visible:
 		refresh()
@@ -220,6 +217,8 @@ func toggle_character() -> void:
 
 func toggle_backpack() -> void:
 
+	if backpack_window == null:
+		return
 	backpack_window.visible = not backpack_window.visible
 	if backpack_window.visible:
 		refresh()
@@ -227,23 +226,27 @@ func toggle_backpack() -> void:
 
 func close_character() -> void:
 
-	equipment_window.visible = false
+	if equipment_window:
+		equipment_window.visible = false
 
 
 func close_backpack() -> void:
 
-	backpack_window.visible = false
+	if backpack_window:
+		backpack_window.visible = false
 
 
 func close_all() -> void:
 
-	equipment_window.visible = false
-	backpack_window.visible = false
+	if equipment_window:
+		equipment_window.visible = false
+	if backpack_window:
+		backpack_window.visible = false
 
 
 func is_any_window_open() -> bool:
 
-	return equipment_window.visible or backpack_window.visible
+	return (equipment_window != null and equipment_window.visible) or (backpack_window != null and backpack_window.visible)
 
 
 func _ensure_inventory_widgets() -> void:
@@ -253,6 +256,7 @@ func _ensure_inventory_widgets() -> void:
 	if inventory_widgets.size() == player.inventory_comp.slots.size():
 		return
 	for child in grid.get_children():
+		grid.remove_child(child)
 		child.queue_free()
 	inventory_widgets.clear()
 	for slot_index in player.inventory_comp.slots.size():
@@ -340,11 +344,15 @@ func activate_slot(context: StringName, index: int, body_slot: StringName = &"",
 	if player == null:
 		return
 	if context == &"hotbar":
-		selected_hotbar_index = index
-		player.activate_hotbar_slot(index, throw_item)
+		# Highlight the slot only when the activation actually did something,
+		# so empty or unbound quick slots stay unhighlighted.
+		if player.activate_hotbar_slot(index, throw_item):
+			selected_hotbar_index = index
 	elif context == &"inventory":
 		player.activate_inventory_slot(index, throw_item)
-	elif context == &"equipment" and not throw_item:
+	elif context == &"equipment":
+		# Equipped gear cannot be thrown in place; both left- and right-click
+		# return it to the backpack.
 		player.equipment_comp.unequip_to_inventory(player.inventory_comp, body_slot)
 	refresh()
 
@@ -378,6 +386,10 @@ func drop_on(target_context: StringName, target_index: int, target_body_slot: St
 	var source_context: StringName = data["context"]
 	var source_index := int(data["index"])
 	var source_body_slot: StringName = data["equipment_slot"]
+	# Re-validate the drag source: it may have been consumed, moved, or
+	# unequipped since the drag began.
+	if get_item_stack(source_context, source_index, source_body_slot) == null:
+		return
 	if target_context == &"hotbar":
 		if source_context == &"inventory":
 			player.inventory_comp.set_hotbar_slot(target_index, source_index)
