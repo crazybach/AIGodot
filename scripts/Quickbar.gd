@@ -16,7 +16,8 @@ func setup(ui: InventoryPanel) -> void:
 
 func _ready() -> void:
 
-	add_theme_constant_override("separation", 6)
+	alignment = BoxContainer.ALIGNMENT_CENTER
+	add_theme_constant_override("separation", 4)
 	if inventory_ui:
 		_build()
 

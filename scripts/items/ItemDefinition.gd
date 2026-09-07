@@ -9,6 +9,7 @@ extends Resource
 @export var max_stack := 1
 @export var tags: Array[StringName] = []
 @export var components: Array[ItemComponent] = []
+@export var icon: Texture2D
 
 
 func has_tag(tag: StringName) -> bool:

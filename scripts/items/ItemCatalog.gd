@@ -4,6 +4,7 @@ extends RefCounted
 ## when designers need editor-authored items; callers keep the same API.
 
 static var _items: Dictionary = {}
+const ICON_ROOT := "res://assets/ui/item_icons/"
 
 
 static func get_item(id: StringName) -> ItemDefinition:
@@ -89,6 +90,9 @@ static func _item(id: StringName, display_name: String, description: String, wei
 	item.weight = weight
 	item.max_stack = max_stack
 	item.tags = tags
+	var icon_path := ICON_ROOT + String(id) + ".webp"
+	if ResourceLoader.exists(icon_path):
+		item.icon = load(icon_path)
 	for component in components:
 		item.components.append(component)
 	return item

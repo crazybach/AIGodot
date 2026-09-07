@@ -392,6 +392,9 @@ func _on_player_ammo_changed(current: int, maximum: int) -> void:
 func _process(delta: float) -> void:
 	# Also allow quitting with Esc.
 	if Input.is_action_just_pressed("ui_cancel"):
+		if hud and hud.inventory_panel and hud.inventory_panel.is_any_window_open():
+			hud.inventory_panel.close_all()
+			return
 		get_tree().quit()
 		return
 

@@ -1,12 +1,15 @@
 class_name ItemSlotWidget
 extends Button
-## Reusable slot visual for backpack, equipment, and the persistent quickbar.
+## Reusable icon slot for backpack, paper doll, and action bar.
 
 var inventory_ui: InventoryPanel
 var context: StringName = &"inventory"
 var index := -1
 var equipment_slot: StringName
 var compact := false
+var key_label: Label
+var name_label: Label
+var quantity_label: Label
 
 
 func configure(ui: InventoryPanel, slot_context: StringName, slot_index: int = -1, body_slot: StringName = &"", is_compact := false) -> void:
@@ -16,12 +19,59 @@ func configure(ui: InventoryPanel, slot_context: StringName, slot_index: int = -
 	index = slot_index
 	equipment_slot = body_slot
 	compact = is_compact
-	custom_minimum_size = Vector2(64, 52) if compact else Vector2(76, 64)
+	custom_minimum_size = Vector2(62, 62) if compact else Vector2(68, 68)
 	focus_mode = Control.FOCUS_NONE
-	alignment = HORIZONTAL_ALIGNMENT_CENTER
+	clip_text = true
+	expand_icon = true
+	add_theme_constant_override("icon_max_width", 42 if compact else 46)
+	icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	vertical_icon_alignment = VERTICAL_ALIGNMENT_CENTER
+	_build_overlay_labels()
 	pressed.connect(_on_pressed)
-	tooltip_text = inventory_ui.describe_slot(context, index, equipment_slot)
+	mouse_entered.connect(_on_mouse_entered)
+	mouse_exited.connect(_on_mouse_exited)
 	refresh()
+
+
+func _build_overlay_labels() -> void:
+
+	key_label = Label.new()
+	key_label.position = Vector2(5, 3)
+	key_label.size = Vector2(18, 16)
+	key_label.text = str(index + 1) if context == &"hotbar" else ""
+	key_label.add_theme_font_size_override("font_size", 11)
+	key_label.add_theme_color_override("font_color", SurvivalUI.GOLD_BRIGHT)
+	key_label.add_theme_constant_override("outline_size", 3)
+	key_label.add_theme_color_override("font_outline_color", SurvivalUI.INK)
+	key_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(key_label)
+
+	quantity_label = Label.new()
+	quantity_label.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	quantity_label.position = Vector2(-28, 3)
+	quantity_label.size = Vector2(23, 16)
+	quantity_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	quantity_label.add_theme_font_size_override("font_size", 10)
+	quantity_label.add_theme_color_override("font_color", Color.WHITE)
+	quantity_label.add_theme_constant_override("outline_size", 3)
+	quantity_label.add_theme_color_override("font_outline_color", SurvivalUI.INK)
+	quantity_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(quantity_label)
+
+	name_label = Label.new()
+	name_label.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
+	name_label.offset_left = 3
+	name_label.offset_top = -18
+	name_label.offset_right = -3
+	name_label.offset_bottom = -3
+	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	name_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	name_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	name_label.add_theme_font_size_override("font_size", 8)
+	name_label.add_theme_constant_override("outline_size", 3)
+	name_label.add_theme_color_override("font_outline_color", Color(0.03, 0.02, 0.06, 0.98))
+	name_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(name_label)
 
 
 func refresh() -> void:
@@ -30,13 +80,27 @@ func refresh() -> void:
 		return
 	var stack := inventory_ui.get_item_stack(context, index, equipment_slot)
 	tooltip_text = inventory_ui.describe_slot(context, index, equipment_slot)
+	_update_styles(stack != null)
+	text = ""
+	icon = stack.definition.icon if stack else null
+	quantity_label.text = str(stack.quantity) if stack and stack.quantity > 1 else ""
 	if stack == null:
-		text = _empty_label()
-		modulate = Color(0.55, 0.62, 0.7, 0.8)
+		name_label.text = String(equipment_slot).replace("_", " ").to_upper() if context == &"equipment" else ""
+		name_label.add_theme_color_override("font_color", SurvivalUI.MUTED)
 	else:
-		var prefix := "%d\n" % (index + 1) if context == &"hotbar" else ""
-		text = prefix + _short_name(stack.definition.display_name) + ("\nx%d" % stack.quantity if stack.quantity > 1 else "")
-		modulate = _item_color(stack.definition)
+		name_label.text = _short_name(stack.definition.display_name)
+		name_label.add_theme_color_override("font_color", _item_color(stack.definition))
+
+
+func _update_styles(has_item: bool) -> void:
+
+	var file_name := SurvivalUI.equipment_frame(equipment_slot) if context == &"equipment" else SurvivalUI.EMPTY_SLOT_TEXTURE
+	var selected := context == &"hotbar" and inventory_ui.selected_hotbar_index == index
+	add_theme_stylebox_override("normal", SurvivalUI.slot_style(file_name, 3 if selected else (1 if has_item else 0)))
+	add_theme_stylebox_override("hover", SurvivalUI.slot_style(file_name, 2))
+	add_theme_stylebox_override("pressed", SurvivalUI.slot_style(file_name, 3))
+	add_theme_stylebox_override("focus", SurvivalUI.slot_style(file_name, 2))
+	add_theme_stylebox_override("disabled", SurvivalUI.slot_style(file_name, 4))
 
 
 func _gui_input(event: InputEvent) -> void:
@@ -58,14 +122,43 @@ func _on_pressed() -> void:
 		inventory_ui.activate_slot(context, index, equipment_slot)
 
 
+func _on_mouse_entered() -> void:
+
+	if inventory_ui:
+		inventory_ui.show_details(context, index, equipment_slot)
+
+
+func _on_mouse_exited() -> void:
+
+	if inventory_ui:
+		inventory_ui.clear_details()
+
+
 func _get_drag_data(_at_position: Vector2):
 
-	if inventory_ui == null or inventory_ui.get_item_stack(context, index, equipment_slot) == null:
+	var stack := inventory_ui.get_item_stack(context, index, equipment_slot) if inventory_ui else null
+	if stack == null:
 		return null
+	var preview_panel := Panel.new()
+	preview_panel.custom_minimum_size = Vector2(190, 54)
+	preview_panel.add_theme_stylebox_override("panel", SurvivalUI.flat_style(Color(0.06, 0.04, 0.1, 0.96), SurvivalUI.GOLD, 2, 4))
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 5)
+	row.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT, Control.PRESET_MODE_MINSIZE, 5)
+	preview_panel.add_child(row)
+	var preview_icon := TextureRect.new()
+	preview_icon.custom_minimum_size = Vector2(42, 42)
+	preview_icon.texture = stack.definition.icon
+	preview_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	preview_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	row.add_child(preview_icon)
 	var preview := Label.new()
-	preview.text = text
-	preview.add_theme_font_size_override("font_size", 14)
-	set_drag_preview(preview)
+	preview.text = stack.definition.display_name
+	preview.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	preview.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	preview.add_theme_color_override("font_color", SurvivalUI.GOLD_BRIGHT)
+	row.add_child(preview)
+	set_drag_preview(preview_panel)
 	return {"context": context, "index": index, "equipment_slot": equipment_slot}
 
 
@@ -80,28 +173,20 @@ func _drop_data(_at_position: Vector2, data) -> void:
 		inventory_ui.drop_on(context, index, equipment_slot, data)
 
 
-func _empty_label() -> String:
-
-	if context == &"equipment":
-		return String(equipment_slot).replace("_", " ").to_upper()
-	if context == &"hotbar":
-		return "%d\nEMPTY" % (index + 1)
-	return "EMPTY"
-
-
 func _short_name(item_name: String) -> String:
 
-	return item_name.substr(0, 11).to_upper()
+	var words := item_name.to_upper().split(" ")
+	var result := words[0]
+	if result.length() < 7 and words.size() > 1:
+		result += " " + words[1]
+	return result.substr(0, 11)
 
 
 func _item_color(definition: ItemDefinition) -> Color:
 
-	if definition.has_tag(&"anomalous"):
-		return Color(0.82, 0.55, 1.0)
-	if definition.has_tag(&"medical"):
-		return Color(0.45, 1.0, 0.58)
-	if definition.has_tag(&"weapon") or definition.has_tag(&"ammo_9mm") or definition.has_tag(&"ammo_shell"):
-		return Color(1.0, 0.76, 0.32)
-	if definition.has_tag(&"food") or definition.has_tag(&"drink"):
-		return Color(0.6, 0.9, 1.0)
-	return Color(0.9, 0.94, 1.0)
+	if definition.has_tag(&"anomalous"): return Color("#d698ff")
+	if definition.has_tag(&"medical"): return Color("#8fe6a5")
+	if definition.has_tag(&"weapon") or definition.has_tag(&"projectile"): return SurvivalUI.GOLD_BRIGHT
+	if definition.has_tag(&"food") or definition.has_tag(&"drink"): return Color("#9bdbe8")
+	if definition.has_tag(&"armor") or definition.has_tag(&"container"): return Color("#d3c8a9")
+	return Color("#c7c5db")

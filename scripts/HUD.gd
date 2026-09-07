@@ -20,6 +20,7 @@ var inventory_panel: InventoryPanel
 var quickbar: Quickbar
 var quickbar_frame: Panel
 var _inventory_key_down := false
+var _character_key_down := false
 var _quickbar_keys_down: Array[bool] = [false, false, false, false, false, false, false, false]
 
 
@@ -103,10 +104,10 @@ func _build_wave_display() -> void:
 func _build_controls_hint() -> void:
 	controls_label = Label.new()
 	controls_label.name = "ControlsLabel"
-	controls_label.position = Vector2(20, 670)
-	controls_label.text = "WASD: Move | Mouse: Aim | LMB: Shoot | R: Reload | 1-8: Quick slots | I: Inventory | SHIFT: Sprint"
-	controls_label.add_theme_font_size_override("font_size", 13)
-	controls_label.add_theme_color_override("font_color", Color(0.5, 0.5, 0.5, 0.8))
+	controls_label.position = Vector2(20, 688)
+	controls_label.text = "[ C ]  CHARACTER    [ I ]  BACKPACK"
+	controls_label.add_theme_font_size_override("font_size", 12)
+	controls_label.add_theme_color_override("font_color", SurvivalUI.LAVENDER)
 	add_child(controls_label)
 
 
@@ -176,18 +177,14 @@ func _build_quickbar() -> void:
 
 	quickbar_frame = Panel.new()
 	quickbar_frame.name = "QuickbarFrame"
-	quickbar_frame.position = Vector2(352, 630)
-	quickbar_frame.size = Vector2(576, 68)
+	quickbar_frame.position = Vector2(360, 628)
+	quickbar_frame.size = Vector2(560, 84)
 	quickbar_frame.mouse_filter = Control.MOUSE_FILTER_STOP
-	var frame_style := StyleBoxFlat.new()
-	frame_style.bg_color = Color(0.015, 0.025, 0.045, 0.94)
-	frame_style.border_color = Color(0.22, 0.44, 0.62, 0.95)
-	frame_style.set_border_width_all(2)
-	frame_style.set_corner_radius_all(8)
-	quickbar_frame.add_theme_stylebox_override("panel", frame_style)
+	quickbar_frame.add_theme_stylebox_override("panel", SurvivalUI.panel_style())
 	add_child(quickbar_frame)
 	quickbar = Quickbar.new()
-	quickbar.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT, Control.PRESET_MODE_MINSIZE, 6)
+	quickbar.position = Vector2(14, 11)
+	quickbar.size = Vector2(532, 62)
 	quickbar_frame.add_child(quickbar)
 	quickbar.setup(inventory_panel)
 	inventory_panel.presentation_changed.connect(quickbar.refresh)
@@ -242,12 +239,14 @@ func show_game_over(final_score: int, wave: int) -> void:
 func _process(delta: float) -> void:
 	var inventory_pressed := Input.is_key_pressed(KEY_I)
 	if inventory_pressed and not _inventory_key_down and inventory_panel:
-		inventory_panel.visible = not inventory_panel.visible
-		if inventory_panel.visible:
-			inventory_panel.refresh()
+		inventory_panel.toggle_backpack()
 	_inventory_key_down = inventory_pressed
+	var character_pressed := Input.is_key_pressed(KEY_C)
+	if character_pressed and not _character_key_down and inventory_panel:
+		inventory_panel.toggle_character()
+	_character_key_down = character_pressed
 	if game_manager and game_manager.player and inventory_panel:
-		game_manager.player.set_ui_input_blocked(inventory_panel.visible)
+		game_manager.player.set_ui_input_blocked(inventory_panel.is_any_window_open())
 	_update_quickbar_keys()
 	# Check for game over restart
 	if game_over_panel.visible and Input.is_key_pressed(KEY_ENTER):
@@ -268,14 +267,13 @@ func _process(delta: float) -> void:
 
 func _update_quickbar_keys() -> void:
 
-	if inventory_panel == null or inventory_panel.visible or game_over_panel.visible:
+	if inventory_panel == null or inventory_panel.is_any_window_open() or game_over_panel.visible:
 		return
 	var keys: Array[Key] = [KEY_1, KEY_2, KEY_3, KEY_4, KEY_5, KEY_6, KEY_7, KEY_8]
 	for index in keys.size():
 		var pressed := Input.is_key_pressed(keys[index])
 		if pressed and not _quickbar_keys_down[index] and game_manager and game_manager.player:
-			game_manager.player.activate_hotbar_slot(index)
-			inventory_panel.refresh()
+			inventory_panel.activate_slot(&"hotbar", index)
 		_quickbar_keys_down[index] = pressed
 
 
