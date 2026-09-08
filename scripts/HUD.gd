@@ -1,6 +1,8 @@
 class_name HUD
 extends CanvasLayer
 
+const FogDebugPanelClass := preload("res://scripts/FogDebugPanel.gd")
+
 var game_manager: Node2D
 
 ## UI elements
@@ -24,6 +26,8 @@ var quickbar: Quickbar
 var quickbar_frame: Panel
 var _inventory_key_down := false
 var _character_key_down := false
+var _debug_key_down := false
+var debug_panel
 var _quickbar_keys_down: Array[bool] = [false, false, false, false, false, false, false, false]
 
 
@@ -39,6 +43,7 @@ func _ready() -> void:
 	_build_game_over_panel()
 	_build_inventory_panel()
 	_build_quickbar()
+	_build_debug_panel()
 
 
 func _build_health_bar() -> void:
@@ -133,7 +138,7 @@ func _build_controls_hint() -> void:
 	controls_label = Label.new()
 	controls_label.name = "ControlsLabel"
 	controls_label.position = Vector2(20, 662)
-	controls_label.text = "[ LMB ] FIRE   [ RMB + LMB ] THROW\n[ Q ] HAND   [ WHEEL ] ARC   [ C / I ] GEAR"
+	controls_label.text = "[ LMB ] FIRE   [ RMB + LMB ] THROW\n[ Q ] HAND   [ WHEEL ] ARC   [ C / I ] GEAR   [ F ] MIST DOOR"
 	controls_label.add_theme_font_size_override("font_size", 12)
 	controls_label.add_theme_color_override("font_color", SurvivalUI.LAVENDER)
 	add_child(controls_label)
@@ -218,6 +223,14 @@ func _build_quickbar() -> void:
 	inventory_panel.presentation_changed.connect(quickbar.refresh)
 
 
+func _build_debug_panel() -> void:
+
+	debug_panel = FogDebugPanelClass.new()
+	debug_panel.name = "DeveloperDebugPanel"
+	debug_panel.setup(game_manager.fog if game_manager else null, game_manager.lighting if game_manager else null)
+	add_child(debug_panel)
+
+
 func update_health(current: float, maximum: float) -> void:
 	health_label.text = "HP: %d/%d" % [int(current), int(maximum)]
 	var ratio := current / maximum
@@ -281,8 +294,12 @@ func _process(delta: float) -> void:
 	if character_pressed and not _character_key_down and inventory_panel:
 		inventory_panel.toggle_character()
 	_character_key_down = character_pressed
+	var debug_pressed := Input.is_key_pressed(KEY_F3)
+	if debug_pressed and not _debug_key_down and debug_panel:
+		debug_panel.toggle()
+	_debug_key_down = debug_pressed
 	if game_manager and game_manager.player and inventory_panel:
-		game_manager.player.set_ui_input_blocked(inventory_panel.is_any_window_open())
+		game_manager.player.set_ui_input_blocked(inventory_panel.is_any_window_open() or (debug_panel and debug_panel.is_open()))
 	_update_quickbar_keys()
 	# Check for game over restart
 	if game_over_panel.visible and Input.is_key_pressed(KEY_ENTER):

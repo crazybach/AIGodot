@@ -16,6 +16,7 @@ const FRAME_HEIGHT := 275
 const WALK_FRAMES := 4
 const SHOOT_FRAMES := 4
 const ANIM_FPS := 8.0
+const BASE_EQUIPPED_LIGHT_RANGE := 240.0
 const HumanoidProfileClass := preload("res://scripts/components/HumanoidProfileComponent.gd")
 
 ## ── Sprites & animation ────────────────────────────────────────
@@ -80,6 +81,7 @@ func _setup_creature() -> void:
 	_build_sprites()
 	build_collision(14.0)
 	_build_light()
+	_apply_equipment_modifiers()
 	_build_aiming_system()
 	z_index = 10
 
@@ -114,12 +116,14 @@ func _build_light() -> void:
 	light_source.name = "PlayerLight"
 	light_source.setup({
 		"type": LightSource2D.LightType.POINT,
-		"range": 240.0,
+		"range": BASE_EQUIPPED_LIGHT_RANGE,
 		"color": Color(1.0, 0.88, 0.66),
 		"energy": 1.6,
 		"cast_shadows": true,
-		"auto_day_night": true,
+		"auto_day_night": false,
 		"movement_response": 0.12,
+		"fog_range_multiplier": 0.88,
+		"fog_clear_strength": 0.72,
 	})
 	_add_component(light_source)
 
@@ -301,6 +305,10 @@ func _apply_equipment_modifiers() -> void:
 			inventory_comp.slots.resize(inventory_comp.slot_capacity)
 	if movement_comp:
 		movement_comp.base_speed = MovementComponent.DEFAULT_MOVE_SPEED * (1.0 + equipment_comp.modifier_total(&"move_speed"))
+	if light_source:
+		var equipped_light_range := equipment_comp.modifier_total(&"light_range")
+		light_source.set_owner_enabled(equipped_light_range > 0.0)
+		light_source.set_light_range(BASE_EQUIPPED_LIGHT_RANGE + equipped_light_range)
 
 
 func take_damage(amount: float) -> void:

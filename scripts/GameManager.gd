@@ -18,16 +18,21 @@ var player: Player
 var camera: Camera2D
 var hud: Node
 var lighting: LightingManager
+var fog
+var fog_door
 var enemy_spawn_timer: Timer
 var enemies_alive: Array = []
 var wave_delay_active := false
 var night_surge_elapsed := 0.0
 var merchant: Merchant
 var _interact_key_down := false
+var _fog_door_key_down := false
 
 ## Preload enemy script
 const EnemyClass := preload("res://scripts/Enemy.gd")
 const BulletClass := preload("res://scripts/Bullet.gd")
+const FogControllerClass := preload("res://scripts/FogController.gd")
+const FogDoorClass := preload("res://scripts/FogDoor.gd")
 
 
 func _ready() -> void:
@@ -37,6 +42,7 @@ func _ready() -> void:
 	_build_level()
 	_spawn_player()
 	_spawn_safehouse_merchant()
+	_build_fog()
 	_build_hud()
 	_start_wave()
 
@@ -45,6 +51,14 @@ func _build_lighting() -> void:
 	lighting = LightingManager.new()
 	lighting.name = "Lighting"
 	add_child(lighting)
+
+
+func _build_fog() -> void:
+
+	fog = FogControllerClass.new()
+	fog.name = "AtmosphericFog"
+	fog.setup(lighting, camera)
+	add_child(fog)
 
 
 func _build_camera() -> void:
@@ -73,6 +87,8 @@ func _build_level() -> void:
 	_build_sidewalks()
 	# Buildings
 	_build_buildings()
+	# Functional night lights make the lighting/fog interaction readable.
+	_build_street_lights()
 	# World bounds
 	_build_world_bounds()
 
@@ -134,6 +150,53 @@ func _build_sidewalks() -> void:
 	sw_bottom.position = Vector2(WORLD_LEFT, 90.0)
 	sw_bottom.color = sidewalk_color
 	add_child(sw_bottom)
+
+
+func _build_street_lights() -> void:
+
+	var lights_root := Node2D.new()
+	lights_root.name = "StreetLights"
+	add_child(lights_root)
+	var positions := [
+		Vector2(-760.0, -142.0),
+		Vector2(-260.0, 122.0),
+		Vector2(260.0, -142.0),
+		Vector2(760.0, 122.0),
+	]
+	for index in positions.size():
+		var lamp := Node2D.new()
+		lamp.name = "StreetLamp%02d" % (index + 1)
+		lamp.position = positions[index]
+		lights_root.add_child(lamp)
+
+		var post := ColorRect.new()
+		post.position = Vector2(-2.0, 0.0)
+		post.size = Vector2(4.0, 24.0)
+		post.color = Color("#34383d")
+		lamp.add_child(post)
+		var fixture := ColorRect.new()
+		fixture.position = Vector2(-7.0, -4.0)
+		fixture.size = Vector2(14.0, 7.0)
+		fixture.color = Color("#b7a36f")
+		lamp.add_child(fixture)
+
+		var source := LightSource2D.new()
+		source.name = "NightLight"
+		source.setup({
+			"type": LightSource2D.LightType.POINT,
+			"range": 215.0,
+			"color": Color("#ffd99a"),
+			"energy": 0.92,
+			"flicker": false,
+			"shimmer": true,
+			"pixel_steps": 0,
+			"falloff_power": 1.75,
+			"cast_shadows": true,
+			"auto_day_night": true,
+			"fog_range_multiplier": 0.92,
+			"fog_clear_strength": 0.78,
+		})
+		lamp.add_child(source)
 
 
 func _build_buildings() -> void:
@@ -219,6 +282,11 @@ func _create_building(def: Dictionary) -> void:
 	door.position = Vector2(def["x"] + def["w"] / 2 - 8, def["y"] + def["h"] - 28)
 	door.color = Color(0.35, 0.2, 0.1, 0.8)
 	add_child(door)
+	if def["name"] == "Store":
+		fog_door = FogDoorClass.new()
+		fog_door.name = "StoreMistDoor"
+		fog_door.position = Vector2(def["x"] + def["w"] / 2.0, def["y"] + def["h"] - 10.0)
+		add_child(fog_door)
 
 	# Label
 	var label := Label.new()
@@ -415,6 +483,7 @@ func _process(delta: float) -> void:
 		get_tree().quit()
 		return
 	_update_merchant_interaction()
+	_update_fog_door_interaction()
 
 	# Night surge: keep spawning extra enemies while it's dark.
 	if lighting and lighting.phase == LightingManager.Phase.NIGHT and state == GameState.PLAYING:
@@ -437,3 +506,15 @@ func _update_merchant_interaction() -> void:
 	if pressed and not _interact_key_down and nearby and hud and hud.inventory_panel:
 		hud.inventory_panel.open_trade(merchant)
 	_interact_key_down = pressed
+
+
+func _update_fog_door_interaction() -> void:
+
+	if fog_door == null or player == null:
+		return
+	var nearby: bool = fog_door.can_interact(player)
+	fog_door.set_interaction_ready(nearby)
+	var pressed := Input.is_key_pressed(KEY_F)
+	if pressed and not _fog_door_key_down and nearby:
+		fog_door.toggle()
+	_fog_door_key_down = pressed

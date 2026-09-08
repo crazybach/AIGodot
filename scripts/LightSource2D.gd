@@ -38,6 +38,8 @@ enum LightType { POINT, SPOT }
 @export var cast_shadows := false
 @export var shadow_filter := 0                      # 0 hard, 1 PCF5, 2 PCF13
 @export var auto_day_night := false                 # auto-off day/dusk, on night/dawn
+@export var fog_range_multiplier := 1.0             # fog clearing radius relative to light range
+@export var fog_clear_strength := 0.72              # maximum local fog thinning
 
 
 ## ---------- Runtime ----------
@@ -46,6 +48,7 @@ var lighting: LightingManager
 var _base_energy := 1.0
 var _time := 0.0
 var _active := true
+var _owner_enabled := true
 var _noise := FastNoiseLite.new()
 
 const TEX_SIZE := 128
@@ -85,6 +88,8 @@ func setup(cfg: Dictionary) -> void:
 	falloff_power = cfg.get("falloff_power", falloff_power)
 	cast_shadows = cfg.get("cast_shadows", cast_shadows)
 	auto_day_night = cfg.get("auto_day_night", auto_day_night)
+	fog_range_multiplier = cfg.get("fog_range_multiplier", fog_range_multiplier)
+	fog_clear_strength = cfg.get("fog_clear_strength", fog_clear_strength)
 
 
 func _build_light() -> void:
@@ -122,10 +127,28 @@ func _process(delta: float) -> void:
 
 
 func _update_active() -> void:
-	if auto_day_night and lighting:
+	if not _owner_enabled:
+		_active = false
+	elif auto_day_night and lighting:
 		_active = lighting.lights_enabled()
 	else:
 		_active = true
+
+
+## Equipment owners can disable a light without removing its reusable component.
+func set_owner_enabled(enabled: bool) -> void:
+
+	_owner_enabled = enabled
+	_update_active()
+	if light_node:
+		light_node.enabled = _active
+
+
+func set_light_range(new_range: float) -> void:
+
+	range = maxf(new_range, 1.0)
+	if light_node:
+		light_node.texture_scale = range / (TEX_SIZE * 0.5)
 
 
 ## 0..1 illumination contribution at world position pos (attenuated by
@@ -147,6 +170,15 @@ func illumination_at(pos: Vector2) -> float:
 		var ang_falloff := pow(clamp(1.0 - ang / half, 0.0, 1.0), 1.5)
 		return dist * ang_falloff
 	return pow(clamp(1.0 - d / range, 0.0, 1.0), falloff_power)
+
+
+## Actual current intensity, including automatic day/night switching and flicker.
+## Atmospheric fog uses this instead of the configured base energy.
+func current_energy() -> float:
+
+	if not _active or light_node == null:
+		return 0.0
+	return light_node.energy
 
 
 ## Radial falloff texture for point lights.
