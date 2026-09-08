@@ -104,8 +104,8 @@ func _build_wave_display() -> void:
 func _build_controls_hint() -> void:
 	controls_label = Label.new()
 	controls_label.name = "ControlsLabel"
-	controls_label.position = Vector2(20, 688)
-	controls_label.text = "[ C ]  CHARACTER    [ I ]  BACKPACK"
+	controls_label.position = Vector2(20, 662)
+	controls_label.text = "[ LMB ] FIRE   [ RMB + LMB ] THROW\n[ Q ] HAND   [ WHEEL ] ARC   [ C / I ] GEAR"
 	controls_label.add_theme_font_size_override("font_size", 12)
 	controls_label.add_theme_color_override("font_color", SurvivalUI.LAVENDER)
 	add_child(controls_label)
@@ -280,6 +280,7 @@ func _update_quickbar_keys() -> void:
 func _update_crosshair() -> void:
 	if crosshair:
 		crosshair.position = get_viewport().get_mouse_position()
+		crosshair.visible = not (game_manager and game_manager.player and game_manager.player.aiming_system and game_manager.player.aiming_system.is_lob_aiming())
 
 
 func _update_time_label() -> void:

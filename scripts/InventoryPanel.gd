@@ -121,7 +121,8 @@ func _build_equipment_window() -> Panel:
 		&"torso": Vector2(181, 91), &"legs": Vector2(181, 184),
 		&"feet": Vector2(181, 300), &"left_hand": Vector2(52, 130),
 		&"right_hand": Vector2(310, 130), &"backpack": Vector2(52, 258),
-		&"accessory_1": Vector2(310, 258), &"accessory_2": Vector2(310, 330)
+		&"two_hand": Vector2(310, 194), &"accessory_1": Vector2(310, 266),
+		&"accessory_2": Vector2(310, 338)
 	}
 	for body_slot in EquipmentComponent.SLOT_ORDER:
 		var slot := ItemSlotWidget.new()

@@ -50,6 +50,7 @@ the catalog.
 | Equippable | Named body slot and passive modifiers | vest → torso, hard hat → head |
 | Launcher | Ammo tag, magazine, reload, fire rate, projectile values | pistol consumes `ammo_9mm` |
 | Projectile | Damage, trajectory, range, impact effect | bullets, bolts, flares, thrown apple |
+| Aim | Strategy plus range and presentation tuning | direct pistol aim, lobbed stone, future charged bow |
 | Consumable | Immediate health/hunger/thirst effects | medkit, beans, water, apple |
 | CraftingPart | Material tags and quality | gun receiver, void resin, phase battery |
 
@@ -77,6 +78,16 @@ equip, drag gear back to an empty backpack slot to unequip, and drag a backpack
 item onto the persistent quickbar to bind it. Shift-click splits a stack; left
 click uses or equips; right-click throws an item with `ProjectileComponent`.
 
+Equipped left-hand, right-hand, and two-hand items with a lob `AimComponent` and
+a `ProjectileComponent` support aimed world throws. Hold **right mouse** to preview a dotted arc and
+landing ring, then press **left mouse** to throw. **Q** switches between occupied
+hands and the mouse wheel adjusts the visual arc. A red cross marks a requested
+landing point outside the aim profile's range. Direct `AimComponent` profiles pair
+with `LauncherComponent` for firearms. This separates targeting from execution and
+leaves room for charged bow, beam, cone, or placed-item strategies. Every thrown item uses
+the same brick-like world proxy in this first iteration, while retaining its
+original `ItemStack` for a future pickup interaction.
+
 The eight-slot quickbar remains at the bottom of the game window. Click a slot
 or press **1–8** to activate it. It references a backpack slot rather than
 duplicating the item, so using the final medkit or equipping a bound item clears
@@ -89,11 +100,13 @@ that quick slot automatically.
 | Launchers | Service Pistol, Pump Shotgun, Improvised Crossbow, Flare Pistol |
 | Ammunition | 9 mm Rounds, 12-gauge Shells, Crossbow Bolts, Signal Flare |
 | Survival | Field Medkit, Antiseptic Spray, Painkillers, Canned Beans, Bottled Water, Bruised Apple |
-| Thrown devices | Smoke Grenade, Warding Salt, Radio Beacon |
+| Thrown devices | Smoke Grenade, Warding Salt, Radio Beacon, Throwing Stone |
 | Wearables | Hard Hat, Filter Gas Mask, Ballistic Vest, Cargo Pants, Work Boots, Canvas Backpack, Hand-crank Flashlight |
 | Salvage / assembly | Scrap Metal, Damaged Gun Receiver, Shielded Circuit Board, Cracked Survey Lens, Void Resin, Phase Battery |
 
-This is 30 item types, including items that belong to more than one group.
+This is 31 item types, including items that belong to more than one group. Three
+stones spawn in the starter loadout and equip to the left hand so the aimed throw
+flow can be tested immediately.
 
 ## Collection and combination roadmap
 

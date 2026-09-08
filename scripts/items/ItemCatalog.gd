@@ -29,7 +29,7 @@ static func starting_loadout(inventory: InventoryComponent) -> void:
 	for entry in [
 		[&"service_pistol", 1], [&"ammo_9mm", 45], [&"field_medkit", 2],
 		[&"canned_beans", 2], [&"bottled_water", 2], [&"apple", 2],
-		[&"smoke_grenade", 1], [&"flashlight", 1], [&"canvas_backpack", 1],
+		[&"smoke_grenade", 1], [&"stone", 3], [&"flashlight", 1], [&"canvas_backpack", 1],
 		[&"work_boots", 1], [&"cargo_pants", 1]
 	]:
 		inventory.add_item(get_item(entry[0]), entry[1])
@@ -38,10 +38,10 @@ static func starting_loadout(inventory: InventoryComponent) -> void:
 static func _build_catalog() -> void:
 
 	# Weapons and ammunition
-	_register(_item(&"service_pistol", "Service Pistol", "Reliable 9 mm sidearm recovered from a patrol car.", 1.0, 1, [&"weapon"], [_equip(&"right_hand"), _launcher(&"ammo_9mm", 15, 1.2, 0.18, 650.0, 25.0)]))
-	_register(_item(&"pump_shotgun", "Pump Shotgun", "Close-range answer to things that should not be close.", 3.6, 1, [&"weapon"], [_equip(&"right_hand"), _launcher(&"ammo_shell", 6, 2.0, 0.85, 520.0, 70.0)]))
-	_register(_item(&"improvised_crossbow", "Improvised Crossbow", "Quiet launcher assembled from scavenged limbs and cable.", 2.2, 1, [&"weapon"], [_equip(&"right_hand"), _launcher(&"ammo_bolt", 1, 1.1, 0.9, 520.0, 50.0)]))
-	_register(_item(&"flare_pistol", "Flare Pistol", "Emergency signal launcher; its burning rounds repel some intruders.", 0.8, 1, [&"weapon"], [_equip(&"right_hand"), _launcher(&"ammo_flare", 1, 1.4, 1.0, 420.0, 35.0)]))
+	_register(_item(&"service_pistol", "Service Pistol", "Reliable 9 mm sidearm recovered from a patrol car.", 1.0, 1, [&"weapon"], [_equip(&"right_hand"), _launcher(&"ammo_9mm", 15, 1.2, 0.18, 650.0, 25.0), _aim_direct(650.0), _aim_lob(300.0, 0.55, 0.12)]))
+	_register(_item(&"pump_shotgun", "Pump Shotgun", "Close-range answer to things that should not be close.", 3.6, 1, [&"weapon"], [_equip(&"two_hand"), _launcher(&"ammo_shell", 6, 2.0, 0.85, 520.0, 70.0), _aim_direct(520.0), _aim_lob(185.0, 0.7, 0.09)]))
+	_register(_item(&"improvised_crossbow", "Improvised Crossbow", "Quiet launcher assembled from scavenged limbs and cable.", 2.2, 1, [&"weapon"], [_equip(&"two_hand"), _launcher(&"ammo_bolt", 1, 1.1, 0.9, 520.0, 50.0), _aim_direct(650.0), _aim_lob(225.0, 0.66, 0.10)]))
+	_register(_item(&"flare_pistol", "Flare Pistol", "Emergency signal launcher; its burning rounds repel some intruders.", 0.8, 1, [&"weapon"], [_equip(&"right_hand"), _launcher(&"ammo_flare", 1, 1.4, 1.0, 420.0, 35.0), _aim_direct(450.0), _aim_lob(320.0, 0.52, 0.13)]))
 	_register(_item(&"ammo_9mm", "9 mm Rounds", "Standard pistol cartridges.", 0.012, 60, [&"ammo_9mm", &"projectile"], [_projectile(25.0, 650.0, 800.0, &"pierce")]))
 	_register(_item(&"ammo_shell", "12-gauge Shells", "Shotgun shells packed with buckshot.", 0.04, 30, [&"ammo_shell", &"projectile"], [_projectile(70.0, 520.0, 350.0, &"spread")]))
 	_register(_item(&"ammo_bolt", "Crossbow Bolts", "Reusable bolts if recovered intact.", 0.05, 20, [&"ammo_bolt", &"projectile"], [_projectile(50.0, 520.0, 650.0, &"recoverable")]))
@@ -53,10 +53,11 @@ static func _build_catalog() -> void:
 	_register(_item(&"painkillers", "Painkillers", "Keeps a survivor moving through the worst hour.", 0.05, 12, [&"medical"], [_consumable(8.0)]))
 	_register(_item(&"canned_beans", "Canned Beans", "Pre-portal pantry food. Still edible.", 0.45, 6, [&"food"], [_consumable(2.0, 35.0)]))
 	_register(_item(&"bottled_water", "Bottled Water", "Clean water is more valuable after the breach.", 0.5, 4, [&"drink"], [_consumable(0.0, 0.0, 45.0)]))
-	_register(_item(&"apple", "Bruised Apple", "Edible, or throwable as a harmless distraction.", 0.18, 8, [&"food", &"throwable"], [_consumable(1.0, 12.0), _projectile(0.0, 360.0, 260.0, &"noise")]))
-	_register(_item(&"smoke_grenade", "Smoke Grenade", "Breaks line of sight with both cultists and things beneath them.", 0.35, 3, [&"throwable"], [_projectile(0.0, 430.0, 350.0, &"smoke")]))
-	_register(_item(&"warding_salt", "Warding Salt", "Salt mixed with a laboratory counter-agent. Creates a short-lived ward.", 0.2, 5, [&"throwable", &"anomalous"], [_projectile(0.0, 300.0, 180.0, &"ward")]))
-	_register(_item(&"radio_beacon", "Radio Beacon", "An emergency beacon tuned to an untrusted evacuation channel.", 0.6, 1, [&"throwable", &"tool"], [_projectile(0.0, 220.0, 100.0, &"lure")]))
+	_register(_item(&"apple", "Bruised Apple", "Edible, or throwable as a harmless distraction.", 0.18, 8, [&"food", &"throwable"], [_equip(&"left_hand"), _consumable(1.0, 12.0), _projectile(0.0, 360.0, 260.0, &"noise"), _aim_lob(410.0, 0.48, 0.16)]))
+	_register(_item(&"smoke_grenade", "Smoke Grenade", "Breaks line of sight with both cultists and things beneath them.", 0.35, 3, [&"throwable"], [_equip(&"left_hand"), _projectile(0.0, 430.0, 350.0, &"smoke"), _aim_lob(370.0, 0.58, 0.15)]))
+	_register(_item(&"warding_salt", "Warding Salt", "Salt mixed with a laboratory counter-agent. Creates a short-lived ward.", 0.2, 5, [&"throwable", &"anomalous"], [_equip(&"left_hand"), _projectile(0.0, 300.0, 180.0, &"ward"), _aim_lob(390.0, 0.52, 0.17)]))
+	_register(_item(&"radio_beacon", "Radio Beacon", "An emergency beacon tuned to an untrusted evacuation channel.", 0.6, 1, [&"throwable", &"tool"], [_equip(&"left_hand"), _projectile(0.0, 220.0, 100.0, &"lure"), _aim_lob(330.0, 0.62, 0.13)]))
+	_register(_item(&"stone", "Throwing Stone", "A palm-sized chunk of granite. Kept ready for testing arcs and distracting intruders.", 0.32, 6, [&"throwable", &"material", &"test_item"], [_equip(&"left_hand"), _projectile(0.0, 400.0, 480.0, &"noise"), _aim_lob(480.0, 0.58, 0.15)]))
 
 	# Wearables and carried gear
 	_register(_item(&"hard_hat", "Construction Hard Hat", "Dented, but better than meeting falling masonry bareheaded.", 0.6, 1, [&"armor"], [_equip(&"head", {"armor": 3.0})]))
@@ -65,7 +66,7 @@ static func _build_catalog() -> void:
 	_register(_item(&"cargo_pants", "Cargo Pants", "Extra pockets for parts that do not belong together.", 0.8, 1, [&"armor"], [_equip(&"legs", {"inventory_slots": 4.0})]))
 	_register(_item(&"work_boots", "Work Boots", "Steel toes and a stable grip on broken streets.", 1.3, 1, [&"armor"], [_equip(&"feet", {"move_speed": 0.05})]))
 	_register(_item(&"canvas_backpack", "Canvas Backpack", "A worn survivor pack with modular straps.", 1.1, 1, [&"container"], [_equip(&"backpack", {"inventory_slots": 8.0, "weight_capacity": 12.0})]))
-	_register(_item(&"flashlight", "Hand-crank Flashlight", "Low-tech light with a magnetized crank.", 0.4, 1, [&"tool"], [_equip(&"left_hand", {"light_range": 90.0})]))
+	_register(_item(&"flashlight", "Hand-crank Flashlight", "Low-tech light with a magnetized crank.", 0.4, 1, [&"tool"], [_equip(&"left_hand", {"light_range": 90.0}), _projectile(0.0, 330.0, 350.0, &"noise"), _aim_lob(350.0, 0.58, 0.13)]))
 
 	# Salvage and portal-tech parts for future combine/assembly gameplay
 	_register(_item(&"scrap_metal", "Scrap Metal", "Bent steel, casings, and usable fasteners.", 0.3, 20, [&"material"], [_part([&"metal", &"mechanical"], 1)]))
@@ -128,6 +129,26 @@ static func _projectile(damage: float, speed: float, range: float, effect: Strin
 	component.speed = speed
 	component.range = range
 	component.effect = effect
+	return component
+
+
+static func _aim_direct(max_distance: float) -> AimComponent:
+
+	var component := AimComponent.new()
+	component.component_id = &"aim_direct"
+	component.strategy = AimComponent.DIRECT
+	component.max_distance = max_distance
+	return component
+
+
+static func _aim_lob(max_distance: float, flight_time: float, arc_height_ratio: float) -> AimComponent:
+
+	var component := AimComponent.new()
+	component.component_id = &"aim_lob"
+	component.strategy = AimComponent.LOB
+	component.max_distance = max_distance
+	component.flight_time = flight_time
+	component.arc_height_ratio = arc_height_ratio
 	return component
 
 

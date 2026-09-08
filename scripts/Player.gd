@@ -25,6 +25,7 @@ var frame_index := 0
 var frame_elapsed := 0.0
 var light_source: LightSource2D
 var ui_input_blocked := false
+var aiming_system: AimingSystem
 var _shoot_flash_timer  # SceneTreeTimer — no Timer type annotation (mismatch)
 
 
@@ -53,8 +54,9 @@ func _setup_creature() -> void:
 	equipment_comp.equipment_changed.connect(_on_equipment_changed)
 	ItemCatalog.starting_loadout(inventory_comp)
 	_bind_starter_hotbar()
-	# Move the starter pistol out of the backpack into the right-hand slot.
+	# Equip both starter test items so shooting and throwing work immediately.
 	equipment_comp.equip_from_inventory(inventory_comp, inventory_comp.find_first(&"service_pistol"))
+	equipment_comp.equip_from_inventory(inventory_comp, inventory_comp.find_first(&"stone"))
 
 	combat_comp = _add_component(CombatComponent.new()) as CombatComponent
 	_configure_equipped_launcher()
@@ -64,6 +66,7 @@ func _setup_creature() -> void:
 	_build_sprites()
 	build_collision(14.0)
 	_build_light()
+	_build_aiming_system()
 	z_index = 10
 
 
@@ -107,6 +110,14 @@ func _build_light() -> void:
 	_add_component(light_source)
 
 
+func _build_aiming_system() -> void:
+
+	aiming_system = AimingSystem.new()
+	aiming_system.name = "AimingSystem"
+	add_child(aiming_system)
+	aiming_system.setup(self)
+
+
 ## ── Per-frame ──────────────────────────────────────────────────
 
 func _physics_process(delta: float) -> void:
@@ -116,8 +127,27 @@ func _physics_process(delta: float) -> void:
 	# Combat ticks cooldown/reload timers. Animation below reads velocity.
 	super._physics_process(delta)
 	_update_aim()
-	_update_shooting(delta)
+	aiming_system.physics_tick()
 	_update_animation(delta)
+
+
+func _input(event: InputEvent) -> void:
+
+	if ui_input_blocked or not is_alive or pointer_over_interactive_ui():
+		return
+	if aiming_system and aiming_system.handle_input(event):
+		get_viewport().set_input_as_handled()
+
+
+func pointer_over_interactive_ui() -> bool:
+
+	var hovered: Control = get_viewport().gui_get_hovered_control()
+	var current: Node = hovered
+	while current:
+		if current is InventoryPanel or current is Quickbar:
+			return true
+		current = current.get_parent()
+	return false
 
 
 ## ── Aim ────────────────────────────────────────────────────────
@@ -130,26 +160,17 @@ func _update_aim() -> void:
 
 ## ── Shooting & reload ──────────────────────────────────────────
 
-func _update_shooting(_delta: float) -> void:
-	# UI controls use the same mouse button as shooting. Do not let a click on
-	# the backpack or quickbar leak through into world combat.
-	if ui_input_blocked or get_viewport().gui_get_hovered_control() != null:
-		return
-	if combat_comp.is_reloading:
-		return
+func perform_direct_shot() -> bool:
 
-	# Manual reload via R key
-	if Input.is_action_just_pressed("reload"):
+	if combat_comp == null or combat_comp.is_reloading or combat_comp.fire_cooldown > 0.0:
+		return false
+	if combat_comp.ammo <= 0:
 		combat_comp.start_reload()
-		return
-
-	if Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT) and combat_comp.fire_cooldown <= 0.0:
-		if combat_comp.ammo > 0:
-			var bullet := combat_comp.shoot()
-			get_parent().add_child(bullet)
-			_flash_shoot_sprite()
-		else:
-			combat_comp.start_reload()
+		return false
+	var bullet := combat_comp.shoot()
+	get_parent().add_child(bullet)
+	_flash_shoot_sprite()
+	return true
 
 
 ## Public UI/gameplay hooks. A future loot panel can call these with a selected
@@ -204,6 +225,8 @@ func activate_hotbar_slot(index: int, throw_item := false) -> bool:
 func set_ui_input_blocked(blocked: bool) -> void:
 
 	ui_input_blocked = blocked
+	if blocked and aiming_system:
+		aiming_system.cancel_aim()
 
 
 func _bind_starter_hotbar() -> void:
@@ -246,6 +269,8 @@ func _on_equipment_changed() -> void:
 
 	_configure_equipped_launcher()
 	_apply_equipment_modifiers()
+	if aiming_system:
+		aiming_system.on_equipment_changed()
 
 
 func _apply_equipment_modifiers() -> void:

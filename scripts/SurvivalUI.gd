@@ -66,6 +66,7 @@ static func equipment_frame(slot: StringName) -> String:
 		&"feet": return "20251124bootsFrameA1-Sheet.png"
 		&"left_hand": return "20251124shieldFrameA1-Sheet.png"
 		&"right_hand": return "20251124weaponFrameA1-Sheet.png"
+		&"two_hand": return "20251124weaponFrameA1-Sheet.png"
 		&"accessory_1", &"accessory_2": return "20251124ringFrameA1-Sheet.png"
 		&"backpack": return EMPTY_SLOT_TEXTURE  # No dedicated frame asset yet; reuse the generic empty frame.
 		_: return EMPTY_SLOT_TEXTURE
