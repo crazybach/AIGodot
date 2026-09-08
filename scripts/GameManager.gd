@@ -22,6 +22,8 @@ var enemy_spawn_timer: Timer
 var enemies_alive: Array = []
 var wave_delay_active := false
 var night_surge_elapsed := 0.0
+var merchant: Merchant
+var _interact_key_down := false
 
 ## Preload enemy script
 const EnemyClass := preload("res://scripts/Enemy.gd")
@@ -34,6 +36,7 @@ func _ready() -> void:
 	_build_camera()
 	_build_level()
 	_spawn_player()
+	_spawn_safehouse_merchant()
 	_build_hud()
 	_start_wave()
 
@@ -263,6 +266,17 @@ func _spawn_player() -> void:
 	camera.position = Vector2.ZERO
 
 
+func _spawn_safehouse_merchant() -> void:
+
+	merchant = Merchant.new()
+	merchant.name = "SafehouseQuartermaster"
+	merchant.position = Vector2(-155, -145)
+	add_child(merchant)
+	if player and player.humanoid_profile and merchant.humanoid_profile:
+		player.humanoid_profile.meet(merchant.humanoid_profile.character_id)
+		merchant.humanoid_profile.meet(player.humanoid_profile.character_id)
+
+
 func _build_hud() -> void:
 	var HudClass := preload("res://scripts/HUD.gd")
 	hud = HudClass.new()
@@ -274,6 +288,9 @@ func _build_hud() -> void:
 		hud.update_health(player.health_comp.health, player.health_comp.max_health)
 	if player and player.combat_comp:
 		hud.update_ammo(player.combat_comp.ammo, player.combat_comp.max_ammo)
+	if player and player.humanoid_profile:
+		hud.update_stamina(player.humanoid_profile.stamina, player.humanoid_profile.max_stamina)
+		player.humanoid_profile.stamina_changed.connect(hud.update_stamina)
 
 
 func _start_wave() -> void:
@@ -397,6 +414,7 @@ func _process(delta: float) -> void:
 			return
 		get_tree().quit()
 		return
+	_update_merchant_interaction()
 
 	# Night surge: keep spawning extra enemies while it's dark.
 	if lighting and lighting.phase == LightingManager.Phase.NIGHT and state == GameState.PLAYING:
@@ -407,3 +425,15 @@ func _process(delta: float) -> void:
 				_spawn_one_enemy(_pick_enemy_type())
 	else:
 		night_surge_elapsed = 0.0
+
+
+func _update_merchant_interaction() -> void:
+
+	if merchant == null or player == null:
+		return
+	var nearby := merchant.can_interact(player)
+	merchant.set_interaction_ready(nearby)
+	var pressed := Input.is_key_pressed(KEY_E)
+	if pressed and not _interact_key_down and nearby and hud and hud.inventory_panel:
+		hud.inventory_panel.open_trade(merchant)
+	_interact_key_down = pressed

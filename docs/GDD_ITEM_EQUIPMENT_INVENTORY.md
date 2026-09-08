@@ -32,16 +32,21 @@ flowchart LR
   C --> U[Consumable: health, hunger, thirst]
   C --> R[Crafting part: material tags + quality]
   D --> S[ItemStack: definition + quantity]
-  S --> I[InventoryComponent: slots + weight]
-  S --> Q[EquipmentComponent: named body slots]
+  S --> K[ItemContainerComponent: slots + weight + transfer]
+  K --> I[InventoryComponent: quick-slot bindings]
+  K --> Q[EquipmentComponent: named body slots]
+  K --> N[NPC / loot / vehicle containers]
   Q --> W[CombatComponent reads equipped launcher]
   I --> W
 ```
 
 `ItemDefinition` is immutable content data. `ItemStack` stores mutable runtime
-quantity. This keeps save/load, trading, loot containers, and network sync
-straightforward: save an item id plus quantity, then rebuild the definition from
-the catalog.
+quantity. `ItemContainerComponent` owns the common slot, weight, merge, split,
+and atomic transfer rules. `InventoryComponent` derives from it for player/NPC
+backpacks and adds quick-slot bindings; `EquipmentComponent` derives from it for
+the same physical-item semantics while constraining slots to anatomy. This keeps
+save/load, trading, loot containers, and network sync straightforward: save an
+item id plus quantity, then rebuild the definition from the catalog.
 
 ## Implemented components
 
@@ -53,6 +58,7 @@ the catalog.
 | Aim | Strategy plus range and presentation tuning | direct pistol aim, lobbed stone, future charged bow |
 | Consumable | Immediate health/hunger/thirst effects | medkit, beans, water, apple |
 | CraftingPart | Material tags and quality | gun receiver, void resin, phase battery |
+| HumanoidProfile | HP index, stamina, social traits, relationship map | survivor and Safehouse Quartermaster |
 
 An apple demonstrates composition: it has both `Consumable` and `Projectile`.
 Using it restores a little hunger; throwing it creates a zero-damage projectile
@@ -107,6 +113,38 @@ that quick slot automatically.
 This is 31 item types, including items that belong to more than one group. Three
 stones spawn in the starter loadout and equip to the left hand so the aimed throw
 flow can be tested immediately.
+
+## Humanoid condition and relationships
+
+Every human-controlled character can own a `HumanoidProfileComponent`. It
+mirrors the current/max HP from `HealthComponent` when combat is enabled and
+provides an independent stamina pool. The current profile costs stamina for
+melee charge, melee hit, ranged hit, and throw actions; stamina regenerates at a
+configurable rate. The HUD displays the player HP and stamina indices.
+
+Profiles also carry social traits (`empathy`, `caution`, and `aggression`) and a
+relationship map keyed by the other character's stable `character_id`. The first
+meeting initializes attitude at **50**. Story, dialogue, gifts, combat, and
+merchant rules can adjust it through `adjust_attitude`; values are clamped from
+**0** hostile to **100** loyal. The Safehouse Quartermaster and player begin
+with mutual attitude 50, displayed as trust in the exchange screen.
+
+## Safehouse trading
+
+The first NPC is the **Safehouse Quartermaster**, standing on the north sidewalk
+near the player start. Approach the NPC until the `[ E ] TRADE` prompt appears,
+then press **E**. The exchange screen shows the survivor backpack and merchant
+stock side by side. Click an item or drag it across the divide to buy or sell a
+full stack; capacity, weight, merchant funds, and price are checked before either
+container changes.
+
+Currency is a `CurrencyWalletComponent` balance called **Breach Scrip**. It is
+not an inventory stack, so it cannot consume body, backpack, or quick-slot space.
+`TradeValueComponent` stores buy/sell values on individual item definitions;
+items without explicit prices receive a conservative weight-based fallback. The
+merchant's stock is an ordinary `InventoryComponent` and is coordinated by
+`MerchantTradeComponent`, allowing the same interaction UI to support future
+friendly NPCs, traders, lockers, corpses, and vehicle caches.
 
 ## Collection and combination roadmap
 

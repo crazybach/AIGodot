@@ -128,6 +128,8 @@ func commit_lob() -> bool:
 	if stack == null or not _supports_lob_execution(stack.definition):
 		cancel_aim()
 		return false
+	if actor.humanoid_profile and not actor.humanoid_profile.resolve_throw():
+		return false
 	# Equipment mutation emits synchronously and may cancel this aim state.
 	# Snapshot the resolved trajectory before removing the held item.
 	var resolved_profile := active_profile

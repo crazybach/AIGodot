@@ -109,9 +109,9 @@ func _gui_input(event: InputEvent) -> void:
 		return
 	if event is InputEventMouseButton and event.pressed:
 		if event.button_index == MOUSE_BUTTON_RIGHT:
-			inventory_ui.activate_slot(context, index, equipment_slot, true)
+			inventory_ui.activate_slot(context, index, equipment_slot, context == &"inventory")
 			accept_event()
-		elif event.button_index == MOUSE_BUTTON_LEFT and event.shift_pressed and context == &"inventory":
+		elif event.button_index == MOUSE_BUTTON_LEFT and event.shift_pressed and (context == &"inventory" or context == &"trade_player"):
 			inventory_ui.split_inventory_stack(index)
 			accept_event()
 

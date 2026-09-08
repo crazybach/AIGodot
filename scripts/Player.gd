@@ -16,6 +16,7 @@ const FRAME_HEIGHT := 275
 const WALK_FRAMES := 4
 const SHOOT_FRAMES := 4
 const ANIM_FPS := 8.0
+const HumanoidProfileClass := preload("res://scripts/components/HumanoidProfileComponent.gd")
 
 ## ── Sprites & animation ────────────────────────────────────────
 var sprite_walk: Sprite2D
@@ -26,6 +27,8 @@ var frame_elapsed := 0.0
 var light_source: LightSource2D
 var ui_input_blocked := false
 var aiming_system: AimingSystem
+var wallet: CurrencyWalletComponent
+var humanoid_profile
 var _shoot_flash_timer  # SceneTreeTimer — no Timer type annotation (mismatch)
 
 
@@ -43,11 +46,22 @@ func _setup_creature() -> void:
 
 	health_comp = _add_component(HealthComponent.new()) as HealthComponent
 	health_comp.configure(100.0, Color.RED, 0.1)
+	humanoid_profile = HumanoidProfileClass.new()
+	humanoid_profile.name = "HumanoidProfile"
+	humanoid_profile.character_id = &"player_survivor"
+	humanoid_profile.display_name = "Survivor"
+	add_child(humanoid_profile)
+	humanoid_profile.bind_health(health_comp)
 
 	inventory_comp = _add_component(InventoryComponent.new()) as InventoryComponent
 	inventory_comp.name = "BackpackInventory"
+	inventory_comp.container_title = "Survivor Backpack"
 	inventory_comp.slot_capacity = 24
 	inventory_comp.weight_capacity = 32.0
+	wallet = CurrencyWalletComponent.new()
+	wallet.name = "BreachScripWallet"
+	wallet.balance = 75
+	add_child(wallet)
 
 	equipment_comp = _add_component(EquipmentComponent.new()) as EquipmentComponent
 	equipment_comp.name = "BodyEquipment"
@@ -166,6 +180,8 @@ func perform_direct_shot() -> bool:
 		return false
 	if combat_comp.ammo <= 0:
 		combat_comp.start_reload()
+		return false
+	if humanoid_profile and not humanoid_profile.resolve_ranged_hit():
 		return false
 	var bullet := combat_comp.shoot()
 	get_parent().add_child(bullet)

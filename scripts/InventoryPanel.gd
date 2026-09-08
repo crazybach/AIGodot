@@ -2,16 +2,27 @@ class_name InventoryPanel
 extends Control
 ## Coordinates separate character and backpack windows while keeping transfers shared.
 
+const HumanoidProfileClass := preload("res://scripts/components/HumanoidProfileComponent.gd")
+
 signal presentation_changed
 
 var player: Player
 var equipment_window: Panel
 var backpack_window: Panel
+var merchant_window: Panel
+var merchant: Merchant
 var tooltip: Label
 var detail_name: Label
 var detail_components: Label
 var character_status: Label
 var grid: GridContainer
+var trade_player_grid: GridContainer
+var merchant_grid: GridContainer
+var trade_player_widgets: Array[ItemSlotWidget] = []
+var merchant_widgets: Array[ItemSlotWidget] = []
+var merchant_title: Label
+var merchant_scrip: Label
+var trade_status: Label
 var equipment_area: Control
 var weight_bar: ProgressBar
 var weight_label: Label
@@ -48,8 +59,11 @@ func _build() -> void:
 	add_child(equipment_window)
 	backpack_window = _build_backpack_window()
 	add_child(backpack_window)
+	merchant_window = _build_merchant_window()
+	add_child(merchant_window)
 	equipment_window.visible = false
 	backpack_window.visible = false
+	merchant_window.visible = false
 
 
 func _window_top_bar(window_title: String, key_hint: String, close_action: Callable) -> Control:
@@ -207,6 +221,60 @@ func _build_backpack_window() -> Panel:
 	return panel
 
 
+func _build_merchant_window() -> Panel:
+
+	var chrome := _build_window("MerchantWindow", Vector2(38, 34), Vector2(1204, 632), 8)
+	var panel: Panel = chrome["panel"]
+	var content: VBoxContainer = chrome["content"]
+	content.add_child(_window_top_bar("SAFEHOUSE EXCHANGE", "[ E / ESC ]", close_trade))
+	var wallet_row := HBoxContainer.new()
+	wallet_row.add_theme_constant_override("separation", 12)
+	content.add_child(wallet_row)
+	merchant_title = Label.new()
+	merchant_title.text = "QUARTERMASTER STOCK"
+	merchant_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	merchant_title.add_theme_font_size_override("font_size", 13)
+	merchant_title.add_theme_color_override("font_color", SurvivalUI.LAVENDER)
+	wallet_row.add_child(merchant_title)
+	merchant_scrip = Label.new()
+	merchant_scrip.add_theme_font_size_override("font_size", 14)
+	merchant_scrip.add_theme_color_override("font_color", SurvivalUI.GOLD_BRIGHT)
+	wallet_row.add_child(merchant_scrip)
+	var columns := HBoxContainer.new()
+	columns.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	columns.add_theme_constant_override("separation", 24)
+	content.add_child(columns)
+	var player_column := VBoxContainer.new()
+	player_column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	columns.add_child(player_column)
+	player_column.add_child(SurvivalUI.make_header("YOUR BACKPACK  |  CLICK / DRAG TO SELL"))
+	trade_player_grid = GridContainer.new()
+	trade_player_grid.columns = 6
+	trade_player_grid.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	trade_player_grid.add_theme_constant_override("h_separation", 6)
+	trade_player_grid.add_theme_constant_override("v_separation", 6)
+	player_column.add_child(trade_player_grid)
+	var divider := VSeparator.new()
+	columns.add_child(divider)
+	var merchant_column := VBoxContainer.new()
+	merchant_column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	columns.add_child(merchant_column)
+	merchant_column.add_child(SurvivalUI.make_header("QUARTERMASTER STOCK  |  CLICK / DRAG TO BUY"))
+	merchant_grid = GridContainer.new()
+	merchant_grid.columns = 6
+	merchant_grid.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	merchant_grid.add_theme_constant_override("h_separation", 6)
+	merchant_grid.add_theme_constant_override("v_separation", 6)
+	merchant_column.add_child(merchant_grid)
+	trade_status = Label.new()
+	trade_status.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	trade_status.add_theme_font_size_override("font_size", 12)
+	trade_status.add_theme_color_override("font_color", SurvivalUI.LAVENDER)
+	trade_status.text = "CLICK OR DRAG ITEMS BETWEEN PACKS  •  PRICES APPLY TO THE FULL STACK"
+	content.add_child(trade_status)
+	return panel
+
+
 func toggle_character() -> void:
 
 	if equipment_window == null:
@@ -237,17 +305,44 @@ func close_backpack() -> void:
 		backpack_window.visible = false
 
 
+func open_trade(trader: Merchant) -> void:
+
+	if trader == null or trader.inventory_comp == null or player == null:
+		return
+	merchant = trader
+	if not merchant.inventory_comp.inventory_changed.is_connected(refresh):
+		merchant.inventory_comp.inventory_changed.connect(refresh)
+	if merchant.trade_comp and not merchant.trade_comp.trade_completed.is_connected(_on_trade_message):
+		merchant.trade_comp.trade_completed.connect(_on_trade_message)
+		merchant.trade_comp.trade_failed.connect(_on_trade_message)
+	if player.wallet and not player.wallet.balance_changed.is_connected(_on_wallet_changed):
+		player.wallet.balance_changed.connect(_on_wallet_changed)
+	_ensure_trade_widgets()
+	close_character()
+	close_backpack()
+	merchant_window.visible = true
+	refresh()
+
+
+func close_trade() -> void:
+
+	if merchant_window:
+		merchant_window.visible = false
+	merchant = null
+
+
 func close_all() -> void:
 
 	if equipment_window:
 		equipment_window.visible = false
 	if backpack_window:
 		backpack_window.visible = false
+	close_trade()
 
 
 func is_any_window_open() -> bool:
 
-	return (equipment_window != null and equipment_window.visible) or (backpack_window != null and backpack_window.visible)
+	return (equipment_window != null and equipment_window.visible) or (backpack_window != null and backpack_window.visible) or (merchant_window != null and merchant_window.visible)
 
 
 func _ensure_inventory_widgets() -> void:
@@ -267,6 +362,30 @@ func _ensure_inventory_widgets() -> void:
 		inventory_widgets.append(slot)
 
 
+func _ensure_trade_widgets() -> void:
+
+	if player == null or player.inventory_comp == null or merchant == null or merchant.inventory_comp == null:
+		return
+	if trade_player_widgets.size() != player.inventory_comp.slots.size():
+		for child in trade_player_grid.get_children():
+			child.queue_free()
+		trade_player_widgets.clear()
+		for slot_index in player.inventory_comp.slots.size():
+			var slot := ItemSlotWidget.new()
+			slot.configure(self, &"trade_player", slot_index)
+			trade_player_grid.add_child(slot)
+			trade_player_widgets.append(slot)
+	if merchant_widgets.size() != merchant.inventory_comp.slots.size():
+		for child in merchant_grid.get_children():
+			child.queue_free()
+		merchant_widgets.clear()
+		for slot_index in merchant.inventory_comp.slots.size():
+			var slot := ItemSlotWidget.new()
+			slot.configure(self, &"merchant", slot_index)
+			merchant_grid.add_child(slot)
+			merchant_widgets.append(slot)
+
+
 func refresh() -> void:
 
 	if not _built or player == null or player.inventory_comp == null:
@@ -281,7 +400,29 @@ func refresh() -> void:
 		slot.refresh()
 	for slot in equipment_widgets:
 		slot.refresh()
+	if merchant_window and merchant_window.visible and merchant:
+		_ensure_trade_widgets()
+		for slot in trade_player_widgets:
+			slot.refresh()
+		for slot in merchant_widgets:
+			slot.refresh()
+		if merchant_scrip and player.wallet:
+			var attitude: int = player.humanoid_profile.attitude_toward(merchant.humanoid_profile.character_id) if player.humanoid_profile and merchant.humanoid_profile else HumanoidProfileClass.NEUTRAL_ATTITUDE
+			merchant_scrip.text = "YOUR SCRIP  %d    •    TRADER  %d    •    TRUST  %d/100" % [player.wallet.balance, merchant.wallet.balance if merchant.wallet else 0, attitude]
 	presentation_changed.emit()
+
+
+func _on_trade_message(message: String) -> void:
+
+	if trade_status:
+		trade_status.text = message
+		trade_status.add_theme_color_override("font_color", SurvivalUI.GOLD_BRIGHT)
+	refresh()
+
+
+func _on_wallet_changed(_balance: int) -> void:
+
+	refresh()
 
 
 func show_details(context: StringName, index: int, body_slot: StringName = &"") -> void:
@@ -299,6 +440,10 @@ func show_details(context: StringName, index: int, body_slot: StringName = &"") 
 		detail_name.text = stack.definition.display_name.to_upper() + ("  ×%d" % stack.quantity if stack.quantity > 1 else "")
 		tooltip.text = stack.definition.description
 		var parts: Array[String] = ["%.2f KG" % stack.definition.weight]
+		if merchant and merchant.trade_comp and context == &"merchant":
+			parts.append("BUY %d SCRIP" % merchant.trade_comp.price_for(stack.definition, stack.quantity, true))
+		elif merchant and merchant.trade_comp and context == &"trade_player":
+			parts.append("SELL %d SCRIP" % merchant.trade_comp.price_for(stack.definition, stack.quantity, false))
 		for component in stack.definition.components:
 			parts.append(String(component.component_id).replace("_", " ").to_upper())
 		detail_components.text = "   •   ".join(parts)
@@ -320,8 +465,10 @@ func get_item_stack(context: StringName, index: int, body_slot: StringName = &""
 
 	if player == null or player.inventory_comp == null:
 		return null
-	if context == &"inventory":
+	if context == &"inventory" or context == &"trade_player":
 		return player.inventory_comp.slots[index] if index >= 0 and index < player.inventory_comp.slots.size() else null
+	if context == &"merchant" and merchant and merchant.inventory_comp:
+		return merchant.inventory_comp.slots[index] if index >= 0 and index < merchant.inventory_comp.slots.size() else null
 	if context == &"hotbar":
 		return player.inventory_comp.get_hotbar_stack(index)
 	if context == &"equipment" and player.equipment_comp:
@@ -351,6 +498,10 @@ func activate_slot(context: StringName, index: int, body_slot: StringName = &"",
 			selected_hotbar_index = index
 	elif context == &"inventory":
 		player.activate_inventory_slot(index, throw_item)
+	elif context == &"trade_player" and merchant and merchant.trade_comp:
+		merchant.trade_comp.sell_from(player.inventory_comp, player.wallet, index)
+	elif context == &"merchant" and merchant and merchant.trade_comp:
+		merchant.trade_comp.buy_to(player.inventory_comp, player.wallet, index)
 	elif context == &"equipment":
 		# Equipped gear cannot be thrown in place; both left- and right-click
 		# return it to the backpack.
@@ -373,8 +524,12 @@ func can_drop_on(target_context: StringName, target_index: int, target_body_slot
 		return source_context == &"inventory" or source_context == &"hotbar"
 	if target_context == &"inventory":
 		return source_context == &"inventory" or source_context == &"equipment"
-	if target_context == &"equipment" and source_context == &"inventory":
-		var stack := get_item_stack(&"inventory", int(data["index"]))
+	if target_context == &"trade_player":
+		return source_context == &"trade_player" or source_context == &"merchant"
+	if target_context == &"merchant":
+		return source_context == &"trade_player" or source_context == &"inventory"
+	if target_context == &"equipment" and (source_context == &"inventory" or source_context == &"trade_player"):
+		var stack := get_item_stack(source_context, int(data["index"]))
 		var equipable := stack.definition.get_component(EquippableComponent) as EquippableComponent if stack else null
 		return equipable != null and equipable.slot == target_body_slot
 	return false
@@ -406,6 +561,10 @@ func drop_on(target_context: StringName, target_index: int, target_body_slot: St
 			var stack := player.equipment_comp.get_equipped(source_body_slot)
 			if player.inventory_comp.place_stack(target_index, stack):
 				player.equipment_comp.take_equipped(source_body_slot)
+	elif target_context == &"trade_player" and source_context == &"merchant" and merchant and merchant.trade_comp:
+		merchant.trade_comp.buy_to(player.inventory_comp, player.wallet, source_index)
+	elif target_context == &"merchant" and (source_context == &"trade_player" or source_context == &"inventory") and merchant and merchant.trade_comp:
+		merchant.trade_comp.sell_from(player.inventory_comp, player.wallet, source_index)
 	elif target_context == &"equipment":
 		player.equipment_comp.equip_from_inventory(player.inventory_comp, source_index)
 	refresh()

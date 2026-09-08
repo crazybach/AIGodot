@@ -1,7 +1,7 @@
 class_name EquipmentComponent
-extends Component
-## A named body-slot container. The slot list can be extended without touching
-## item definitions, and each equipped item remains an ItemStack.
+extends ItemContainerComponent
+## A specialized named-slot container. It uses the same ItemStack storage and
+## transfer rules as a backpack, while enforcing meaningful body locations.
 
 signal equipment_changed
 
@@ -10,40 +10,64 @@ const SLOT_ORDER: Array[StringName] = [
 	&"backpack", &"accessory_1", &"accessory_2"
 ]
 
-var equipped: Dictionary = {}
-
 
 func _ready() -> void:
 
-	for slot in SLOT_ORDER:
-		equipped[slot] = null
+	container_title = "Body Equipment"
+	slot_capacity = SLOT_ORDER.size()
+	weight_capacity = INF
+	super._ready()
 
 
-func equip_from_inventory(inventory: InventoryComponent, index: int) -> bool:
+func notify_changed() -> void:
+
+	super.notify_changed()
+	equipment_changed.emit()
+
+
+func slot_index(slot: StringName) -> int:
+
+	return SLOT_ORDER.find(slot)
+
+
+func get_equipped(slot: StringName) -> ItemStack:
+
+	var index := slot_index(slot)
+	return slots[index] if index >= 0 else null
+
+
+func _set_equipped(slot: StringName, stack: ItemStack) -> void:
+
+	var index := slot_index(slot)
+	if index >= 0:
+		slots[index] = stack
+
+
+func equip_from_inventory(inventory: ItemContainerComponent, index: int) -> bool:
 
 	if inventory == null or index < 0 or index >= inventory.slots.size():
 		return false
-	var candidate: ItemStack = inventory.slots[index]
+	var candidate := inventory.slots[index]
 	if candidate == null:
 		return false
 	var equipable := candidate.definition.get_component(EquippableComponent) as EquippableComponent
-	if equipable == null or not equipped.has(equipable.slot):
+	if equipable == null or slot_index(equipable.slot) < 0:
 		return false
 	var conflicting_slots := _conflicting_slots(equipable.slot)
 	var displaced: Array[ItemStack] = []
 	for slot in conflicting_slots:
-		var occupied: ItemStack = equipped[slot]
+		var occupied := get_equipped(slot)
 		if occupied:
 			displaced.append(occupied)
 	if not _can_store_after_take(inventory, index, candidate, displaced):
 		return false
 	var incoming := inventory.take_slot(index)
 	for slot in conflicting_slots:
-		equipped[slot] = null
+		_set_equipped(slot, null)
 	for previous in displaced:
 		inventory.put_stack(previous)
-	equipped[equipable.slot] = incoming
-	equipment_changed.emit()
+	_set_equipped(equipable.slot, incoming)
+	notify_changed()
 	return true
 
 
@@ -56,7 +80,7 @@ func _conflicting_slots(target: StringName) -> Array[StringName]:
 	return [target]
 
 
-func _can_store_after_take(inventory: InventoryComponent, source_index: int, incoming: ItemStack, stacks: Array[ItemStack]) -> bool:
+func _can_store_after_take(inventory: ItemContainerComponent, source_index: int, incoming: ItemStack, displaced: Array[ItemStack]) -> bool:
 
 	var projected_weight := inventory.total_weight() - incoming.definition.weight * incoming.quantity
 	var free_slots := 0
@@ -66,54 +90,42 @@ func _can_store_after_take(inventory: InventoryComponent, source_index: int, inc
 			free_slots += 1
 			continue
 		var existing: ItemStack = inventory.slots[index]
-		var room := existing.definition.max_stack - existing.quantity
-		merge_room[existing.definition] = int(merge_room.get(existing.definition, 0)) + room
-	for stack in stacks:
+		merge_room[existing.definition] = int(merge_room.get(existing.definition, 0)) + existing.definition.max_stack - existing.quantity
+	for stack in displaced:
 		projected_weight += stack.definition.weight * stack.quantity
-		var remaining: int = stack.quantity
-		var available := int(merge_room.get(stack.definition, 0))
-		var merged := mini(remaining, available)
-		remaining -= merged
-		merge_room[stack.definition] = available - merged
+		var remaining: int = stack.quantity - min(stack.quantity, int(merge_room.get(stack.definition, 0)))
 		if remaining > 0:
-			var slots_needed := ceili(float(remaining) / float(stack.definition.max_stack))
-			free_slots -= slots_needed
+			free_slots -= ceili(float(remaining) / float(stack.definition.max_stack))
 			if free_slots < 0:
 				return false
 	return projected_weight <= inventory.weight_capacity + 0.001
 
 
-func unequip_to_inventory(inventory: InventoryComponent, slot: StringName) -> bool:
+func unequip_to_inventory(inventory: ItemContainerComponent, slot: StringName) -> bool:
 
-	if inventory == null or not equipped.has(slot) or equipped[slot] == null:
+	var stack := get_equipped(slot)
+	if inventory == null or stack == null or not inventory.can_accept_stack(stack):
 		return false
-	var stack: ItemStack = equipped[slot]
-	if not inventory.put_stack(stack):
-		return false
-	equipped[slot] = null
-	equipment_changed.emit()
+	_set_equipped(slot, null)
+	inventory.put_stack(stack)
+	notify_changed()
 	return true
-
-
-func get_equipped(slot: StringName) -> ItemStack:
-
-	return equipped.get(slot)
 
 
 func take_equipped(slot: StringName) -> ItemStack:
 
-	if not equipped.has(slot) or equipped[slot] == null:
+	var stack := get_equipped(slot)
+	if stack == null:
 		return null
-	var stack: ItemStack = equipped[slot]
-	equipped[slot] = null
-	equipment_changed.emit()
+	_set_equipped(slot, null)
+	notify_changed()
 	return stack
 
 
 func get_launcher() -> ItemDefinition:
 
 	for slot in [&"two_hand", &"right_hand", &"left_hand"]:
-		var stack: ItemStack = get_equipped(slot)
+		var stack := get_equipped(slot)
 		if stack and stack.definition.get_component(LauncherComponent):
 			return stack.definition
 	return null
@@ -122,7 +134,7 @@ func get_launcher() -> ItemDefinition:
 func modifier_total(key: StringName) -> float:
 
 	var total := 0.0
-	for stack in equipped.values():
+	for stack in slots:
 		if stack == null:
 			continue
 		var equipable := stack.definition.get_component(EquippableComponent) as EquippableComponent

@@ -7,6 +7,9 @@ var game_manager: Node2D
 var health_label: Label
 var health_bar_bg: ColorRect
 var health_bar_fill: ColorRect
+var stamina_label: Label
+var stamina_bar_bg: ColorRect
+var stamina_bar_fill: ColorRect
 var ammo_label: Label
 var wave_label: Label
 var score_label: Label
@@ -27,6 +30,7 @@ var _quickbar_keys_down: Array[bool] = [false, false, false, false, false, false
 func _ready() -> void:
 	layer = 100  # Always on top
 	_build_health_bar()
+	_build_stamina_bar()
 	_build_ammo_display()
 	_build_wave_display()
 	_build_controls_hint()
@@ -65,10 +69,34 @@ func _build_health_bar() -> void:
 	add_child(health_bar_fill)
 
 
+func _build_stamina_bar() -> void:
+
+	stamina_label = Label.new()
+	stamina_label.name = "StaminaLabel"
+	stamina_label.position = Vector2(20, 64)
+	stamina_label.text = "STM: 100/100"
+	stamina_label.add_theme_font_size_override("font_size", 14)
+	stamina_label.add_theme_color_override("font_color", Color("#7ddbb3"))
+	add_child(stamina_label)
+	stamina_bar_bg = ColorRect.new()
+	stamina_bar_bg.name = "StaminaBarBG"
+	stamina_bar_bg.position = Vector2(20, 84)
+	stamina_bar_bg.size = Vector2(200, 9)
+	stamina_bar_bg.color = Color(0.08, 0.13, 0.13, 0.85)
+	add_child(stamina_bar_bg)
+	stamina_bar_fill = ColorRect.new()
+	stamina_bar_fill.name = "StaminaBarFill"
+	stamina_bar_fill.position = Vector2(20, 84)
+	stamina_bar_fill.size = Vector2(200, 9)
+	stamina_bar_fill.color = Color("#56c997")
+	stamina_bar_fill.set_meta("full_width", 200.0)
+	add_child(stamina_bar_fill)
+
+
 func _build_ammo_display() -> void:
 	ammo_label = Label.new()
 	ammo_label.name = "AmmoLabel"
-	ammo_label.position = Vector2(20, 68)
+	ammo_label.position = Vector2(20, 102)
 	ammo_label.text = "AMMO: 30/30"
 	ammo_label.add_theme_font_size_override("font_size", 16)
 	ammo_label.add_theme_color_override("font_color", Color(1.0, 0.85, 0.3))
@@ -76,7 +104,7 @@ func _build_ammo_display() -> void:
 
 	reload_indicator = Label.new()
 	reload_indicator.name = "ReloadIndicator"
-	reload_indicator.position = Vector2(180, 68)
+	reload_indicator.position = Vector2(180, 102)
 	reload_indicator.text = ""
 	reload_indicator.add_theme_font_size_override("font_size", 14)
 	reload_indicator.add_theme_color_override("font_color", Color(1.0, 0.5, 0.2))
@@ -86,7 +114,7 @@ func _build_ammo_display() -> void:
 func _build_wave_display() -> void:
 	wave_label = Label.new()
 	wave_label.name = "WaveLabel"
-	wave_label.position = Vector2(20, 92)
+	wave_label.position = Vector2(20, 126)
 	wave_label.text = "WAVE: 1"
 	wave_label.add_theme_font_size_override("font_size", 16)
 	wave_label.add_theme_color_override("font_color", Color(0.5, 0.9, 1.0))
@@ -94,7 +122,7 @@ func _build_wave_display() -> void:
 
 	score_label = Label.new()
 	score_label.name = "ScoreLabel"
-	score_label.position = Vector2(20, 114)
+	score_label.position = Vector2(20, 148)
 	score_label.text = "KILLS: 0"
 	score_label.add_theme_font_size_override("font_size", 14)
 	score_label.add_theme_color_override("font_color", Color(0.7, 0.7, 0.7))
@@ -199,6 +227,14 @@ func update_health(current: float, maximum: float) -> void:
 		health_bar_fill.color = Color(0.2 + (1.0 - ratio) * 1.2, 0.85, 0.15, 0.9)
 	else:
 		health_bar_fill.color = Color(1.0, ratio * 1.7, 0.1, 0.9)
+
+
+func update_stamina(current: float, maximum: float) -> void:
+
+	if maximum <= 0.0:
+		return
+	stamina_label.text = "STM: %d/%d" % [int(ceil(current)), int(maximum)]
+	stamina_bar_fill.size.x = stamina_bar_fill.get_meta("full_width", 200.0) * current / maximum
 
 
 func update_ammo(current: int, maximum: int) -> void:

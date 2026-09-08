@@ -25,3 +25,6 @@ The upstream pack contains 1,235 normalized icons in one pixel-art style. This
 project includes only the 30 100×100 WebP files mapped to the first-iteration
 item catalog. Some fictional items use the nearest visual analogue from the
 same set. The upstream `LICENSE` is retained as `item_icons/LICENSE.txt`.
+
+`item_icons/breach_scrip.webp` is the pack's `valuables/gold_coin.webp`, renamed
+for the safehouse merchant currency.

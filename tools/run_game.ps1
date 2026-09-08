@@ -1,5 +1,5 @@
 param(
-    [string]$GodotExe = "D:\workspacep\GodotRuntime\Godot_v4.6.2-stable_win64_console.exe",
+    [string]$GodotExe = "D:\workspace\GodotRuntime\Godot_v4.6.2-stable_win64_console.exe",
     [switch]$Headless
 )
 
