@@ -1,5 +1,7 @@
 # City Survival: Item, Equipment, and Inventory GDD
 
+> AI implementation guide: [`AI_AGENT_ITEM_SYSTEM.md`](AI_AGENT_ITEM_SYSTEM.md)
+
 ## High concept
 
 The portal experiment at the city research campus opened a breach into a
