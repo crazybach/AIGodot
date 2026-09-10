@@ -1,124 +1,246 @@
 class_name CombatComponent
 extends Component
-## Handles ranged combat: ammo, fire rate, reload, bullet creation.
-##
-## Five configurable combat constants:
-##   MAX_AMMO, RELOAD_TIME, FIRE_RATE, BULLET_SPEED, BULLET_DAMAGE
+## Config-driven ranged combat supporting semi, burst, spread and charged fire.
 
 const BulletClass := preload("res://scripts/Bullet.gd")
 
 signal ammo_changed(current: int, maximum: int)
+signal weapon_changed(config: WeaponConfig)
+signal charge_changed(active: bool, ratio: float)
+signal weapon_fired(config: WeaponConfig, projectile_count: int, critical: bool)
 
-## ── Configuration ──────────────────────────────────────────────
-const DEFAULT_MAX_AMMO     := 30
-const DEFAULT_RELOAD_TIME  := 1.5
-const DEFAULT_FIRE_RATE    := 0.15
-const DEFAULT_BULLET_SPEED := 600.0
-const DEFAULT_BULLET_DAMAGE := 25.0
-
-var max_ammo     := DEFAULT_MAX_AMMO
-var reload_time  := DEFAULT_RELOAD_TIME
-var fire_rate    := DEFAULT_FIRE_RATE
-var bullet_speed := DEFAULT_BULLET_SPEED
-var bullet_damage := DEFAULT_BULLET_DAMAGE
-var ammo_tag: StringName = &"ammo_9mm"
 var weapon_item: ItemDefinition
-
-## ── Runtime state ──────────────────────────────────────────────
-var ammo := max_ammo
+var active_config: WeaponConfig
+var ammo := 0
+var max_ammo := 0
 var is_reloading := false
 var reload_elapsed := 0.0
 var fire_cooldown := 0.0
+var charge_elapsed := 0.0
+var is_charging := false
+
+var _database: WeaponConfigDatabase
+var _proficiency: WeaponProficiencyComponent
+var _magazines: Dictionary = {}
+var _burst_remaining := 0
+var _burst_timer := 0.0
 
 
-func configure(cfg: Dictionary) -> void:
-	max_ammo      = cfg.get("max_ammo", DEFAULT_MAX_AMMO)
-	reload_time   = cfg.get("reload_time", DEFAULT_RELOAD_TIME)
-	fire_rate     = cfg.get("fire_rate", DEFAULT_FIRE_RATE)
-	bullet_speed  = cfg.get("bullet_speed", DEFAULT_BULLET_SPEED)
-	bullet_damage = cfg.get("bullet_damage", DEFAULT_BULLET_DAMAGE)
-	ammo = max_ammo
+func _ready() -> void:
+
+	_database = get_tree().get_first_node_in_group(WeaponConfigDatabase.GROUP) as WeaponConfigDatabase
+	if _database and not _database.configs_reloaded.is_connected(_on_configs_reloaded):
+		_database.configs_reloaded.connect(_on_configs_reloaded)
+	if _database and not _database.config_changed.is_connected(_on_config_changed):
+		_database.config_changed.connect(_on_config_changed)
 
 
-## Reads launcher behavior from an equipped component-based item. A missing
-## launcher leaves the component inactive, rather than creating a hidden gun.
+func set_proficiency(component: WeaponProficiencyComponent) -> void:
+
+	_proficiency = component
+
+
 func configure_from_item(item: ItemDefinition) -> void:
 
-	# Equipment changes such as boots or a backpack leave the active launcher
-	# alone; resetting it here would discard its loaded magazine.
 	if weapon_item == item:
 		return
+	_save_magazine()
+	cancel_trigger()
 	weapon_item = item
-	if item == null:
-		ammo = 0
-		max_ammo = 0
-		ammo_changed.emit(ammo, max_ammo)
-		return
-	var launcher := item.get_component(LauncherComponent) as LauncherComponent
-	if launcher == null:
+	active_config = null
+	if item:
+		var launcher := item.get_component(LauncherComponent) as LauncherComponent
+		if launcher and _database:
+			active_config = _database.get_config(launcher.weapon_config_id)
+	if active_config == null:
 		weapon_item = null
 		ammo = 0
 		max_ammo = 0
-		ammo_changed.emit(ammo, max_ammo)
-		return
-	ammo_tag = launcher.ammo_tag
-	max_ammo = launcher.magazine_size
-	reload_time = launcher.reload_time
-	fire_rate = launcher.fire_rate
-	bullet_speed = launcher.projectile_speed
-	bullet_damage = launcher.projectile_damage
-	ammo = 0
-	_load_magazine()
-
-
-func _load_magazine() -> void:
-
-	if creature == null or creature.inventory_comp == null or max_ammo <= ammo:
-		return
-	var loaded := creature.inventory_comp.consume_tag(ammo_tag, max_ammo - ammo)
-	ammo += loaded
+	else:
+		max_ammo = active_config.magazine_size
+		ammo = clampi(int(_magazines.get(active_config.id, 0)), 0, max_ammo)
+		_load_magazine()
 	ammo_changed.emit(ammo, max_ammo)
+	weapon_changed.emit(active_config)
 
 
-## Returns true if the weapon is ready to fire.
+func trigger_pressed() -> bool:
+
+	if active_config == null:
+		return false
+	if active_config.fire_mode == WeaponConfig.CHARGED:
+		if not _ready_for_round():
+			_try_reload_empty()
+			return false
+		is_charging = true
+		charge_elapsed = 0.0
+		charge_changed.emit(true, 0.0)
+		return true
+	if active_config.fire_mode == WeaponConfig.BURST:
+		if _burst_remaining > 0 or not _ready_for_round():
+			_try_reload_empty()
+			return false
+		_burst_remaining = mini(active_config.burst_size, ammo)
+		if not _fire_round(1.0):
+			_burst_remaining = 0
+			return false
+		_burst_remaining -= 1
+		_burst_timer = active_config.shot_interval
+		return true
+	if not _ready_for_round():
+		_try_reload_empty()
+		return false
+	return _fire_round(1.0)
+
+
+func trigger_released() -> bool:
+
+	if not is_charging or active_config == null:
+		return false
+	var ratio := active_config.charge_ratio(charge_elapsed)
+	is_charging = false
+	charge_changed.emit(false, ratio)
+	if not _ready_for_round():
+		_try_reload_empty()
+		return false
+	return _fire_round(ratio)
+
+
+func cancel_trigger() -> void:
+
+	if is_charging:
+		is_charging = false
+		charge_changed.emit(false, 0.0)
+	charge_elapsed = 0.0
+
+
+func charge_ratio() -> float:
+
+	return active_config.charge_ratio(charge_elapsed) if is_charging and active_config else 0.0
+
+
 func can_fire() -> bool:
-	return weapon_item != null and not is_reloading and fire_cooldown <= 0.0 and ammo > 0
 
-
-## Called by Player when LMB is pressed and can_fire() is true.
-func shoot() -> Node2D:
-	ammo -= 1
-	fire_cooldown = fire_rate
-	ammo_changed.emit(ammo, max_ammo)
-	if ammo <= 0:
-		start_reload()
-	return _create_bullet()
+	return _ready_for_round()
 
 
 func start_reload() -> void:
-	if weapon_item == null or is_reloading or ammo == max_ammo:
+
+	if active_config == null or is_reloading or ammo >= max_ammo or _burst_remaining > 0:
 		return
-	if creature == null or creature.inventory_comp == null or creature.inventory_comp.count_tag(ammo_tag) == 0:
+	if creature == null or creature.inventory_comp == null or creature.inventory_comp.count_tag(active_config.ammo_tag) == 0:
 		return
+	cancel_trigger()
 	is_reloading = true
 	reload_elapsed = 0.0
 
 
 func _physics_tick(delta: float) -> void:
-	fire_cooldown = max(0.0, fire_cooldown - delta)
+
+	fire_cooldown = maxf(0.0, fire_cooldown - delta)
+	if active_config and _proficiency:
+		_proficiency.record_use_time(active_config, delta)
+	if is_charging and active_config:
+		charge_elapsed += delta
+		charge_changed.emit(true, active_config.charge_ratio(charge_elapsed))
+	if _burst_remaining > 0:
+		_burst_timer -= delta
+		if _burst_timer <= 0.0:
+			if ammo > 0 and active_config and not _fire_round(1.0):
+				_burst_remaining = 1
+			_burst_remaining -= 1
+			_burst_timer = active_config.shot_interval if active_config else 0.0
+			if ammo <= 0:
+				_burst_remaining = 0
+				start_reload()
 	if is_reloading:
 		reload_elapsed += delta
-		if reload_elapsed >= reload_time:
+		if active_config and reload_elapsed >= active_config.reload_time:
 			is_reloading = false
 			_load_magazine()
 
 
-func _create_bullet() -> Node2D:
-	var bullet = BulletClass.new()
-	bullet.name = "Bullet"
-	bullet.global_position = creature.global_position
-	bullet.direction = Vector2.RIGHT.rotated(creature.facing_angle)
-	bullet.speed = bullet_speed
-	bullet.damage = bullet_damage
-	bullet.shooter = creature
-	return bullet
+func _ready_for_round() -> bool:
+
+	return active_config != null and not is_reloading and fire_cooldown <= 0.0 and ammo > 0
+
+
+func _try_reload_empty() -> void:
+
+	if ammo <= 0:
+		start_reload()
+
+
+func _fire_round(power_ratio: float) -> bool:
+
+	if active_config == null or ammo <= 0 or creature == null:
+		return false
+	if creature is Player and creature.humanoid_profile and not creature.humanoid_profile.resolve_ranged_hit():
+		return false
+	ammo -= 1
+	_magazines[active_config.id] = ammo
+	fire_cooldown = active_config.shot_interval
+	var critical_chance := _proficiency.critical_chance(active_config) if _proficiency else active_config.critical_chance_min
+	var critical := randf() < critical_chance
+	var projectile_count := active_config.pellets_per_shot
+	var power := active_config.power_for_charge(power_ratio)
+	var maximum_range := active_config.range_for_charge(power_ratio)
+	for pellet_index in projectile_count:
+		var angle_offset := deg_to_rad(randf_range(-active_config.spread_degrees * 0.5, active_config.spread_degrees * 0.5))
+		var bullet := BulletClass.new()
+		bullet.name = "Projectile_%s_%d" % [active_config.id, pellet_index]
+		bullet.global_position = creature.global_position
+		bullet.direction = Vector2.RIGHT.rotated(creature.facing_angle + angle_offset)
+		bullet.speed = active_config.projectile_speed * power
+		bullet.damage = active_config.damage * power * (active_config.critical_damage_multiplier if critical else 1.0)
+		bullet.lifetime = maximum_range / maxf(bullet.speed, 1.0)
+		bullet.shooter = creature
+		bullet.critical_hit = critical
+		creature.get_parent().add_child(bullet)
+	if _proficiency:
+		_proficiency.record_shot(active_config)
+	ammo_changed.emit(ammo, max_ammo)
+	weapon_fired.emit(active_config, projectile_count, critical)
+	if ammo <= 0 and _burst_remaining <= 0:
+		start_reload()
+	return true
+
+
+func _load_magazine() -> void:
+
+	if active_config == null or creature == null or creature.inventory_comp == null:
+		return
+	var loaded := creature.inventory_comp.consume_tag(active_config.ammo_tag, max_ammo - ammo)
+	ammo += loaded
+	_magazines[active_config.id] = ammo
+	ammo_changed.emit(ammo, max_ammo)
+
+
+func _save_magazine() -> void:
+
+	if active_config:
+		_magazines[active_config.id] = ammo
+
+
+func _on_configs_reloaded() -> void:
+
+	if active_config == null or _database == null:
+		return
+	var refreshed := _database.get_config(active_config.id)
+	if refreshed == null:
+		configure_from_item(null)
+		return
+	active_config = refreshed
+	max_ammo = refreshed.magazine_size
+	ammo = mini(ammo, max_ammo)
+	_magazines[refreshed.id] = ammo
+	ammo_changed.emit(ammo, max_ammo)
+	weapon_changed.emit(active_config)
+
+
+func _on_config_changed(config_id: StringName) -> void:
+
+	if active_config and active_config.id == config_id:
+		if is_charging and active_config.fire_mode != WeaponConfig.CHARGED:
+			cancel_trigger()
+		_on_configs_reloaded()

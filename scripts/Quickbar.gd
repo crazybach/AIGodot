@@ -1,7 +1,7 @@
 class_name Quickbar
 extends HBoxContainer
-## Persistent eight-slot action bar. Bindings reference backpack indices;
-## dragging a backpack item here changes the binding without duplicating it.
+## Persistent eight-slot action bar. Bindings reference item IDs so backpack
+## sorting and equipping do not silently point a key at a different item.
 
 var inventory_ui: InventoryPanel
 var slots: Array[ItemSlotWidget] = []

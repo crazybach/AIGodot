@@ -9,6 +9,7 @@ var damage := 25.0
 var shooter: Node2D = null
 var lifetime := 2.0
 var elapsed := 0.0
+var critical_hit := false
 
 
 func _ready() -> void:
@@ -34,7 +35,8 @@ func _build_sprite() -> void:
 	sprite.name = "BulletSprite"
 	sprite.texture = BULLET_TEXTURE
 	sprite.centered = true
-	sprite.scale = Vector2(0.6, 0.6)
+	sprite.scale = Vector2(0.8, 0.8) if critical_hit else Vector2(0.6, 0.6)
+	sprite.modulate = Color(1.0, 0.5, 0.18) if critical_hit else Color.WHITE
 	add_child(sprite)
 
 	# Rotate to face direction

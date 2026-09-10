@@ -11,12 +11,16 @@ var darkness_label: Label
 var enabled_toggle: CheckButton
 var sliders: Dictionary = {}
 var value_labels: Dictionary = {}
+var weapon_database: WeaponConfigDatabase
+var player: Player
 
 
-func setup(fog_controller, lighting_manager: LightingManager) -> void:
+func setup(fog_controller, lighting_manager: LightingManager, config_database: WeaponConfigDatabase = null, owner_player: Player = null) -> void:
 
 	fog = fog_controller
 	lighting = lighting_manager
+	weapon_database = config_database
+	player = owner_player
 
 
 func _ready() -> void:
@@ -125,6 +129,10 @@ func _build() -> void:
 	note.add_theme_font_size_override("font_size", 12)
 	note.add_theme_color_override("font_color", SurvivalUI.MUTED)
 	world_tab.add_child(note)
+	var weapons_tab := WeaponDebugTab.new()
+	weapons_tab.name = "Weapons"
+	weapons_tab.setup(weapon_database, player)
+	tabs.add_child(weapons_tab)
 	_sync_controls()
 
 

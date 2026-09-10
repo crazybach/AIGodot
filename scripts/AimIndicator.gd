@@ -34,6 +34,18 @@ func show_lob(target_global: Vector2, profile: AimComponent, height_scale: float
 	queue_redraw()
 
 
+func show_charged(target_global: Vector2, config: WeaponConfig, charge: float) -> void:
+
+	active = true
+	strategy = WeaponConfig.CHARGED
+	max_distance = config.range_for_charge(charge)
+	requested_endpoint = to_local(target_global)
+	landing_endpoint = requested_endpoint.normalized() * max_distance
+	target_valid = true
+	arc_height = charge
+	queue_redraw()
+
+
 func hide_preview() -> void:
 
 	active = false
@@ -44,7 +56,12 @@ func hide_preview() -> void:
 
 func _draw() -> void:
 
-	if not active or strategy != AimComponent.LOB:
+	if not active:
+		return
+	if strategy == WeaponConfig.CHARGED:
+		_draw_charged()
+		return
+	if strategy != AimComponent.LOB:
 		return
 	var color := VALID_COLOR if target_valid else INVALID_COLOR
 	var points := PackedVector2Array()
@@ -59,6 +76,18 @@ func _draw() -> void:
 		_draw_cross(requested_endpoint, INVALID_COLOR, 7.0)
 	var distance_text := "%.0f/%.0fm" % [requested_endpoint.length() / 10.0, max_distance / 10.0]
 	draw_string(ThemeDB.fallback_font, landing_endpoint + Vector2(-24, 22), distance_text, HORIZONTAL_ALIGNMENT_CENTER, 48.0, 9, color)
+
+
+func _draw_charged() -> void:
+
+	var color := VALID_COLOR.lerp(Color(1.0, 0.84, 0.34, 0.82), arc_height)
+	var start := landing_endpoint.normalized() * 24.0
+	draw_dashed_line(start, landing_endpoint, Color(color, 0.48), 1.2, 8.0, true)
+	draw_arc(landing_endpoint, 7.0, 0.0, TAU, 18, color, 1.2, true)
+	draw_circle(landing_endpoint, 2.0, color)
+	var meter_start := start + Vector2(-18.0, -15.0)
+	draw_rect(Rect2(meter_start, Vector2(36.0, 4.0)), Color(0.03, 0.04, 0.05, 0.72), true)
+	draw_rect(Rect2(meter_start + Vector2.ONE, Vector2(34.0 * arc_height, 2.0)), color, true)
 
 
 func _draw_landing_marker(center: Vector2, color: Color) -> void:

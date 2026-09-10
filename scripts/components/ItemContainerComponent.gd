@@ -60,7 +60,7 @@ func add_item(definition: ItemDefinition, quantity: int = 1) -> int:
 	if definition == null or quantity <= 0:
 		return quantity
 	var weight_limited := quantity
-	if definition.weight > 0.0:
+	if definition.weight > 0.0 and not is_inf(weight_capacity):
 		weight_limited = min(quantity, max(0, int(floor((weight_capacity - total_weight()) / definition.weight))))
 	var rejected_by_weight := quantity - weight_limited
 	var remaining := weight_limited
@@ -93,6 +93,15 @@ func put_stack(stack: ItemStack) -> bool:
 		return true
 	if not can_accept_stack(stack):
 		return false
+	# Stateful or unique items must move as the same stack instance so endurance
+	# and later customization survive container and merchant transfers.
+	if stack.definition.max_stack == 1 or not stack.runtime_values.is_empty():
+		var empty_index := slots.find(null)
+		if empty_index < 0:
+			return false
+		slots[empty_index] = stack
+		notify_changed()
+		return true
 	return add_item(stack.definition, stack.quantity) == 0
 
 
@@ -122,10 +131,13 @@ func consume_at(index: int, amount: int = 1) -> ItemStack:
 	if index < 0 or index >= slots.size() or slots[index] == null:
 		return null
 	var stack := slots[index]
-	var removed := ItemStack.new(stack.definition, min(amount, stack.quantity))
-	stack.quantity -= removed.quantity
-	if stack.quantity == 0:
+	var removed_amount: int = min(amount, stack.quantity)
+	if removed_amount == stack.quantity:
 		slots[index] = null
+		notify_changed()
+		return stack
+	var removed := ItemStack.new(stack.definition, removed_amount, stack.runtime_values)
+	stack.quantity -= removed.quantity
 	notify_changed()
 	return removed
 

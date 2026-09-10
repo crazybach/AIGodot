@@ -1,10 +1,6 @@
 class_name LauncherComponent
 extends ItemComponent
-## A weapon chamber or launcher. It consumes an ItemDefinition with a matching tag.
+## Connects an item definition to a row in the weapon configuration table.
+## Keeping behavior in the table lets weapons share combat code and reload live.
 
-@export var ammo_tag: StringName = &"ammo_9mm"
-@export var magazine_size := 15
-@export var reload_time := 1.2
-@export var fire_rate := 0.18
-@export var projectile_speed := 600.0
-@export var projectile_damage := 25.0
+@export var weapon_config_id: StringName

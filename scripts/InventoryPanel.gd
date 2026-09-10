@@ -39,8 +39,16 @@ func setup(owner_player: Player) -> void:
 		player.inventory_comp.inventory_changed.connect(refresh)
 	if player.equipment_comp and not player.equipment_comp.equipment_changed.is_connected(refresh):
 		player.equipment_comp.equipment_changed.connect(refresh)
+	if player.item_light_system and not player.item_light_system.endurance_changed.is_connected(_on_item_endurance_changed):
+		player.item_light_system.endurance_changed.connect(_on_item_endurance_changed)
 	_ensure_inventory_widgets()
 	refresh()
+
+
+func _on_item_endurance_changed(_item_id: StringName, _current: float, _maximum: float) -> void:
+
+	if is_any_window_open():
+		refresh()
 
 
 func _ready() -> void:
@@ -470,7 +478,15 @@ func get_item_stack(context: StringName, index: int, body_slot: StringName = &""
 	if context == &"merchant" and merchant and merchant.inventory_comp:
 		return merchant.inventory_comp.slots[index] if index >= 0 and index < merchant.inventory_comp.slots.size() else null
 	if context == &"hotbar":
-		return player.inventory_comp.get_hotbar_stack(index)
+		var hotbar_stack := player.inventory_comp.get_hotbar_stack(index)
+		if hotbar_stack:
+			return hotbar_stack
+		if index >= 0 and index < player.inventory_comp.hotbar_slots.size() and player.equipment_comp:
+			var item_id := player.inventory_comp.hotbar_slots[index]
+			for equipped in player.equipment_comp.slots:
+				if equipped and equipped.definition.id == item_id:
+					return equipped
+		return null
 	if context == &"equipment" and player.equipment_comp:
 		return player.equipment_comp.get_equipped(body_slot)
 	return null
@@ -484,6 +500,17 @@ func describe_slot(context: StringName, index: int, body_slot: StringName = &"")
 	var parts: Array[String] = [stack.definition.display_name, stack.definition.description, "Weight: %.2f kg" % stack.definition.weight]
 	for component in stack.definition.components:
 		parts.append(String(component.component_id).replace("_", " ").capitalize())
+	var launcher := stack.definition.get_component(LauncherComponent) as LauncherComponent
+	if launcher:
+		var database := get_tree().get_first_node_in_group(WeaponConfigDatabase.GROUP) as WeaponConfigDatabase
+		var config := database.get_config(launcher.weapon_config_id) if database else null
+		if config:
+			parts.append("%s | Magazine %d | Damage %.0f | %.2fs" % [String(config.fire_mode).capitalize(), config.magazine_size, config.damage, config.shot_interval])
+	var endurance := stack.definition.get_component(EnduranceComponent) as EnduranceComponent
+	if endurance:
+		parts.append("Endurance: %.1f / %.1f  Drain: %.2f/s" % [stack.endurance(endurance), endurance.maximum, endurance.drain_per_second])
+		if endurance.refill_item_tag != &"":
+			parts.append("Use a %s item to restore %.0f endurance" % [String(endurance.refill_item_tag), endurance.refill_amount])
 	return "\n".join(parts)
 
 

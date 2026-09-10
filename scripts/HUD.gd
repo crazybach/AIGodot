@@ -21,6 +21,10 @@ var reload_indicator: Label
 var controls_label: Label
 var crosshair: Sprite2D
 var time_label: Label
+var weapon_name_label: Label
+var weapon_detail_label: Label
+var charge_bar: ProgressBar
+var light_status_label: Label
 var inventory_panel: InventoryPanel
 var quickbar: Quickbar
 var quickbar_frame: Panel
@@ -39,6 +43,8 @@ func _ready() -> void:
 	_build_wave_display()
 	_build_controls_hint()
 	_build_time_indicator()
+	_build_weapon_status()
+	_build_light_status()
 	_build_crosshair()
 	_build_game_over_panel()
 	_build_inventory_panel()
@@ -138,7 +144,7 @@ func _build_controls_hint() -> void:
 	controls_label = Label.new()
 	controls_label.name = "ControlsLabel"
 	controls_label.position = Vector2(20, 662)
-	controls_label.text = "[ LMB ] FIRE   [ RMB + LMB ] THROW\n[ Q ] HAND   [ WHEEL ] ARC   [ C / I ] GEAR   [ F ] MIST DOOR"
+	controls_label.text = "[ LMB ] FIRE / HOLD BOW   [ RMB + LMB ] THROW   [ R ] RELOAD\n[ 1-8 ] QUICK SLOTS   [ Q ] HAND   [ C / I ] GEAR   [ F3 ] DEBUG"
 	controls_label.add_theme_font_size_override("font_size", 12)
 	controls_label.add_theme_color_override("font_color", SurvivalUI.LAVENDER)
 	add_child(controls_label)
@@ -152,6 +158,47 @@ func _build_time_indicator() -> void:
 	time_label.add_theme_font_size_override("font_size", 16)
 	time_label.add_theme_color_override("font_color", Color(1.0, 0.9, 0.5))
 	add_child(time_label)
+
+
+func _build_weapon_status() -> void:
+
+	var frame := Panel.new()
+	frame.name = "WeaponStatus"
+	frame.position = Vector2(952, 50)
+	frame.size = Vector2(306, 86)
+	frame.add_theme_stylebox_override("panel", SurvivalUI.panel_style())
+	add_child(frame)
+	weapon_name_label = Label.new()
+	weapon_name_label.position = Vector2(12, 8)
+	weapon_name_label.size = Vector2(282, 23)
+	weapon_name_label.add_theme_font_size_override("font_size", 15)
+	weapon_name_label.add_theme_color_override("font_color", SurvivalUI.GOLD_BRIGHT)
+	frame.add_child(weapon_name_label)
+	weapon_detail_label = Label.new()
+	weapon_detail_label.position = Vector2(12, 33)
+	weapon_detail_label.size = Vector2(282, 20)
+	weapon_detail_label.add_theme_font_size_override("font_size", 11)
+	weapon_detail_label.add_theme_color_override("font_color", SurvivalUI.LAVENDER)
+	frame.add_child(weapon_detail_label)
+	charge_bar = ProgressBar.new()
+	charge_bar.position = Vector2(12, 61)
+	charge_bar.size = Vector2(282, 10)
+	charge_bar.min_value = 0.0
+	charge_bar.max_value = 1.0
+	charge_bar.show_percentage = false
+	charge_bar.visible = false
+	frame.add_child(charge_bar)
+
+
+func _build_light_status() -> void:
+
+	light_status_label = Label.new()
+	light_status_label.name = "LightStatusLabel"
+	light_status_label.position = Vector2(20, 171)
+	light_status_label.size = Vector2(330, 22)
+	light_status_label.add_theme_font_size_override("font_size", 12)
+	light_status_label.add_theme_color_override("font_color", Color("#f2bb63"))
+	add_child(light_status_label)
 
 
 func _build_crosshair() -> void:
@@ -227,7 +274,7 @@ func _build_debug_panel() -> void:
 
 	debug_panel = FogDebugPanelClass.new()
 	debug_panel.name = "DeveloperDebugPanel"
-	debug_panel.setup(game_manager.fog if game_manager else null, game_manager.lighting if game_manager else null)
+	debug_panel.setup(game_manager.fog if game_manager else null, game_manager.lighting if game_manager else null, game_manager.weapon_configs if game_manager else null, game_manager.player if game_manager else null)
 	add_child(debug_panel)
 
 
@@ -316,6 +363,8 @@ func _process(delta: float) -> void:
 
 	_update_crosshair()
 	_update_time_label()
+	_update_weapon_status()
+	_update_light_status()
 
 
 func _update_quickbar_keys() -> void:
@@ -333,7 +382,39 @@ func _update_quickbar_keys() -> void:
 func _update_crosshair() -> void:
 	if crosshair:
 		crosshair.position = get_viewport().get_mouse_position()
-		crosshair.visible = not (game_manager and game_manager.player and game_manager.player.aiming_system and game_manager.player.aiming_system.is_lob_aiming())
+		crosshair.visible = not (game_manager and game_manager.player and ((game_manager.player.aiming_system and game_manager.player.aiming_system.is_lob_aiming()) or (game_manager.player.combat_comp and game_manager.player.combat_comp.is_charging)))
+
+
+func _update_weapon_status() -> void:
+
+	if weapon_name_label == null or game_manager == null or game_manager.player == null:
+		return
+	var combat: CombatComponent = game_manager.player.combat_comp
+	var config: WeaponConfig = combat.active_config if combat else null
+	if config == null:
+		weapon_name_label.text = "UNARMED"
+		weapon_detail_label.text = "Equip a weapon from the backpack"
+		charge_bar.visible = false
+		return
+	var skill: float = game_manager.player.weapon_skill.skill_for(config) if game_manager.player.weapon_skill else config.skill_start
+	var critical: float = game_manager.player.weapon_skill.critical_chance(config) if game_manager.player.weapon_skill else config.critical_chance_min
+	var reserve: int = game_manager.player.inventory_comp.count_tag(config.ammo_tag)
+	weapon_name_label.text = "%s  %d / %d  +%d" % [config.display_name.to_upper(), combat.ammo, combat.max_ammo, reserve]
+	weapon_detail_label.text = "%s  DMG %.0f  SKILL %.1f  CRIT %.1f%%" % [String(config.fire_mode).to_upper(), config.damage, skill, critical * 100.0]
+	charge_bar.visible = combat.is_charging
+	charge_bar.value = combat.charge_ratio()
+
+
+func _update_light_status() -> void:
+
+	if light_status_label == null or game_manager == null or game_manager.player == null or game_manager.player.item_light_system == null:
+		return
+	var stack: ItemStack = game_manager.player.item_light_system.primary_light_stack()
+	if stack == null:
+		light_status_label.text = ""
+		return
+	var endurance := stack.definition.get_component(EnduranceComponent) as EnduranceComponent
+	light_status_label.text = "LIGHT: %s  %.0f / %.0f" % [stack.definition.display_name.to_upper(), stack.endurance(endurance), endurance.maximum] if endurance else "LIGHT: " + stack.definition.display_name.to_upper()
 
 
 func _update_time_label() -> void:

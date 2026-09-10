@@ -18,6 +18,7 @@ var player: Player
 var camera: Camera2D
 var hud: Node
 var lighting: LightingManager
+var weapon_configs: WeaponConfigDatabase
 var fog
 var fog_door
 var enemy_spawn_timer: Timer
@@ -37,6 +38,7 @@ const FogDoorClass := preload("res://scripts/FogDoor.gd")
 
 func _ready() -> void:
 	get_tree().auto_accept_quit = true
+	_build_weapon_configs()
 	_build_lighting()
 	_build_camera()
 	_build_level()
@@ -45,6 +47,12 @@ func _ready() -> void:
 	_build_fog()
 	_build_hud()
 	_start_wave()
+
+
+func _build_weapon_configs() -> void:
+	weapon_configs = WeaponConfigDatabase.new()
+	weapon_configs.name = "WeaponConfigDatabase"
+	add_child(weapon_configs)
 
 
 func _build_lighting() -> void:

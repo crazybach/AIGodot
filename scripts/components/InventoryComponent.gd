@@ -1,10 +1,10 @@
 class_name InventoryComponent
 extends ItemContainerComponent
-## General-purpose container with player-only quick-slot bindings.
+## General-purpose container with stable item-id quick-slot bindings.
 
 signal inventory_changed
 
-var hotbar_slots: Array[int] = []
+var hotbar_slots: Array[StringName] = []
 
 
 func _ready() -> void:
@@ -13,7 +13,7 @@ func _ready() -> void:
 	if hotbar_slots.is_empty():
 		hotbar_slots.resize(8)
 		for index in hotbar_slots.size():
-			hotbar_slots[index] = -1
+			hotbar_slots[index] = &""
 
 
 func notify_changed() -> void:
@@ -61,7 +61,7 @@ func set_hotbar_slot(hotbar_index: int, inventory_index: int) -> bool:
 
 	if hotbar_index < 0 or hotbar_index >= hotbar_slots.size() or inventory_index < -1 or inventory_index >= slots.size():
 		return false
-	hotbar_slots[hotbar_index] = inventory_index
+	hotbar_slots[hotbar_index] = slots[inventory_index].definition.id if inventory_index >= 0 and slots[inventory_index] else &""
 	notify_changed()
 	return true
 
@@ -70,5 +70,12 @@ func get_hotbar_stack(hotbar_index: int) -> ItemStack:
 
 	if hotbar_index < 0 or hotbar_index >= hotbar_slots.size():
 		return null
-	var inventory_index := hotbar_slots[hotbar_index]
+	var inventory_index := get_hotbar_inventory_index(hotbar_index)
 	return slots[inventory_index] if inventory_index >= 0 and inventory_index < slots.size() else null
+
+
+func get_hotbar_inventory_index(hotbar_index: int) -> int:
+
+	if hotbar_index < 0 or hotbar_index >= hotbar_slots.size():
+		return -1
+	return find_first(hotbar_slots[hotbar_index]) if hotbar_slots[hotbar_index] != &"" else -1

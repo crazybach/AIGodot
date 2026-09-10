@@ -51,8 +51,11 @@ func handle_input(event: InputEvent) -> bool:
 				suppress_direct_fire = true
 				commit_lob()
 				return true
-			if not mouse_event.pressed:
+			if mouse_event.pressed:
+				return actor.combat_comp.trigger_pressed() if actor.combat_comp else false
+			else:
 				suppress_direct_fire = false
+				return actor.combat_comp.trigger_released() if actor.combat_comp else false
 	if event is InputEventKey:
 		var key_event := event as InputEventKey
 		if is_lob_aiming() and key_event.pressed and not key_event.echo and key_event.keycode == KEY_Q:
@@ -68,6 +71,11 @@ func physics_tick() -> void:
 	if is_lob_aiming():
 		_update_lob_preview()
 		return
+	if actor.combat_comp and actor.combat_comp.is_charging and actor.combat_comp.active_config:
+		indicator.show_charged(actor.get_global_mouse_position(), actor.combat_comp.active_config, actor.combat_comp.charge_ratio())
+		return
+	if indicator and indicator.strategy == WeaponConfig.CHARGED:
+		indicator.hide_preview()
 	if suppress_direct_fire:
 		if not Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
 			suppress_direct_fire = false
@@ -78,8 +86,6 @@ func physics_tick() -> void:
 	if Input.is_action_just_pressed("reload"):
 		actor.combat_comp.start_reload()
 		return
-	if Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
-		actor.perform_direct_shot()
 
 
 func begin_lob_aim() -> bool:
@@ -116,7 +122,10 @@ func cancel_aim() -> void:
 
 func on_equipment_changed() -> void:
 
-	if is_lob_aiming() and actor.equipment_comp.get_equipped(active_slot) == null:
+	if not is_lob_aiming():
+		return
+	var stack := actor.equipment_comp.get_equipped(active_slot)
+	if stack == null or _profile_for(stack.definition, AimComponent.LOB) != active_profile:
 		cancel_aim()
 
 

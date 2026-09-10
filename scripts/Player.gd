@@ -16,7 +16,6 @@ const FRAME_HEIGHT := 275
 const WALK_FRAMES := 4
 const SHOOT_FRAMES := 4
 const ANIM_FPS := 8.0
-const BASE_EQUIPPED_LIGHT_RANGE := 240.0
 const HumanoidProfileClass := preload("res://scripts/components/HumanoidProfileComponent.gd")
 
 ## ── Sprites & animation ────────────────────────────────────────
@@ -25,11 +24,12 @@ var sprite_shoot: Sprite2D
 var active_sprite: Sprite2D
 var frame_index := 0
 var frame_elapsed := 0.0
-var light_source: LightSource2D
 var ui_input_blocked := false
 var aiming_system: AimingSystem
 var wallet: CurrencyWalletComponent
 var humanoid_profile
+var weapon_skill: WeaponProficiencyComponent
+var item_light_system: ItemLightSystem
 var _shoot_flash_timer  # SceneTreeTimer — no Timer type annotation (mismatch)
 
 
@@ -74,13 +74,18 @@ func _setup_creature() -> void:
 	equipment_comp.equip_from_inventory(inventory_comp, inventory_comp.find_first(&"stone"))
 
 	combat_comp = _add_component(CombatComponent.new()) as CombatComponent
+	weapon_skill = _add_component(WeaponProficiencyComponent.new()) as WeaponProficiencyComponent
+	combat_comp.set_proficiency(weapon_skill)
+	combat_comp.weapon_fired.connect(_on_weapon_fired)
 	_configure_equipped_launcher()
 	_apply_equipment_modifiers()
 
 	# Build visuals
 	_build_sprites()
 	build_collision(14.0)
-	_build_light()
+	item_light_system = _add_component(ItemLightSystem.new()) as ItemLightSystem
+	item_light_system.name = "EquippedItemLights"
+	item_light_system.setup(equipment_comp, inventory_comp)
 	_apply_equipment_modifiers()
 	_build_aiming_system()
 	z_index = 10
@@ -111,23 +116,6 @@ func _build_sprites() -> void:
 	active_sprite = sprite_walk
 
 
-func _build_light() -> void:
-	light_source = LightSource2D.new()
-	light_source.name = "PlayerLight"
-	light_source.setup({
-		"type": LightSource2D.LightType.POINT,
-		"range": BASE_EQUIPPED_LIGHT_RANGE,
-		"color": Color(1.0, 0.88, 0.66),
-		"energy": 1.6,
-		"cast_shadows": true,
-		"auto_day_night": false,
-		"movement_response": 0.12,
-		"fog_range_multiplier": 0.88,
-		"fog_clear_strength": 0.72,
-	})
-	_add_component(light_source)
-
-
 func _build_aiming_system() -> void:
 
 	aiming_system = AimingSystem.new()
@@ -151,6 +139,9 @@ func _physics_process(delta: float) -> void:
 
 func _input(event: InputEvent) -> void:
 
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and not event.pressed and combat_comp and combat_comp.is_charging and (ui_input_blocked or pointer_over_interactive_ui()):
+		combat_comp.cancel_trigger()
+		return
 	if ui_input_blocked or not is_alive or pointer_over_interactive_ui():
 		return
 	if aiming_system and aiming_system.handle_input(event):
@@ -180,17 +171,7 @@ func _update_aim() -> void:
 
 func perform_direct_shot() -> bool:
 
-	if combat_comp == null or combat_comp.is_reloading or combat_comp.fire_cooldown > 0.0:
-		return false
-	if combat_comp.ammo <= 0:
-		combat_comp.start_reload()
-		return false
-	if humanoid_profile and not humanoid_profile.resolve_ranged_hit():
-		return false
-	var bullet := combat_comp.shoot()
-	get_parent().add_child(bullet)
-	_flash_shoot_sprite()
-	return true
+	return combat_comp.trigger_pressed() if combat_comp else false
 
 
 ## Public UI/gameplay hooks. A future loot panel can call these with a selected
@@ -226,6 +207,8 @@ func activate_inventory_slot(index: int, throw_item := false) -> bool:
 		return false
 	if throw_item:
 		return throw_inventory_slot(index)
+	if stack.definition.has_tag(&"battery") and item_light_system:
+		return item_light_system.refill_equipped_from_inventory(index)
 	if stack.definition.get_component(EquippableComponent):
 		return equip_inventory_slot(index)
 	if stack.definition.get_component(ConsumableComponent):
@@ -239,7 +222,15 @@ func activate_hotbar_slot(index: int, throw_item := false) -> bool:
 
 	if inventory_comp == null or index < 0 or index >= inventory_comp.hotbar_slots.size():
 		return false
-	return activate_inventory_slot(inventory_comp.hotbar_slots[index], throw_item)
+	var inventory_index := inventory_comp.get_hotbar_inventory_index(index)
+	if inventory_index >= 0:
+		return activate_inventory_slot(inventory_index, throw_item)
+	var item_id := inventory_comp.hotbar_slots[index]
+	if equipment_comp and item_id != &"":
+		for stack in equipment_comp.slots:
+			if stack and stack.definition.id == item_id:
+				return true
+	return false
 
 
 func set_ui_input_blocked(blocked: bool) -> void:
@@ -247,13 +238,15 @@ func set_ui_input_blocked(blocked: bool) -> void:
 	ui_input_blocked = blocked
 	if blocked and aiming_system:
 		aiming_system.cancel_aim()
+	if blocked and combat_comp:
+		combat_comp.cancel_trigger()
 
 
 func _bind_starter_hotbar() -> void:
 
 	var item_ids: Array[StringName] = [
-		&"field_medkit", &"canned_beans", &"bottled_water", &"apple", &"smoke_grenade",
-		&"warding_salt", &"flashlight", &"canvas_backpack"
+		&"service_pistol", &"assault_rifle", &"pump_shotgun", &"recurve_bow",
+		&"field_medkit", &"flashlight", &"fire_torch", &"flare_light"
 	]
 	for index in item_ids.size():
 		inventory_comp.set_hotbar_slot(index, inventory_comp.find_first(item_ids[index]))
@@ -293,6 +286,11 @@ func _on_equipment_changed() -> void:
 		aiming_system.on_equipment_changed()
 
 
+func _on_weapon_fired(_config: WeaponConfig, _projectile_count: int, _critical: bool) -> void:
+
+	_flash_shoot_sprite()
+
+
 func _apply_equipment_modifiers() -> void:
 
 	if equipment_comp == null:
@@ -305,10 +303,6 @@ func _apply_equipment_modifiers() -> void:
 			inventory_comp.slots.resize(inventory_comp.slot_capacity)
 	if movement_comp:
 		movement_comp.base_speed = MovementComponent.DEFAULT_MOVE_SPEED * (1.0 + equipment_comp.modifier_total(&"move_speed"))
-	if light_source:
-		var equipped_light_range := equipment_comp.modifier_total(&"light_range")
-		light_source.set_owner_enabled(equipped_light_range > 0.0)
-		light_source.set_light_range(BASE_EQUIPPED_LIGHT_RANGE + equipped_light_range)
 
 
 func take_damage(amount: float) -> void:

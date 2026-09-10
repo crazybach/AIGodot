@@ -36,6 +36,51 @@ func get_equipped(slot: StringName) -> ItemStack:
 	return slots[index] if index >= 0 else null
 
 
+func can_accept_stack(stack: ItemStack) -> bool:
+
+	if stack == null or stack.is_empty() or stack.quantity != 1:
+		return false
+	var equipable := stack.definition.get_component(EquippableComponent) as EquippableComponent
+	if equipable == null or slot_index(equipable.slot) < 0:
+		return false
+	for slot in _conflicting_slots(equipable.slot):
+		if get_equipped(slot) != null:
+			return false
+	return true
+
+
+func add_item(definition: ItemDefinition, quantity: int = 1) -> int:
+
+	if definition == null or quantity != 1:
+		return quantity
+	return 0 if put_stack(ItemStack.new(definition, 1)) else quantity
+
+
+func put_stack(stack: ItemStack) -> bool:
+
+	if not can_accept_stack(stack):
+		return false
+	var equipable := stack.definition.get_component(EquippableComponent) as EquippableComponent
+	_set_equipped(equipable.slot, stack)
+	notify_changed()
+	return true
+
+
+func place_stack(index: int, stack: ItemStack) -> bool:
+
+	if stack == null or stack.quantity != 1 or index < 0 or index >= SLOT_ORDER.size() or slots[index] != null:
+		return false
+	var equipable := stack.definition.get_component(EquippableComponent) as EquippableComponent
+	if equipable == null or SLOT_ORDER[index] != equipable.slot:
+		return false
+	for conflict in _conflicting_slots(equipable.slot):
+		if get_equipped(conflict) != null:
+			return false
+	slots[index] = stack
+	notify_changed()
+	return true
+
+
 func _set_equipped(slot: StringName, stack: ItemStack) -> void:
 
 	var index := slot_index(slot)

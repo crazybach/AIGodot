@@ -53,8 +53,11 @@ item id plus quantity, then rebuild the definition from the catalog.
 | Component | What it supplies | Example |
 | --- | --- | --- |
 | Equippable | Named body slot and passive modifiers | vest → torso, hard hat → head |
-| Launcher | Ammo tag, magazine, reload, fire rate, projectile values | pistol consumes `ammo_9mm` |
+| Launcher | Weapon configuration ID | pistol resolves `service_pistol` from the weapon table |
 | Projectile | Damage, trajectory, range, impact effect | bullets, bolts, flares, thrown apple |
+| Endurance | Capacity, drain, refill tag, depletion result | flashlight battery and burning torch |
+| Light Emitter | Point/spot shape, color, range, energy and flicker | flashlight, torch, emergency flare |
+| World Actor | Persistent behavior after leaving a container | a thrown flare keeps burning on the ground |
 | Aim | Strategy plus range and presentation tuning | direct pistol aim, lobbed stone, future charged bow |
 | Consumable | Immediate health/hunger/thirst effects | medkit, beans, water, apple |
 | CraftingPart | Material tags and quality | gun receiver, void resin, phase battery |

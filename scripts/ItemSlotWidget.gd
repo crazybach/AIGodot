@@ -10,6 +10,8 @@ var compact := false
 var key_label: Label
 var name_label: Label
 var quantity_label: Label
+var endurance_bg: ColorRect
+var endurance_fill: ColorRect
 
 
 func configure(ui: InventoryPanel, slot_context: StringName, slot_index: int = -1, body_slot: StringName = &"", is_compact := false) -> void:
@@ -72,6 +74,20 @@ func _build_overlay_labels() -> void:
 	name_label.add_theme_color_override("font_outline_color", Color(0.03, 0.02, 0.06, 0.98))
 	name_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(name_label)
+	endurance_bg = ColorRect.new()
+	endurance_bg.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
+	endurance_bg.offset_left = 5
+	endurance_bg.offset_top = -23
+	endurance_bg.offset_right = -5
+	endurance_bg.offset_bottom = -20
+	endurance_bg.color = Color(0.03, 0.03, 0.05, 0.9)
+	endurance_bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(endurance_bg)
+	endurance_fill = ColorRect.new()
+	endurance_fill.position = Vector2.ZERO
+	endurance_fill.color = Color("#e8b956")
+	endurance_fill.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	endurance_bg.add_child(endurance_fill)
 
 
 func refresh() -> void:
@@ -84,12 +100,24 @@ func refresh() -> void:
 	text = ""
 	icon = stack.definition.icon if stack else null
 	quantity_label.text = str(stack.quantity) if stack and stack.quantity > 1 else ""
+	_update_endurance(stack)
 	if stack == null:
 		name_label.text = String(equipment_slot).replace("_", " ").to_upper() if context == &"equipment" else ""
 		name_label.add_theme_color_override("font_color", SurvivalUI.MUTED)
 	else:
 		name_label.text = _short_name(stack.definition.display_name)
 		name_label.add_theme_color_override("font_color", _item_color(stack.definition))
+
+
+func _update_endurance(stack: ItemStack) -> void:
+
+	var component := stack.definition.get_component(EnduranceComponent) as EnduranceComponent if stack else null
+	endurance_bg.visible = component != null
+	if component == null:
+		return
+	var ratio := stack.endurance(component) / maxf(component.maximum, 0.001)
+	endurance_fill.size = Vector2(maxf(custom_minimum_size.x - 10.0, 1.0) * ratio, 3.0)
+	endurance_fill.color = Color("#d8564b").lerp(Color("#e8b956"), ratio)
 
 
 func _update_styles(has_item: bool) -> void:
