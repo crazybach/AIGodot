@@ -30,6 +30,7 @@ var wallet: CurrencyWalletComponent
 var humanoid_profile
 var weapon_skill: WeaponProficiencyComponent
 var item_light_system: ItemLightSystem
+var consumable_effects: ConsumableEffectSystem
 var _shoot_flash_timer  # SceneTreeTimer — no Timer type annotation (mismatch)
 
 
@@ -53,6 +54,9 @@ func _setup_creature() -> void:
 	humanoid_profile.display_name = "Survivor"
 	add_child(humanoid_profile)
 	humanoid_profile.bind_health(health_comp)
+	consumable_effects = ConsumableEffectSystem.new()
+	consumable_effects.setup(health_comp, humanoid_profile)
+	add_child(consumable_effects)
 
 	inventory_comp = _add_component(InventoryComponent.new()) as InventoryComponent
 	inventory_comp.name = "BackpackInventory"
@@ -186,7 +190,8 @@ func use_inventory_slot(index: int) -> bool:
 	var consumable := stack.definition.get_component(ConsumableComponent) as ConsumableComponent
 	if consumable == null:
 		return false
-	heal(consumable.health_restore)
+	if not consumable_effects.apply(stack.definition):
+		return false
 	inventory_comp.consume_at(index)
 	return true
 
@@ -209,10 +214,10 @@ func activate_inventory_slot(index: int, throw_item := false) -> bool:
 		return throw_inventory_slot(index)
 	if stack.definition.has_tag(&"battery") and item_light_system:
 		return item_light_system.refill_equipped_from_inventory(index)
-	if stack.definition.get_component(EquippableComponent):
-		return equip_inventory_slot(index)
 	if stack.definition.get_component(ConsumableComponent):
 		return use_inventory_slot(index)
+	if stack.definition.get_component(EquippableComponent):
+		return equip_inventory_slot(index)
 	if stack.definition.get_component(ProjectileComponent):
 		return throw_inventory_slot(index)
 	return false
@@ -260,6 +265,10 @@ func throw_inventory_slot(index: int) -> bool:
 	if stack == null:
 		return false
 	var projectile := stack.definition.get_component(ProjectileComponent) as ProjectileComponent
+	if projectile and stack.definition.get_component(EquippableComponent):
+		if not equip_inventory_slot(index):
+			return false
+		return aiming_system.begin_lob_aim()
 	# Launcher ammunition is loaded by CombatComponent rather than thrown by hand.
 	if projectile == null or stack.definition.get_component(LauncherComponent):
 		return false

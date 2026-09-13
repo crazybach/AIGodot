@@ -14,7 +14,9 @@ const MAX_ATTITUDE := 100
 
 @export var character_id: StringName = &"unnamed_humanoid"
 @export var display_name := "Unknown Survivor"
-@export var max_stamina := 100.0
+@export var max_stamina := 100.0:
+	get: return max_stamina + _stamina_bonus
+var _stamina_bonus := 0.0
 @export var stamina_recovery_per_second := 16.0
 @export var melee_charge_stamina_cost := 10.0
 @export var melee_hit_stamina_cost := 14.0
@@ -65,6 +67,21 @@ func _on_health_changed(current: float, maximum: float) -> void:
 func can_spend_stamina(amount: float) -> bool:
 
 	return amount <= 0.0 or stamina + 0.001 >= amount
+
+
+func set_stamina_bonus(value: float) -> void:
+	if is_equal_approx(_stamina_bonus, value):
+		return
+	_stamina_bonus = maxf(0.0, value)
+	stamina = minf(stamina, max_stamina)
+	stamina_changed.emit(stamina, max_stamina)
+
+
+func restore_stamina(amount: float) -> void:
+	if amount <= 0.0:
+		return
+	stamina = minf(max_stamina, stamina + amount)
+	stamina_changed.emit(stamina, max_stamina)
 
 
 func spend_stamina(amount: float) -> bool:

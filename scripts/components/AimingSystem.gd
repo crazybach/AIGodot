@@ -82,7 +82,10 @@ func physics_tick() -> void:
 		return
 	var direct_item := actor.equipment_comp.get_launcher() if actor.equipment_comp else null
 	if direct_item == null or _profile_for(direct_item, AimComponent.DIRECT) == null:
+		indicator.hide_preview()
 		return
+	if actor.combat_comp and actor.combat_comp.active_config:
+		indicator.show_direct(actor.get_global_mouse_position(), actor.combat_comp.active_config, actor.combat_comp.current_spread())
 	if Input.is_action_just_pressed("reload"):
 		actor.combat_comp.start_reload()
 		return
@@ -147,11 +150,12 @@ func commit_lob() -> bool:
 	var thrown_stack: ItemStack
 	if stack.quantity > 1:
 		stack.quantity -= 1
-		thrown_stack = ItemStack.new(stack.definition, 1)
+		thrown_stack = ItemStack.new(stack.definition, 1, stack.runtime_values)
 		actor.equipment_comp.equipment_changed.emit()
 	else:
 		thrown_stack = actor.equipment_comp.take_equipped(active_slot)
 	var thrown_item := ThrownItem.new()
+	thrown_item.source = actor
 	thrown_item.name = "Thrown " + thrown_stack.definition.display_name
 	thrown_item.launch(thrown_stack, actor.global_position, landing, resolved_profile.flight_time, resolved_arc_height)
 	actor.get_parent().add_child(thrown_item)
@@ -176,6 +180,7 @@ func _update_lob_preview() -> void:
 		cancel_aim()
 		return
 	indicator.show_lob(actor.get_global_mouse_position(), active_profile, curve_scale)
+	indicator.area_payload = stack.definition.get_component(AreaEffectComponent) as AreaEffectComponent
 
 
 func _lob_slots() -> Array[StringName]:

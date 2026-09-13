@@ -16,6 +16,9 @@ var landed := false
 var spin := 0.0
 var light_source: LightSource2D
 var _depleted := false
+var source: Node2D
+var _landing_age := 0.0
+var _payload_fired := false
 
 
 func launch(stack: ItemStack, start: Vector2, finish: Vector2, duration: float, height: float) -> void:
@@ -68,10 +71,33 @@ func _physics_process(delta: float) -> void:
 			landed_at.emit(self)
 		queue_redraw()
 	_tick_endurance(delta)
+	_tick_payload(delta)
+
+
+func _tick_payload(delta: float) -> void:
+	if not landed or _payload_fired or item_stack == null:
+		return
+	var payload := item_stack.definition.get_component(AreaEffectComponent) as AreaEffectComponent
+	if payload == null:
+		return
+	_landing_age += delta
+	queue_redraw()
+	if _landing_age < payload.fuse_seconds:
+		return
+	_payload_fired = true
+	var effect := AreaEffectActor.new()
+	effect.payload = payload.duplicate() as AreaEffectComponent
+	effect.source = source if is_instance_valid(source) else null
+	effect.global_position = global_position
+	get_parent().add_child(effect)
+	item_stack = null # Payload is consumed exactly once.
+	queue_free()
 
 
 func extract_stack() -> ItemStack:
 
+	if item_stack and item_stack.definition.get_component(AreaEffectComponent):
+		return null # Armed payloads cannot return to inventory.
 	var result := item_stack
 	item_stack = null
 	if light_source:
@@ -147,6 +173,13 @@ func _draw() -> void:
 	_draw_ellipse(Vector2.ZERO, Vector2(15.0, 6.0), Color(0.0, 0.0, 0.0, 0.34 if landed else 0.2))
 	var center := Vector2(0.0, -lift)
 	var base_color := Color("#8f4935")
+	if item_stack:
+		var payload := item_stack.definition.get_component(AreaEffectComponent) as AreaEffectComponent
+		if payload:
+			base_color = payload.color.darkened(0.4)
+			if landed:
+				draw_arc(Vector2.ZERO, payload.radius, 0, TAU, 96, Color(payload.color, 0.25), 1.0, true)
+				draw_string(ThemeDB.fallback_font, Vector2(-22, -20), "%.1fs" % maxf(0.0, payload.fuse_seconds - _landing_age), HORIZONTAL_ALIGNMENT_CENTER, 44, 12, payload.color)
 	if item_stack and item_stack.definition:
 		if item_stack.definition.id == &"ash":
 			base_color = Color("#39383e")

@@ -1,7 +1,23 @@
 # Item System: AI Agent Architecture Guide
-
 Read this before changing items, inventory, equipment, weapons, lights, throwing,
 trade, or their UI. This is an implementation map; the GDDs describe design intent.
+
+## Field collection extension (2026-09)
+
+Start with [GDD_FIELD_COLLECTION.md](GDD_FIELD_COLLECTION.md) for the 50-item roster,
+18-weapon tuning table, controls, effects, tests, and research/art provenance.
+`ItemCatalog._build_catalog()` now calls `FieldCollection.register_into(_items)`;
+edit featured content there. `data/weapons.cfg` remains authoritative for weapons.
+
+- `AreaEffectComponent` is payload data; `WorldItemActor` owns its landing fuse;
+  `AreaEffectActor` executes a single blast plus finite damage over time with LOS.
+- `ConsumableEffectSystem` snapshots timed consumable data per owner. Same item
+  refreshes duration; distinct items coexist. Stamina cap bonuses are transient.
+- `Creature.receive_damage(amount, type)` applies resistance and routes armor.
+- Weapon configs add auto fire, recoil and damage falloff; `ItemPresentation`
+  supplies derived stats to UI. `F3 → Items` grants content and creates a target.
+- `add_item()` returns the **unaccepted remainder**, not the added count.
+- Featured SVG icons: `assets/ui/field_icons/`; generated VFX: `assets/vfx/`.
 
 ## 30-second model
 

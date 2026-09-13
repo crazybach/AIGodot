@@ -17,6 +17,7 @@ var endurance_fill: ColorRect
 func configure(ui: InventoryPanel, slot_context: StringName, slot_index: int = -1, body_slot: StringName = &"", is_compact := false) -> void:
 
 	inventory_ui = ui
+	texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 	context = slot_context
 	index = slot_index
 	equipment_slot = body_slot

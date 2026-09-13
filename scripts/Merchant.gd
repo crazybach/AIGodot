@@ -33,7 +33,7 @@ func _build_components() -> void:
 	inventory_comp = InventoryComponent.new()
 	inventory_comp.name = "TraderBackpack"
 	inventory_comp.container_title = "Quartermaster Stock"
-	inventory_comp.slot_capacity = 28
+	inventory_comp.slot_capacity = 64
 	inventory_comp.weight_capacity = 200.0
 	add_child(inventory_comp)
 	ItemCatalog.merchant_stock(inventory_comp)

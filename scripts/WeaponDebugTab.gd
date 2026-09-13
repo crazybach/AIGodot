@@ -4,6 +4,11 @@ extends VBoxContainer
 ## data/weapons.cfg and compiled output demonstrates the future binary path.
 
 const NUMERIC_FIELDS := [
+	[&"recoil_per_shot", "Recoil / shot", 0.0, 30.0, 0.1],
+	[&"recoil_recovery", "Recovery deg/s", 0.0, 40.0, 0.5],
+	[&"recoil_max", "Max recoil", 0.0, 45.0, 0.5],
+	[&"falloff_start", "Falloff starts", 0.0, 1600.0, 10.0],
+	[&"minimum_damage_ratio", "Range damage ratio", 0.0, 1.0, 0.05],
 	[&"magazine_size", "Magazine", 1.0, 120.0, 1.0],
 	[&"reload_time", "Reload seconds", 0.05, 8.0, 0.05],
 	[&"shot_interval", "Shot interval", 0.02, 3.0, 0.01],
@@ -51,7 +56,7 @@ func _ready() -> void:
 	selector.item_selected.connect(_select_weapon)
 	add_child(selector)
 	mode_selector = OptionButton.new()
-	for mode in [WeaponConfig.SEMI, WeaponConfig.BURST, WeaponConfig.CHARGED]:
+	for mode in [WeaponConfig.SEMI, WeaponConfig.BURST, WeaponConfig.CHARGED, WeaponConfig.AUTO]:
 		mode_selector.add_item(String(mode).to_upper())
 		mode_selector.set_item_metadata(mode_selector.item_count - 1, mode)
 	mode_selector.item_selected.connect(_set_mode)

@@ -13,6 +13,8 @@ var landing_endpoint := Vector2.ZERO
 var max_distance := 1.0
 var arc_height := 24.0
 var target_valid := false
+var area_payload: AreaEffectComponent
+var spread := 0.0
 
 
 func _ready() -> void:
@@ -51,12 +53,30 @@ func hide_preview() -> void:
 	active = false
 	strategy = &""
 	target_valid = false
+	area_payload = null
+	queue_redraw()
+
+
+func show_direct(target_global: Vector2, config: WeaponConfig, current_spread: float) -> void:
+	active = true
+	strategy = AimComponent.DIRECT
+	requested_endpoint = to_local(target_global)
+	target_valid = requested_endpoint.length() <= config.max_range
+	landing_endpoint = requested_endpoint.limit_length(config.max_range)
+	spread = current_spread
 	queue_redraw()
 
 
 func _draw() -> void:
 
 	if not active:
+		return
+	if strategy == AimComponent.DIRECT:
+		var color := VALID_COLOR if target_valid else INVALID_COLOR
+		var radius := maxf(6.0, landing_endpoint.length() * tan(deg_to_rad(spread * 0.5)))
+		draw_arc(landing_endpoint, radius, 0, TAU, 64, Color(color, 0.3), 1.0, true)
+		if not target_valid:
+			_draw_cross(requested_endpoint, INVALID_COLOR, 6.0)
 		return
 	if strategy == WeaponConfig.CHARGED:
 		_draw_charged()
@@ -72,6 +92,11 @@ func _draw() -> void:
 		if index % 2 == 0:
 			draw_line(points[index], points[index + 1], color, 1.35, true)
 	_draw_landing_marker(landing_endpoint, color)
+	if area_payload:
+		var area_color := area_payload.color if target_valid else INVALID_COLOR
+		draw_arc(landing_endpoint, area_payload.radius, 0, TAU, 96, Color(area_color, 0.42), 1.2, true)
+		var timing := "%.1fs FUSE" % area_payload.fuse_seconds if area_payload.duration <= 0.0 else "%.1fs FIELD" % area_payload.duration
+		draw_string(ThemeDB.fallback_font, landing_endpoint + Vector2(-90, -area_payload.radius - 8), "%s  %.1fm  %s" % [String(area_payload.damage_type).to_upper(), area_payload.radius / 10.0, timing], HORIZONTAL_ALIGNMENT_CENTER, 180, 11, area_color)
 	if not target_valid:
 		_draw_cross(requested_endpoint, INVALID_COLOR, 7.0)
 	var distance_text := "%.0f/%.0fm" % [requested_endpoint.length() / 10.0, max_distance / 10.0]

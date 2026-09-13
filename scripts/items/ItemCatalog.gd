@@ -39,15 +39,10 @@ static func starting_loadout(inventory: InventoryComponent) -> void:
 
 static func merchant_stock(inventory: ItemContainerComponent) -> void:
 
-	for entry in [
-		[&"field_medkit", 3], [&"antiseptic", 4], [&"painkillers", 6],
-		[&"bottled_water", 4], [&"canned_beans", 4], [&"smoke_grenade", 2],
-		[&"flashlight", 1], [&"battery_cell", 6], [&"fire_torch", 1], [&"flare_light", 2],
-		[&"service_pistol", 1], [&"assault_rifle", 1], [&"pump_shotgun", 1], [&"recurve_bow", 1],
-		[&"ammo_9mm", 30], [&"ammo_762", 60], [&"ammo_shell", 12], [&"arrow", 12], [&"hard_hat", 1],
-		[&"gas_mask", 1], [&"canvas_backpack", 1], [&"scrap_metal", 10]
-	]:
-		inventory.add_item(get_item(entry[0]), entry[1])
+	for id in FieldCollection.ids():
+		var item := get_item(id)
+		var amount := mini(item.max_stack, 30) if item.has_tag(&"projectile") else mini(item.max_stack, 3)
+		inventory.add_item(item, amount)
 
 
 static func _build_catalog() -> void:
@@ -96,6 +91,7 @@ static func _build_catalog() -> void:
 	_register(_item(&"cracked_lens", "Cracked Survey Lens", "The lens shows impossible reflections near anomalies.", 0.1, 6, [&"material", &"anomalous"], [_part([&"optics", &"anomalous"], 2)]))
 	_register(_item(&"void_resin", "Void Resin", "Viscous material that folds light at the edge of a portal.", 0.2, 8, [&"material", &"anomalous"], [_part([&"binding", &"anomalous"], 3)]))
 	_register(_item(&"phase_battery", "Phase Battery", "Prototype power cell that hums when no one is touching it.", 0.5, 3, [&"material", &"anomalous"], [_part([&"power", &"anomalous"], 3)]))
+	FieldCollection.register_into(_items)
 
 
 static func _register(item: ItemDefinition) -> void:
@@ -115,6 +111,9 @@ static func _item(id: StringName, display_name: String, description: String, wei
 	var icon_path := ICON_ROOT + String(icon_alias if icon_alias != &"" else id) + ".webp"
 	if ResourceLoader.exists(icon_path):
 		item.icon = load(icon_path)
+	var field_icon := "res://assets/ui/field_icons/" + String(id) + ".svg"
+	if ResourceLoader.exists(field_icon):
+		item.icon = load(field_icon)
 	for component in components:
 		item.components.append(component)
 	return item

@@ -7,23 +7,21 @@ const PANEL_TEXTURE := "20251029darkDwellers9SlicesA.png"
 const HEADER_TEXTURE := "20251117darkDwellersHeaderA.png"
 const EMPTY_SLOT_TEXTURE := "20251124emptyFrameA1-Sheet.png"
 
-const INK := Color("#0b0814")
-const PANEL := Color("#171126")
-const GOLD := Color("#f0b45b")
-const GOLD_BRIGHT := Color("#ffd889")
-const LAVENDER := Color("#aaa3d9")
-const MUTED := Color("#777091")
+const INK := Color("#0b1015")
+const PANEL := Color("#141d26")
+const GOLD := Color("#b59b70")
+const GOLD_BRIGHT := Color("#dfc99f")
+const LAVENDER := Color("#a5b7c5")
+const MUTED := Color("#788b99")
 const DANGER := Color("#d55758")
 
 
-static func panel_style() -> StyleBoxTexture:
+static func panel_style() -> StyleBoxFlat:
 
-	var style := StyleBoxTexture.new()
-	style.texture = load(ASSET_ROOT + PANEL_TEXTURE)
-	style.texture_margin_left = 28.0
-	style.texture_margin_right = 28.0
-	style.texture_margin_top = 28.0
-	style.texture_margin_bottom = 28.0
+	var style := flat_style(Color(0.045, 0.064, 0.085, 0.97), Color("#52606a"), 1, 7)
+	style.shadow_color = Color(0, 0, 0, 0.4)
+	style.shadow_size = 12
+	style.shadow_offset = Vector2(0, 5)
 	return style
 
 
@@ -45,14 +43,18 @@ static func atlas_texture(file_name: String, frame: int, frame_size := Vector2(3
 	return texture
 
 
-static func slot_style(file_name: String, frame: int) -> StyleBoxTexture:
+static func slot_style(_file_name: String, frame: int) -> StyleBoxFlat:
 
-	var style := StyleBoxTexture.new()
-	style.texture = atlas_texture(file_name, frame)
-	style.texture_margin_left = 7.0
-	style.texture_margin_right = 7.0
-	style.texture_margin_top = 7.0
-	style.texture_margin_bottom = 7.0
+	var fill := Color("#1d2934") if frame > 0 else Color("#10181f")
+	var border := Color("#40515f") if frame > 0 else Color("#263540")
+	if frame in [2, 3]:
+		fill = Color("#30404b")
+		border = GOLD_BRIGHT
+	var style := flat_style(fill, border, 2 if frame == 3 else 1, 5)
+	style.content_margin_left = 5
+	style.content_margin_right = 5
+	style.content_margin_top = 5
+	style.content_margin_bottom = 5
 	return style
 
 
@@ -76,10 +78,8 @@ static func make_header(text: String) -> Control:
 
 	var wrapper := Control.new()
 	wrapper.custom_minimum_size = Vector2(0, 38)
-	var texture := TextureRect.new()
-	texture.texture = load(ASSET_ROOT + HEADER_TEXTURE)
-	texture.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	texture.stretch_mode = TextureRect.STRETCH_SCALE
+	var texture := Panel.new()
+	texture.add_theme_stylebox_override("panel", flat_style(Color("#1a2630"), Color("#354651"), 1, 3))
 	texture.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	texture.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	wrapper.add_child(texture)
@@ -87,7 +87,7 @@ static func make_header(text: String) -> Control:
 	label.text = text
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	label.add_theme_font_size_override("font_size", 17)
+	label.add_theme_font_size_override("font_size", 13)
 	label.add_theme_color_override("font_color", GOLD_BRIGHT)
 	label.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE

@@ -28,11 +28,13 @@ var combat_comp: CombatComponent
 var movement_comp: MovementComponent
 var inventory_comp: InventoryComponent
 var equipment_comp: EquipmentComponent
+var damage_resistances: Dictionary = {} # damage type -> fraction resisted [0, 1]
 
 var _components: Array[Component] = []
 
 
 func _ready() -> void:
+	add_to_group(&"damage_receivers")
 	_setup_creature()
 	_relay_signals()
 
@@ -98,6 +100,16 @@ func take_damage(amount: float) -> void:
 func heal(amount: float) -> void:
 	if health_comp:
 		health_comp.heal(amount)
+
+
+func receive_damage(amount: float, damage_type: StringName = &"kinetic") -> void:
+	var resolved := maxf(0.0, amount) * (1.0 - clampf(float(damage_resistances.get(damage_type, 0.0)), 0.0, 1.0))
+	if resolved <= 0.0:
+		return
+	if damage_type in [&"kinetic", &"explosion"]:
+		take_damage(resolved)
+	elif health_comp and is_alive:
+		health_comp.take_damage(resolved)
 
 
 ## Override in subclass — sets where damage flash is applied.

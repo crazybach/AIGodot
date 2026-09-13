@@ -133,6 +133,11 @@ func _build() -> void:
 	weapons_tab.name = "Weapons"
 	weapons_tab.setup(weapon_database, player)
 	tabs.add_child(weapons_tab)
+	var items_tab := ItemDebugTab.new()
+	items_tab.name = "Items"
+	items_tab.player = player
+	items_tab.database = weapon_database
+	tabs.add_child(items_tab)
 	_sync_controls()
 
 

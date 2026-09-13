@@ -17,7 +17,8 @@ const FIELDS: Array[StringName] = [
 	&"pellets_per_shot", &"spread_degrees", &"max_range", &"charge_time",
 	&"minimum_power", &"maximum_power", &"minimum_range", &"critical_chance_min",
 	&"critical_chance_max", &"critical_damage_multiplier", &"skill_start",
-	&"skill_gain_per_shot", &"skill_gain_per_use_second"
+	&"skill_gain_per_shot", &"skill_gain_per_use_second", &"recoil_per_shot",
+	&"recoil_recovery", &"recoil_max", &"falloff_start", &"minimum_damage_ratio"
 ]
 
 @export var hot_reload_enabled := true

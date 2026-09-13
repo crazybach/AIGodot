@@ -23,6 +23,7 @@ var crosshair: Sprite2D
 var time_label: Label
 var weapon_name_label: Label
 var weapon_detail_label: Label
+var effect_status_label: Label
 var charge_bar: ProgressBar
 var light_status_label: Label
 var inventory_panel: InventoryPanel
@@ -188,6 +189,13 @@ func _build_weapon_status() -> void:
 	charge_bar.show_percentage = false
 	charge_bar.visible = false
 	frame.add_child(charge_bar)
+	effect_status_label = Label.new()
+	effect_status_label.position = Vector2(20, 200)
+	effect_status_label.size = Vector2(620, 48)
+	effect_status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	effect_status_label.add_theme_font_size_override("font_size", 13)
+	effect_status_label.add_theme_color_override("font_color", Color("#b8d8be"))
+	add_child(effect_status_label)
 
 
 func _build_light_status() -> void:
@@ -333,12 +341,13 @@ func show_game_over(final_score: int, wave: int) -> void:
 
 
 func _process(delta: float) -> void:
+	var typing := get_viewport().gui_get_focus_owner() is LineEdit
 	var inventory_pressed := Input.is_key_pressed(KEY_I)
-	if inventory_pressed and not _inventory_key_down and inventory_panel:
+	if inventory_pressed and not _inventory_key_down and inventory_panel and not typing:
 		inventory_panel.toggle_backpack()
 	_inventory_key_down = inventory_pressed
 	var character_pressed := Input.is_key_pressed(KEY_C)
-	if character_pressed and not _character_key_down and inventory_panel:
+	if character_pressed and not _character_key_down and inventory_panel and not typing:
 		inventory_panel.toggle_character()
 	_character_key_down = character_pressed
 	var debug_pressed := Input.is_key_pressed(KEY_F3)
@@ -365,11 +374,13 @@ func _process(delta: float) -> void:
 	_update_time_label()
 	_update_weapon_status()
 	_update_light_status()
+	if effect_status_label and game_manager and game_manager.player and game_manager.player.consumable_effects:
+		effect_status_label.text = game_manager.player.consumable_effects.status_text()
 
 
 func _update_quickbar_keys() -> void:
 
-	if inventory_panel == null or inventory_panel.is_any_window_open() or game_over_panel.visible:
+	if inventory_panel == null or inventory_panel.is_any_window_open() or game_over_panel.visible or (debug_panel and debug_panel.is_open()):
 		return
 	var keys: Array[Key] = [KEY_1, KEY_2, KEY_3, KEY_4, KEY_5, KEY_6, KEY_7, KEY_8]
 	for index in keys.size():
@@ -400,9 +411,10 @@ func _update_weapon_status() -> void:
 	var critical: float = game_manager.player.weapon_skill.critical_chance(config) if game_manager.player.weapon_skill else config.critical_chance_min
 	var reserve: int = game_manager.player.inventory_comp.count_tag(config.ammo_tag)
 	weapon_name_label.text = "%s  %d / %d  +%d" % [config.display_name.to_upper(), combat.ammo, combat.max_ammo, reserve]
-	weapon_detail_label.text = "%s  DMG %.0f  SKILL %.1f  CRIT %.1f%%" % [String(config.fire_mode).to_upper(), config.damage, skill, critical * 100.0]
-	charge_bar.visible = combat.is_charging
-	charge_bar.value = combat.charge_ratio()
+	weapon_detail_label.text = "%s  DPS %.0f  CRIT %.1f%%" % [String(config.fire_mode).to_upper(), config.sustained_dps(), critical * 100.0]
+	weapon_detail_label.tooltip_text = "Skill %.1f | Spread %.1f degrees | Reload %.2fs" % [skill, combat.current_spread(), config.reload_time]
+	charge_bar.visible = combat.is_charging or combat.is_reloading
+	charge_bar.value = combat.reload_elapsed / config.reload_time if combat.is_reloading else combat.charge_ratio()
 
 
 func _update_light_status() -> void:

@@ -24,6 +24,8 @@ var _proficiency: WeaponProficiencyComponent
 var _magazines: Dictionary = {}
 var _burst_remaining := 0
 var _burst_timer := 0.0
+var recoil := 0.0
+var _trigger_held := false
 
 
 func _ready() -> void:
@@ -46,6 +48,10 @@ func configure_from_item(item: ItemDefinition) -> void:
 		return
 	_save_magazine()
 	cancel_trigger()
+	_burst_remaining = 0
+	is_reloading = false
+	reload_elapsed = 0.0
+	recoil = 0.0
 	weapon_item = item
 	active_config = null
 	if item:
@@ -68,6 +74,7 @@ func trigger_pressed() -> bool:
 
 	if active_config == null:
 		return false
+	_trigger_held = active_config.fire_mode == WeaponConfig.AUTO
 	if active_config.fire_mode == WeaponConfig.CHARGED:
 		if not _ready_for_round():
 			_try_reload_empty()
@@ -95,6 +102,7 @@ func trigger_pressed() -> bool:
 
 func trigger_released() -> bool:
 
+	_trigger_held = false
 	if not is_charging or active_config == null:
 		return false
 	var ratio := active_config.charge_ratio(charge_elapsed)
@@ -108,6 +116,8 @@ func trigger_released() -> bool:
 
 func cancel_trigger() -> void:
 
+	_trigger_held = false
+	_burst_remaining = 0
 	if is_charging:
 		is_charging = false
 		charge_changed.emit(false, 0.0)
@@ -130,7 +140,9 @@ func start_reload() -> void:
 		return
 	if creature == null or creature.inventory_comp == null or creature.inventory_comp.count_tag(active_config.ammo_tag) == 0:
 		return
+	var resume_auto := _trigger_held and active_config.fire_mode == WeaponConfig.AUTO
 	cancel_trigger()
+	_trigger_held = resume_auto
 	is_reloading = true
 	reload_elapsed = 0.0
 
@@ -138,6 +150,10 @@ func start_reload() -> void:
 func _physics_tick(delta: float) -> void:
 
 	fire_cooldown = maxf(0.0, fire_cooldown - delta)
+	if active_config:
+		recoil = move_toward(recoil, 0.0, active_config.recoil_recovery * delta)
+	if _trigger_held and active_config and active_config.fire_mode == WeaponConfig.AUTO and _ready_for_round():
+		_fire_round(1.0)
 	if active_config and _proficiency:
 		_proficiency.record_use_time(active_config, delta)
 	if is_charging and active_config:
@@ -186,7 +202,7 @@ func _fire_round(power_ratio: float) -> bool:
 	var power := active_config.power_for_charge(power_ratio)
 	var maximum_range := active_config.range_for_charge(power_ratio)
 	for pellet_index in projectile_count:
-		var angle_offset := deg_to_rad(randf_range(-active_config.spread_degrees * 0.5, active_config.spread_degrees * 0.5))
+		var angle_offset := deg_to_rad(randf_range(-current_spread() * 0.5, current_spread() * 0.5))
 		var bullet := BulletClass.new()
 		bullet.name = "Projectile_%s_%d" % [active_config.id, pellet_index]
 		bullet.global_position = creature.global_position
@@ -196,7 +212,14 @@ func _fire_round(power_ratio: float) -> bool:
 		bullet.lifetime = maximum_range / maxf(bullet.speed, 1.0)
 		bullet.shooter = creature
 		bullet.critical_hit = critical
+		bullet.is_arrow = active_config.ammo_tag == &"arrow"
+		bullet.max_range = maximum_range
+		bullet.falloff_start = active_config.falloff_start
+		bullet.minimum_damage_ratio = active_config.minimum_damage_ratio
 		creature.get_parent().add_child(bullet)
+	recoil = minf(active_config.recoil_max, recoil + active_config.recoil_per_shot)
+	if active_config.ammo_tag != &"arrow":
+		CombatVFX.spawn(creature.get_parent(), creature.global_position + Vector2.RIGHT.rotated(creature.facing_angle) * 20.0, creature.facing_angle, false)
 	if _proficiency:
 		_proficiency.record_shot(active_config)
 	ammo_changed.emit(ammo, max_ammo)
@@ -204,6 +227,10 @@ func _fire_round(power_ratio: float) -> bool:
 	if ammo <= 0 and _burst_remaining <= 0:
 		start_reload()
 	return true
+
+
+func current_spread() -> float:
+	return minf(85.0, active_config.spread_degrees + recoil) if active_config else 0.0
 
 
 func _load_magazine() -> void:

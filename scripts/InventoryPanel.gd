@@ -90,13 +90,12 @@ func _window_top_bar(window_title: String, key_hint: String, close_action: Calla
 	key.add_theme_font_size_override("font_size", 12)
 	key.add_theme_color_override("font_color", SurvivalUI.LAVENDER)
 	bar.add_child(key)
-	var close := TextureButton.new()
+	var close := Button.new()
 	close.custom_minimum_size = Vector2(32, 32)
-	close.ignore_texture_size = true
-	close.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
-	close.texture_normal = SurvivalUI.atlas_texture("20251125closeButton1-Sheet.png", 0)
-	close.texture_hover = SurvivalUI.atlas_texture("20251125closeButton1-Sheet.png", 1)
-	close.texture_pressed = SurvivalUI.atlas_texture("20251125closeButton1-Sheet.png", 2)
+	close.text = "×"
+	close.add_theme_font_size_override("font_size", 23)
+	close.add_theme_stylebox_override("normal", SurvivalUI.flat_style(SurvivalUI.PANEL, Color("#40515f"), 1, 4))
+	close.add_theme_stylebox_override("hover", SurvivalUI.flat_style(Color("#453236"), SurvivalUI.DANGER, 1, 4))
 	close.tooltip_text = "Close " + window_title.to_lower()
 	close.pressed.connect(close_action)
 	bar.add_child(close)
@@ -189,7 +188,7 @@ func _build_backpack_window() -> Panel:
 	grid.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	grid.add_theme_constant_override("h_separation", 6)
 	grid.add_theme_constant_override("v_separation", 6)
-	content.add_child(grid)
+	_add_grid_scroll(content, grid, 220)
 	var detail_panel := Panel.new()
 	detail_panel.custom_minimum_size.y = 92
 	detail_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -216,6 +215,7 @@ func _build_backpack_window() -> Panel:
 	tooltip.add_theme_color_override("font_color", Color("#b8b4ca"))
 	details.add_child(tooltip)
 	detail_components = Label.new()
+	detail_components.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	detail_components.add_theme_font_size_override("font_size", 10)
 	detail_components.add_theme_color_override("font_color", Color("#8e83b5"))
 	details.add_child(detail_components)
@@ -261,7 +261,7 @@ func _build_merchant_window() -> Panel:
 	trade_player_grid.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	trade_player_grid.add_theme_constant_override("h_separation", 6)
 	trade_player_grid.add_theme_constant_override("v_separation", 6)
-	player_column.add_child(trade_player_grid)
+	_add_grid_scroll(player_column, trade_player_grid, 240)
 	var divider := VSeparator.new()
 	columns.add_child(divider)
 	var merchant_column := VBoxContainer.new()
@@ -273,7 +273,7 @@ func _build_merchant_window() -> Panel:
 	merchant_grid.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	merchant_grid.add_theme_constant_override("h_separation", 6)
 	merchant_grid.add_theme_constant_override("v_separation", 6)
-	merchant_column.add_child(merchant_grid)
+	_add_grid_scroll(merchant_column, merchant_grid, 240)
 	trade_status = Label.new()
 	trade_status.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	trade_status.add_theme_font_size_override("font_size", 12)
@@ -290,6 +290,17 @@ func toggle_character() -> void:
 	equipment_window.visible = not equipment_window.visible
 	if equipment_window.visible:
 		refresh()
+
+
+func _add_grid_scroll(parent: Control, item_grid: GridContainer, minimum_height: float) -> void:
+	var scroll := ScrollContainer.new()
+	scroll.name = "ItemGridScroll"
+	scroll.custom_minimum_size.y = minimum_height
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	parent.add_child(scroll)
+	item_grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.add_child(item_grid)
 
 
 func toggle_backpack() -> void:
@@ -452,8 +463,8 @@ func show_details(context: StringName, index: int, body_slot: StringName = &"") 
 			parts.append("BUY %d SCRIP" % merchant.trade_comp.price_for(stack.definition, stack.quantity, true))
 		elif merchant and merchant.trade_comp and context == &"trade_player":
 			parts.append("SELL %d SCRIP" % merchant.trade_comp.price_for(stack.definition, stack.quantity, false))
-		for component in stack.definition.components:
-			parts.append(String(component.component_id).replace("_", " ").to_upper())
+		var database := get_tree().get_first_node_in_group(WeaponConfigDatabase.GROUP) as WeaponConfigDatabase
+		parts.append(ItemPresentation.short_stats(stack.definition, database))
 		detail_components.text = "   •   ".join(parts)
 	if character_status and context == &"equipment":
 		character_status.text = stack.definition.display_name.to_upper() + "  •  " + stack.definition.description
@@ -497,15 +508,8 @@ func describe_slot(context: StringName, index: int, body_slot: StringName = &"")
 	var stack := get_item_stack(context, index, body_slot)
 	if stack == null:
 		return "Empty " + (String(body_slot).replace("_", " ") if context == &"equipment" else "slot")
-	var parts: Array[String] = [stack.definition.display_name, stack.definition.description, "Weight: %.2f kg" % stack.definition.weight]
-	for component in stack.definition.components:
-		parts.append(String(component.component_id).replace("_", " ").capitalize())
-	var launcher := stack.definition.get_component(LauncherComponent) as LauncherComponent
-	if launcher:
-		var database := get_tree().get_first_node_in_group(WeaponConfigDatabase.GROUP) as WeaponConfigDatabase
-		var config := database.get_config(launcher.weapon_config_id) if database else null
-		if config:
-			parts.append("%s | Magazine %d | Damage %.0f | %.2fs" % [String(config.fire_mode).capitalize(), config.magazine_size, config.damage, config.shot_interval])
+	var database := get_tree().get_first_node_in_group(WeaponConfigDatabase.GROUP) as WeaponConfigDatabase
+	var parts: Array[String] = [ItemPresentation.describe(stack.definition, database)]
 	var endurance := stack.definition.get_component(EnduranceComponent) as EnduranceComponent
 	if endurance:
 		parts.append("Endurance: %.1f / %.1f  Drain: %.2f/s" % [stack.endurance(endurance), endurance.maximum, endurance.drain_per_second])

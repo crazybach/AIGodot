@@ -82,7 +82,7 @@ func _run() -> void:
 
 func _test_table(database: WeaponConfigDatabase) -> void:
 
-	_check(database.all_configs().size() == 4, "weapon table should contain four weapons")
+	_check(database.all_configs().size() == 18, "weapon table should contain eighteen weapons")
 	var pistol := database.get_config(&"service_pistol")
 	var rifle := database.get_config(&"assault_rifle")
 	var shotgun := database.get_config(&"pump_shotgun")

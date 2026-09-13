@@ -6,3 +6,8 @@ extends ItemComponent
 @export var hunger_restore := 0.0
 @export var thirst_restore := 0.0
 @export var use_time := 0.0
+@export var stamina_restore := 0.0
+@export var health_per_second := 0.0
+@export var stamina_per_second := 0.0
+@export var stamina_max_bonus := 0.0
+@export var duration := 0.0

@@ -5,6 +5,7 @@ extends Resource
 const SEMI: StringName = &"semi"
 const BURST: StringName = &"burst"
 const CHARGED: StringName = &"charged"
+const AUTO: StringName = &"auto"
 
 @export var id: StringName
 @export var display_name := "Weapon"
@@ -29,11 +30,16 @@ const CHARGED: StringName = &"charged"
 @export var skill_start := 0.0
 @export var skill_gain_per_shot := 0.25
 @export var skill_gain_per_use_second := 0.01
+@export var recoil_per_shot := 0.8
+@export var recoil_recovery := 8.0
+@export var recoil_max := 8.0
+@export var falloff_start := 400.0
+@export var minimum_damage_ratio := 0.45
 
 
 func sanitize() -> void:
 
-	if fire_mode not in [SEMI, BURST, CHARGED]:
+	if fire_mode not in [SEMI, BURST, CHARGED, AUTO]:
 		fire_mode = SEMI
 	magazine_size = maxi(1, magazine_size)
 	reload_time = maxf(0.05, reload_time)
@@ -54,6 +60,24 @@ func sanitize() -> void:
 	skill_start = clampf(skill_start, 0.0, 100.0)
 	skill_gain_per_shot = maxf(0.0, skill_gain_per_shot)
 	skill_gain_per_use_second = maxf(0.0, skill_gain_per_use_second)
+	recoil_per_shot = clampf(recoil_per_shot, 0.0, 30.0)
+	recoil_recovery = maxf(0.0, recoil_recovery)
+	recoil_max = clampf(recoil_max, 0.0, 45.0)
+	falloff_start = clampf(falloff_start, 0.0, max_range)
+	minimum_damage_ratio = clampf(minimum_damage_ratio, 0.0, 1.0)
+
+
+func shot_damage() -> float:
+	return damage * pellets_per_shot * (maximum_power if fire_mode == CHARGED else 1.0)
+
+
+func sustained_dps() -> float:
+	# Full-charge bows; no misses, armor, stamina limits or critical hits.
+	var cadence := shot_interval + (charge_time if fire_mode == CHARGED else 0.0)
+	var cycle := cadence * maxf(0.0, magazine_size - 1) + maxf(shot_interval, reload_time)
+	if fire_mode == CHARGED:
+		cycle += charge_time
+	return shot_damage() * magazine_size / maxf(cycle, 0.01)
 
 
 func charge_ratio(elapsed: float) -> float:
