@@ -1,0 +1,55 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/world/InteriorProp.gd" id="1"]
+
+[node name="Interior" type="Node2D"]
+
+[node name="Desk" type="Node2D" parent="."]
+position = Vector2(135, 100)
+script = ExtResource("1")
+title = "Desk"
+kind = "counter"
+size = Vector2(150, 40)
+tint = Color(0.40, 0.49, 0.48, 1)
+solid = true
+storage_enabled = false
+
+[node name="Medicine" type="Node2D" parent="."]
+position = Vector2(65, 220)
+script = ExtResource("1")
+title = "Triage medicine cabinet"
+kind = "closet"
+size = Vector2(90, 44)
+tint = Color(0.40, 0.49, 0.48, 1)
+solid = true
+storage_enabled = true
+starting_items = {&"field_medkit": 2, &"antiseptic": 3, &"painkillers": 2}
+
+[node name="Seat1" type="Node2D" parent="."]
+position = Vector2(160, 325)
+script = ExtResource("1")
+title = "Seat1"
+kind = "bench"
+size = Vector2(100, 30)
+tint = Color(0.40, 0.49, 0.48, 1)
+solid = true
+storage_enabled = false
+
+[node name="Seat2" type="Node2D" parent="."]
+position = Vector2(300, 325)
+script = ExtResource("1")
+title = "Seat2"
+kind = "bench"
+size = Vector2(90, 30)
+tint = Color(0.40, 0.49, 0.48, 1)
+solid = true
+storage_enabled = false
+
+[node name="Sign0" type="Label" parent="."]
+offset_left = 35
+offset_top = 155
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.75, 0.82, 0.77, 1)
+theme_override_font_sizes/font_size = 15
+text = "TRIAGE / FIRST AID"
+

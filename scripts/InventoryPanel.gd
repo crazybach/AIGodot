@@ -11,6 +11,11 @@ var equipment_window: Panel
 var backpack_window: Panel
 var merchant_window: Panel
 var merchant: Merchant
+var loot_prop: InteriorProp
+var source_container: ItemContainerComponent
+var transfer_heading: Label
+var player_container_header: Control
+var source_container_header: Control
 var tooltip: Label
 var detail_name: Label
 var detail_components: Label
@@ -234,7 +239,9 @@ func _build_merchant_window() -> Panel:
 	var chrome := _build_window("MerchantWindow", Vector2(38, 34), Vector2(1204, 632), 8)
 	var panel: Panel = chrome["panel"]
 	var content: VBoxContainer = chrome["content"]
-	content.add_child(_window_top_bar("SAFEHOUSE EXCHANGE", "[ E / ESC ]", close_trade))
+	var top_bar := _window_top_bar("SAFEHOUSE EXCHANGE", "[ E / ESC ]", close_trade)
+	transfer_heading = top_bar.get_child(0) as Label
+	content.add_child(top_bar)
 	var wallet_row := HBoxContainer.new()
 	wallet_row.add_theme_constant_override("separation", 12)
 	content.add_child(wallet_row)
@@ -255,7 +262,8 @@ func _build_merchant_window() -> Panel:
 	var player_column := VBoxContainer.new()
 	player_column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	columns.add_child(player_column)
-	player_column.add_child(SurvivalUI.make_header("YOUR BACKPACK  |  CLICK / DRAG TO SELL"))
+	player_container_header = SurvivalUI.make_header("YOUR BACKPACK  |  CLICK / DRAG TO SELL")
+	player_column.add_child(player_container_header)
 	trade_player_grid = GridContainer.new()
 	trade_player_grid.columns = 6
 	trade_player_grid.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
@@ -267,7 +275,8 @@ func _build_merchant_window() -> Panel:
 	var merchant_column := VBoxContainer.new()
 	merchant_column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	columns.add_child(merchant_column)
-	merchant_column.add_child(SurvivalUI.make_header("QUARTERMASTER STOCK  |  CLICK / DRAG TO BUY"))
+	source_container_header = SurvivalUI.make_header("QUARTERMASTER STOCK  |  CLICK / DRAG TO BUY")
+	merchant_column.add_child(source_container_header)
 	merchant_grid = GridContainer.new()
 	merchant_grid.columns = 6
 	merchant_grid.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
@@ -329,6 +338,13 @@ func open_trade(trader: Merchant) -> void:
 	if trader == null or trader.inventory_comp == null or player == null:
 		return
 	merchant = trader
+	loot_prop = null
+	source_container = merchant.inventory_comp
+	transfer_heading.text = "SAFEHOUSE EXCHANGE"
+	merchant_title.text = "QUARTERMASTER STOCK"
+	_set_header_text(player_container_header, "YOUR BACKPACK  |  CLICK / DRAG TO SELL")
+	_set_header_text(source_container_header, "QUARTERMASTER STOCK  |  CLICK / DRAG TO BUY")
+	trade_status.text = "CLICK OR DRAG ITEMS BETWEEN PACKS  •  PRICES APPLY TO THE FULL STACK"
 	if not merchant.inventory_comp.inventory_changed.is_connected(refresh):
 		merchant.inventory_comp.inventory_changed.connect(refresh)
 	if merchant.trade_comp and not merchant.trade_comp.trade_completed.is_connected(_on_trade_message):
@@ -343,11 +359,39 @@ func open_trade(trader: Merchant) -> void:
 	refresh()
 
 
+func open_loot(prop: InteriorProp) -> void:
+	if prop == null or prop.inventory == null or player == null:
+		return
+	merchant = null
+	loot_prop = prop
+	source_container = prop.inventory
+	transfer_heading.text = "SEARCH / " + prop.title.to_upper()
+	merchant_title.text = prop.title.to_upper() + "  |  CLICK / DRAG TO TAKE"
+	_set_header_text(player_container_header, "YOUR BACKPACK  |  STORE ITEMS")
+	_set_header_text(source_container_header, prop.title.to_upper() + "  |  TAKE ITEMS")
+	merchant_scrip.text = "NO CURRENCY  •  CONTENTS PERSIST UNTIL RESTART"
+	trade_status.text = "MOVE ITEMS BETWEEN THE CONTAINER AND YOUR BACKPACK"
+	if not source_container.contents_changed.is_connected(refresh):
+		source_container.contents_changed.connect(refresh)
+	_ensure_trade_widgets()
+	close_character()
+	close_backpack()
+	merchant_window.visible = true
+	refresh()
+
+
 func close_trade() -> void:
 
 	if merchant_window:
 		merchant_window.visible = false
 	merchant = null
+	loot_prop = null
+	source_container = null
+
+
+func _set_header_text(header: Control, value: String) -> void:
+	if header and header.get_child_count() > 1 and header.get_child(1) is Label:
+		(header.get_child(1) as Label).text = value
 
 
 func close_all() -> void:
@@ -383,7 +427,7 @@ func _ensure_inventory_widgets() -> void:
 
 func _ensure_trade_widgets() -> void:
 
-	if player == null or player.inventory_comp == null or merchant == null or merchant.inventory_comp == null:
+	if player == null or player.inventory_comp == null or source_container == null:
 		return
 	if trade_player_widgets.size() != player.inventory_comp.slots.size():
 		for child in trade_player_grid.get_children():
@@ -394,11 +438,11 @@ func _ensure_trade_widgets() -> void:
 			slot.configure(self, &"trade_player", slot_index)
 			trade_player_grid.add_child(slot)
 			trade_player_widgets.append(slot)
-	if merchant_widgets.size() != merchant.inventory_comp.slots.size():
+	if merchant_widgets.size() != source_container.slots.size():
 		for child in merchant_grid.get_children():
 			child.queue_free()
 		merchant_widgets.clear()
-		for slot_index in merchant.inventory_comp.slots.size():
+		for slot_index in source_container.slots.size():
 			var slot := ItemSlotWidget.new()
 			slot.configure(self, &"merchant", slot_index)
 			merchant_grid.add_child(slot)
@@ -419,13 +463,13 @@ func refresh() -> void:
 		slot.refresh()
 	for slot in equipment_widgets:
 		slot.refresh()
-	if merchant_window and merchant_window.visible and merchant:
+	if merchant_window and merchant_window.visible and source_container:
 		_ensure_trade_widgets()
 		for slot in trade_player_widgets:
 			slot.refresh()
 		for slot in merchant_widgets:
 			slot.refresh()
-		if merchant_scrip and player.wallet:
+		if merchant_scrip and player.wallet and merchant:
 			var attitude: int = player.humanoid_profile.attitude_toward(merchant.humanoid_profile.character_id) if player.humanoid_profile and merchant.humanoid_profile else HumanoidProfileClass.NEUTRAL_ATTITUDE
 			merchant_scrip.text = "YOUR SCRIP  %d    •    TRADER  %d    •    TRUST  %d/100" % [player.wallet.balance, merchant.wallet.balance if merchant.wallet else 0, attitude]
 	presentation_changed.emit()
@@ -486,8 +530,8 @@ func get_item_stack(context: StringName, index: int, body_slot: StringName = &""
 		return null
 	if context == &"inventory" or context == &"trade_player":
 		return player.inventory_comp.slots[index] if index >= 0 and index < player.inventory_comp.slots.size() else null
-	if context == &"merchant" and merchant and merchant.inventory_comp:
-		return merchant.inventory_comp.slots[index] if index >= 0 and index < merchant.inventory_comp.slots.size() else null
+	if context == &"merchant" and source_container:
+		return source_container.slots[index] if index >= 0 and index < source_container.slots.size() else null
 	if context == &"hotbar":
 		var hotbar_stack := player.inventory_comp.get_hotbar_stack(index)
 		if hotbar_stack:
@@ -533,6 +577,10 @@ func activate_slot(context: StringName, index: int, body_slot: StringName = &"",
 		merchant.trade_comp.sell_from(player.inventory_comp, player.wallet, index)
 	elif context == &"merchant" and merchant and merchant.trade_comp:
 		merchant.trade_comp.buy_to(player.inventory_comp, player.wallet, index)
+	elif context == &"merchant" and source_container:
+		source_container.move_slot_to(player.inventory_comp, index)
+	elif context == &"trade_player" and loot_prop and source_container:
+		player.inventory_comp.move_slot_to(source_container, index)
 	elif context == &"equipment":
 		# Equipped gear cannot be thrown in place; both left- and right-click
 		# return it to the backpack.
@@ -596,6 +644,10 @@ func drop_on(target_context: StringName, target_index: int, target_body_slot: St
 		merchant.trade_comp.buy_to(player.inventory_comp, player.wallet, source_index)
 	elif target_context == &"merchant" and (source_context == &"trade_player" or source_context == &"inventory") and merchant and merchant.trade_comp:
 		merchant.trade_comp.sell_from(player.inventory_comp, player.wallet, source_index)
+	elif target_context == &"trade_player" and source_context == &"merchant" and loot_prop and source_container:
+		source_container.move_slot_to(player.inventory_comp, source_index)
+	elif target_context == &"merchant" and (source_context == &"trade_player" or source_context == &"inventory") and loot_prop and source_container:
+		player.inventory_comp.move_slot_to(source_container, source_index)
 	elif target_context == &"equipment":
 		player.equipment_comp.equip_from_inventory(player.inventory_comp, source_index)
 	refresh()

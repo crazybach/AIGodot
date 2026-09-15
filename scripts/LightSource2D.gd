@@ -61,6 +61,12 @@ func _init() -> void:
 	_noise.fractal_lacunarity = 2.1
 
 
+func _enter_tree() -> void:
+	lighting = get_tree().get_first_node_in_group("lighting") as LightingManager
+	if lighting:
+		lighting.register_light(self)
+
+
 func _ready() -> void:
 	_base_energy = energy
 	_build_light()

@@ -1,0 +1,46 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/world/InteriorProp.gd" id="1"]
+
+[node name="Interior" type="Node2D"]
+
+[node name="RelayRack" type="Node2D" parent="."]
+position = Vector2(90, 100)
+script = ExtResource("1")
+title = "Relay maintenance rack"
+kind = "shelf"
+size = Vector2(110, 55)
+tint = Color(0.40, 0.49, 0.48, 1)
+solid = true
+storage_enabled = true
+starting_items = {&"battery_cell": 3, &"circuit_board": 2}
+
+[node name="RelayRack2" type="Node2D" parent="."]
+position = Vector2(90, 290)
+script = ExtResource("1")
+title = "Electrical spares"
+kind = "shelf"
+size = Vector2(110, 55)
+tint = Color(0.40, 0.49, 0.48, 1)
+solid = true
+storage_enabled = true
+starting_items = {&"scrap_metal": 4}
+
+[node name="Dispatch" type="Node2D" parent="."]
+position = Vector2(260, 280)
+script = ExtResource("1")
+title = "Dispatch"
+kind = "counter"
+size = Vector2(140, 42)
+tint = Color(0.40, 0.49, 0.48, 1)
+solid = true
+storage_enabled = false
+
+[node name="Sign0" type="Label" parent="."]
+offset_left = 220
+offset_top = 220
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.75, 0.82, 0.77, 1)
+theme_override_font_sizes/font_size = 18
+text = "DISPATCH"
+

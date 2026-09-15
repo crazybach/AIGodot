@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+<defs><radialGradient id="skin"><stop stop-color="#89988e"/><stop offset="1" stop-color="#2d4646"/></radialGradient></defs>
+<g fill="none" stroke="#4c6865" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">
+<path d="M58 48 36 26 12 18M55 55 26 46 7 61M55 73 27 84 12 109M68 80 63 108 87 119M73 43 83 17 109 10"/>
+</g><path d="M35 64Q35 34 65 35L97 48 110 64 97 80 65 93Q35 94 35 64" fill="url(#skin)" stroke="#a6b4a4" stroke-width="2"/>
+<path d="M52 44 73 54 51 64 73 74 52 84" fill="none" stroke="#b9b6a0" stroke-width="3"/>
+<path d="M91 52 103 58M91 76 103 70" stroke="#efbd85" stroke-width="4" stroke-linecap="round"/>
+<path d="M100 59 116 64 100 69" fill="#15272b" stroke="#c1b9a0" stroke-width="2"/>
+</svg>

@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="BuildingDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/world/BuildingDefinition.gd" id="1"]
+[ext_resource type="PackedScene" path="res://scenes/world/interiors/HotelLobby.tscn" id="2"]
+[ext_resource type="PackedScene" path="res://scenes/world/interiors/RoofUtilities.tscn" id="3"]
+
+[resource]
+script = ExtResource("1")
+id = &"H"
+title = "NORTHBANK HOTEL"
+footprint = PackedVector2Array(0, 0, 730, 0, 730, 520, 420, 520, 420, 610, 0, 610)
+doors = PackedVector2Array(540, 520)
+door_width = 112.0
+elevator = Vector2(625, 90)
+ground_interior = ExtResource("2")
+roof_interior = ExtResource("3")
+

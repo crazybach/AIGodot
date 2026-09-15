@@ -29,6 +29,9 @@ func _physics_tick(_delta: float) -> void:
 	var speed := base_speed
 
 	if input_control:
+		if creature is Player and creature.ui_input_blocked:
+			creature.velocity = Vector2.ZERO
+			return
 		dir = Vector2(
 			Input.get_axis("move_left", "move_right"),
 			Input.get_axis("move_up", "move_down")

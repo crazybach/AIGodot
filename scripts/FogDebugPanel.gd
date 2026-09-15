@@ -13,6 +13,13 @@ var sliders: Dictionary = {}
 var value_labels: Dictionary = {}
 var weapon_database: WeaponConfigDatabase
 var player: Player
+var tabs: TabContainer
+
+func add_layer_controls(manager: LayerManager) -> void:
+	var tab := LayerDebugTab.new()
+	tab.name = "Layers"
+	tab.manager = manager
+	tabs.add_child(tab)
 
 
 func setup(fog_controller, lighting_manager: LightingManager, config_database: WeaponConfigDatabase = null, owner_player: Player = null) -> void:
@@ -73,7 +80,7 @@ func _build() -> void:
 	key.add_theme_font_size_override("font_size", 11)
 	key.add_theme_color_override("font_color", SurvivalUI.LAVENDER)
 	title_row.add_child(key)
-	var tabs := TabContainer.new()
+	tabs = TabContainer.new()
 	tabs.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	content.add_child(tabs)
 	var fog_tab := VBoxContainer.new()
@@ -124,7 +131,7 @@ func _build() -> void:
 	force_night.pressed.connect(_force_phase.bind(LightingManager.Phase.NIGHT))
 	phase_buttons.add_child(force_night)
 	var note := Label.new()
-	note.text = "Fog preserves ambient and local lighting: no noise, UV warping, or refraction.\nDoor mist sources use [ F ] at the Store."
+	note.text = "Ground floors have hazardous mist; rooftops have clear air.\nFog visibility does not disable exposure. Use elevators [ E ] to escape."
 	note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	note.add_theme_font_size_override("font_size", 12)
 	note.add_theme_color_override("font_color", SurvivalUI.MUTED)
@@ -172,7 +179,7 @@ func _add_slider(parent: VBoxContainer, label_text: String, property: StringName
 func _set_fog_enabled(enabled: bool) -> void:
 
 	if fog and fog.overlay:
-		fog.overlay.visible = enabled
+		fog.set_visual_enabled(enabled)
 
 
 func _set_fog_property(value: float, property: StringName) -> void:
@@ -188,7 +195,7 @@ func _set_fog_property(value: float, property: StringName) -> void:
 func _sync_controls() -> void:
 
 	if fog and enabled_toggle:
-		enabled_toggle.button_pressed = fog.overlay.visible if fog.overlay else true
+		enabled_toggle.button_pressed = fog.visual_enabled
 		for property in sliders:
 			var slider: HSlider = sliders[property]
 			var value: float = float(fog.get(property))

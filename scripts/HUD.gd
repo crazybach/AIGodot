@@ -144,9 +144,9 @@ func _build_wave_display() -> void:
 func _build_controls_hint() -> void:
 	controls_label = Label.new()
 	controls_label.name = "ControlsLabel"
-	controls_label.position = Vector2(20, 662)
-	controls_label.text = "[ LMB ] FIRE / HOLD BOW   [ RMB + LMB ] THROW   [ R ] RELOAD\n[ 1-8 ] QUICK SLOTS   [ Q ] HAND   [ C / I ] GEAR   [ F3 ] DEBUG"
-	controls_label.add_theme_font_size_override("font_size", 12)
+	controls_label.position = Vector2(20, 638)
+	controls_label.text = "[ WASD ] MOVE   [ SHIFT ] SPRINT\n[ LMB ] FIRE   [ RMB + LMB ] THROW\n[ E ] INTERACT   [ R ] RELOAD   [ Q ] HAND\n[ C / I ] GEAR   [ 1-8 ] SLOTS   [ F3 ] DEBUG"
+	controls_label.add_theme_font_size_override("font_size", 11)
 	controls_label.add_theme_color_override("font_color", SurvivalUI.LAVENDER)
 	add_child(controls_label)
 

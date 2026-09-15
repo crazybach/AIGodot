@@ -31,6 +31,7 @@ var canvas_modulate: CanvasModulate
 var phase: Phase = Phase.DAY
 var phase_time := 0.0
 var darkness := 0.0                  # 0 = day, 1 = night
+var environment_night_color := NIGHT_COLOR
 var _lights: Array[LightSource2D] = []
 
 
@@ -71,7 +72,7 @@ func _update_cycle(delta: float) -> void:
 			if phase_time >= dawn_duration:
 				_advance(Phase.DAY)
 	
-	canvas_modulate.color = NIGHT_COLOR.lerp(DAY_COLOR, 1.0 - darkness)
+	canvas_modulate.color = environment_night_color.lerp(DAY_COLOR, 1.0 - darkness)
 
 
 func _advance(next: Phase) -> void:

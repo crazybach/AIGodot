@@ -1,0 +1,66 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/world/InteriorProp.gd" id="1"]
+
+[node name="Interior" type="Node2D"]
+
+[node name="Reception" type="Node2D" parent="."]
+position = Vector2(220, 95)
+script = ExtResource("1")
+title = "Reception drawers"
+kind = "counter"
+size = Vector2(160, 40)
+tint = Color(0.40, 0.49, 0.48, 1)
+solid = true
+storage_enabled = true
+starting_items = {&"battery_cell": 2, &"antiseptic": 1}
+
+[node name="FileCabinets" type="Node2D" parent="."]
+position = Vector2(65, 210)
+script = ExtResource("1")
+title = "Emergency supply cabinet"
+kind = "closet"
+size = Vector2(90, 42)
+tint = Color(0.40, 0.49, 0.48, 1)
+solid = true
+storage_enabled = true
+starting_items = {&"field_medkit": 1, &"flashlight": 1}
+
+[node name="WaitingSeat" type="Node2D" parent="."]
+position = Vector2(240, 305)
+script = ExtResource("1")
+title = "WaitingSeat"
+kind = "bench"
+size = Vector2(170, 34)
+tint = Color(0.40, 0.49, 0.48, 1)
+solid = true
+storage_enabled = false
+
+[node name="Plant1" type="Node2D" parent="."]
+position = Vector2(470, 75)
+script = ExtResource("1")
+title = "Plant1"
+kind = "planter"
+size = Vector2(50, 50)
+tint = Color(0.40, 0.49, 0.48, 1)
+solid = true
+storage_enabled = false
+
+[node name="Plant2" type="Node2D" parent="."]
+position = Vector2(470, 305)
+script = ExtResource("1")
+title = "Plant2"
+kind = "planter"
+size = Vector2(50, 50)
+tint = Color(0.40, 0.49, 0.48, 1)
+solid = true
+storage_enabled = false
+
+[node name="Sign0" type="Label" parent="."]
+offset_left = 145
+offset_top = 140
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.75, 0.82, 0.77, 1)
+theme_override_font_sizes/font_size = 15
+text = "MERCER / RECEPTION"
+

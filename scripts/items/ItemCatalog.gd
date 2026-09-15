@@ -47,6 +47,7 @@ static func merchant_stock(inventory: ItemContainerComponent) -> void:
 
 static func _build_catalog() -> void:
 
+	_register(_item(&"portable_ladder", "Portable Crossing Ladder", "A telescoping steel ladder. Use at a marked rooftop gap with E to build a permanent crossing.", 2.0, 2, [&"tool", &"construction"], [ConstructionComponent.new(), _trade(45, 20)]))
 	# Weapons and ammunition
 	_register(_item(&"service_pistol", "M9 Service Pistol", "One-hand 9 mm sidearm with a ten-round magazine.", 1.0, 1, [&"weapon"], [_equip(&"right_hand"), _launcher(&"service_pistol"), _aim_direct(650.0), _aim_lob(300.0, 0.55, 0.12), _trade(90, 48)]))
 	_register(_item(&"assault_rifle", "M14 Breach Rifle", "Two-hand 7.62 mm rifle set to controlled three-round bursts.", 4.1, 1, [&"weapon"], [_equip(&"two_hand"), _launcher(&"assault_rifle"), _aim_direct(900.0), _trade(240, 125)], &"service_pistol"))
@@ -109,6 +110,8 @@ static func _item(id: StringName, display_name: String, description: String, wei
 	item.max_stack = max_stack
 	item.tags = tags
 	var icon_path := ICON_ROOT + String(icon_alias if icon_alias != &"" else id) + ".webp"
+	if not ResourceLoader.exists(icon_path):
+		icon_path = ICON_ROOT + String(icon_alias if icon_alias != &"" else id) + ".svg"
 	if ResourceLoader.exists(icon_path):
 		item.icon = load(icon_path)
 	var field_icon := "res://assets/ui/field_icons/" + String(id) + ".svg"

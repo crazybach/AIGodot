@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="BuildingDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/world/BuildingDefinition.gd" id="1"]
+[ext_resource type="PackedScene" path="res://scenes/world/interiors/MallConcourse.tscn" id="2"]
+[ext_resource type="PackedScene" path="res://scenes/world/interiors/RoofUtilities.tscn" id="3"]
+
+[resource]
+script = ExtResource("1")
+id = &"M"
+title = "ASHDOWN GALLERIA"
+footprint = PackedVector2Array(0, 0, 1050, 0, 1050, 300, 1550, 300, 1550, 1150, 0, 1150)
+doors = PackedVector2Array(775, 1150)
+door_width = 180.0
+elevator = Vector2(1120, 1010)
+ground_interior = ExtResource("2")
+roof_interior = ExtResource("3")
+

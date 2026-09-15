@@ -1,0 +1,26 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/world/InteriorProp.gd" id="1"]
+
+[node name="Interior" type="Node2D"]
+
+[node name="Vent" type="Node2D" parent="."]
+position = Vector2(60, 85)
+script = ExtResource("1")
+title = "Vent"
+kind = "crate"
+size = Vector2(75, 45)
+tint = Color(0.39, 0.47, 0.50, 1)
+solid = true
+storage_enabled = false
+
+[node name="Vent2" type="Node2D" parent="."]
+position = Vector2(170, 85)
+script = ExtResource("1")
+title = "Vent2"
+kind = "crate"
+size = Vector2(75, 45)
+tint = Color(0.39, 0.47, 0.50, 1)
+solid = true
+storage_enabled = false
+

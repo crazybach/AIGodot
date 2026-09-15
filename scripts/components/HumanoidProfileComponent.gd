@@ -32,6 +32,7 @@ var health_maximum := 100.0
 var relationships: Dictionary = {}
 var _tracked_health: HealthComponent
 var _spent_stamina_this_frame := false
+var environment_recovery_multiplier := 1.0
 
 
 func _ready() -> void:
@@ -42,7 +43,7 @@ func _ready() -> void:
 func _physics_process(delta: float) -> void:
 
 	if not _spent_stamina_this_frame and stamina < max_stamina:
-		stamina = minf(max_stamina, stamina + stamina_recovery_per_second * delta)
+		stamina = minf(max_stamina, stamina + stamina_recovery_per_second * environment_recovery_multiplier * delta)
 		stamina_changed.emit(stamina, max_stamina)
 	_spent_stamina_this_frame = false
 

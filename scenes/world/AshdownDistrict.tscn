@@ -1,0 +1,274 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/world/DistrictLayout.gd" id="layout"]
+[ext_resource type="Script" path="res://scripts/world/BuildingMarker.gd" id="building"]
+[ext_resource type="Script" path="res://scripts/world/RoofLinkMarker.gd" id="link"]
+[ext_resource type="Script" path="res://scripts/world/EncounterMarker.gd" id="encounter"]
+[ext_resource type="Resource" path="res://data/world/buildings/A.tres" id="A"]
+[ext_resource type="Resource" path="res://data/world/buildings/B.tres" id="B"]
+[ext_resource type="Resource" path="res://data/world/buildings/C.tres" id="C"]
+[ext_resource type="Resource" path="res://data/world/buildings/D.tres" id="D"]
+[ext_resource type="Resource" path="res://data/world/buildings/M.tres" id="M"]
+[ext_resource type="Resource" path="res://data/world/buildings/W.tres" id="W"]
+[ext_resource type="Resource" path="res://data/world/buildings/H.tres" id="H"]
+[ext_resource type="Resource" path="res://data/world/buildings/S.tres" id="S"]
+[ext_resource type="Resource" path="res://data/world/buildings/P.tres" id="P"]
+[ext_resource type="Resource" path="res://data/world/buildings/T.tres" id="T"]
+
+[node name="AshdownDistrict" type="Node2D"]
+script = ExtResource("layout")
+bounds = Rect2(-2400, -1800, 6000, 4200)
+roads = Array[Rect2]([Rect2(-2380, -90, 5960, 180), Rect2(-2380, 820, 5960, 170), Rect2(-2380, -1020, 3700, 140), Rect2(-1150, -1780, 160, 4160), Rect2(1210, -1780, 160, 4160), Rect2(3160, -1780, 160, 4160)])
+
+[node name="Buildings" type="Node2D" parent="."]
+
+[node name="A" type="Node2D" parent="Buildings"]
+position = Vector2(-650, -430)
+script = ExtResource("building")
+definition = ExtResource("A")
+
+[node name="B" type="Node2D" parent="Buildings"]
+position = Vector2(-80, -520)
+script = ExtResource("building")
+definition = ExtResource("B")
+
+[node name="C" type="Node2D" parent="Buildings"]
+position = Vector2(720, -550)
+script = ExtResource("building")
+definition = ExtResource("C")
+
+[node name="D" type="Node2D" parent="Buildings"]
+position = Vector2(-80, 180)
+script = ExtResource("building")
+definition = ExtResource("D")
+
+[node name="M" type="Node2D" parent="Buildings"]
+position = Vector2(1450, -1550)
+script = ExtResource("building")
+definition = ExtResource("M")
+
+[node name="W" type="Node2D" parent="Buildings"]
+position = Vector2(-2130, 190)
+script = ExtResource("building")
+definition = ExtResource("W")
+
+[node name="H" type="Node2D" parent="Buildings"]
+position = Vector2(-2150, -1570)
+script = ExtResource("building")
+definition = ExtResource("H")
+
+[node name="S" type="Node2D" parent="Buildings"]
+position = Vector2(-2110, -650)
+script = ExtResource("building")
+definition = ExtResource("S")
+
+[node name="P" type="Node2D" parent="Buildings"]
+position = Vector2(1530, 190)
+script = ExtResource("building")
+definition = ExtResource("P")
+
+[node name="T" type="Node2D" parent="Buildings"]
+position = Vector2(-780, 1190)
+script = ExtResource("building")
+definition = ExtResource("T")
+
+[node name="Crossings" type="Node2D" parent="."]
+
+[node name="crossing_ab" type="Node2D" parent="Crossings"]
+position = Vector2(-230, -280)
+script = ExtResource("link")
+from_building = &"A"
+to_building = &"B"
+end_offset = Vector2(150, 0)
+built = true
+
+[node name="crossing_bc" type="Node2D" parent="Crossings"]
+position = Vector2(580, -280)
+script = ExtResource("link")
+from_building = &"B"
+to_building = &"C"
+end_offset = Vector2(140, 0)
+built = false
+
+[node name="Encounters" type="Node2D" parent="."]
+
+[node name="egg1" type="Node2D" parent="Encounters"]
+position = Vector2(-680, 10)
+script = ExtResource("encounter")
+kind = "egg"
+sight_range = 115.0
+
+[node name="egg2" type="Node2D" parent="Encounters"]
+position = Vector2(-240, 270)
+script = ExtResource("encounter")
+kind = "egg"
+sight_range = 115.0
+
+[node name="egg3" type="Node2D" parent="Encounters"]
+position = Vector2(600, 25)
+script = ExtResource("encounter")
+kind = "egg"
+sight_range = 115.0
+
+[node name="egg4" type="Node2D" parent="Encounters"]
+position = Vector2(1150, -190)
+script = ExtResource("encounter")
+kind = "egg"
+sight_range = 115.0
+
+[node name="egg5" type="Node2D" parent="Encounters"]
+position = Vector2(1980, -280)
+script = ExtResource("encounter")
+kind = "egg"
+sight_range = 115.0
+
+[node name="egg6" type="Node2D" parent="Encounters"]
+position = Vector2(2520, -260)
+script = ExtResource("encounter")
+kind = "egg"
+sight_range = 115.0
+
+[node name="egg7" type="Node2D" parent="Encounters"]
+position = Vector2(-1600, 120)
+script = ExtResource("encounter")
+kind = "egg"
+sight_range = 115.0
+
+[node name="egg8" type="Node2D" parent="Encounters"]
+position = Vector2(-1390, -700)
+script = ExtResource("encounter")
+kind = "egg"
+sight_range = 115.0
+
+[node name="egg9" type="Node2D" parent="Encounters"]
+position = Vector2(520, 520)
+script = ExtResource("encounter")
+kind = "egg"
+sight_range = 115.0
+
+[node name="egg10" type="Node2D" parent="Encounters"]
+position = Vector2(1040, 1090)
+script = ExtResource("encounter")
+kind = "egg"
+sight_range = 115.0
+
+[node name="egg11" type="Node2D" parent="Encounters"]
+position = Vector2(-300, 1070)
+script = ExtResource("encounter")
+kind = "egg"
+sight_range = 115.0
+
+[node name="egg12" type="Node2D" parent="Encounters"]
+position = Vector2(2100, 1080)
+script = ExtResource("encounter")
+kind = "egg"
+sight_range = 115.0
+
+[node name="egg13" type="Node2D" parent="Encounters"]
+position = Vector2(2760, -1350)
+script = ExtResource("encounter")
+kind = "egg"
+sight_range = 115.0
+
+[node name="egg14" type="Node2D" parent="Encounters"]
+position = Vector2(2000, -1040)
+script = ExtResource("encounter")
+kind = "egg"
+sight_range = 115.0
+
+[node name="egg15" type="Node2D" parent="Encounters"]
+position = Vector2(2510, -650)
+script = ExtResource("encounter")
+kind = "egg"
+sight_range = 115.0
+
+[node name="egg16" type="Node2D" parent="Encounters"]
+position = Vector2(-1960, -880)
+script = ExtResource("encounter")
+kind = "egg"
+sight_range = 115.0
+
+[node name="wanderer17" type="Node2D" parent="Encounters"]
+position = Vector2(-820, 400)
+script = ExtResource("encounter")
+kind = "wanderer"
+sight_range = 170.0
+
+[node name="wanderer18" type="Node2D" parent="Encounters"]
+position = Vector2(-420, 30)
+script = ExtResource("encounter")
+kind = "wanderer"
+sight_range = 170.0
+
+[node name="wanderer19" type="Node2D" parent="Encounters"]
+position = Vector2(910, 0)
+script = ExtResource("encounter")
+kind = "wanderer"
+sight_range = 170.0
+
+[node name="wanderer20" type="Node2D" parent="Encounters"]
+position = Vector2(1120, -740)
+script = ExtResource("encounter")
+kind = "wanderer"
+sight_range = 170.0
+
+[node name="wanderer21" type="Node2D" parent="Encounters"]
+position = Vector2(1680, -280)
+script = ExtResource("encounter")
+kind = "wanderer"
+sight_range = 170.0
+
+[node name="wanderer22" type="Node2D" parent="Encounters"]
+position = Vector2(2480, -800)
+script = ExtResource("encounter")
+kind = "wanderer"
+sight_range = 170.0
+
+[node name="wanderer23" type="Node2D" parent="Encounters"]
+position = Vector2(2200, -1050)
+script = ExtResource("encounter")
+kind = "wanderer"
+sight_range = 170.0
+
+[node name="wanderer24" type="Node2D" parent="Encounters"]
+position = Vector2(-1810, 590)
+script = ExtResource("encounter")
+kind = "wanderer"
+sight_range = 170.0
+
+[node name="wanderer25" type="Node2D" parent="Encounters"]
+position = Vector2(-1730, -800)
+script = ExtResource("encounter")
+kind = "wanderer"
+sight_range = 170.0
+
+[node name="wanderer26" type="Node2D" parent="Encounters"]
+position = Vector2(-1360, 940)
+script = ExtResource("encounter")
+kind = "wanderer"
+sight_range = 170.0
+
+[node name="wanderer27" type="Node2D" parent="Encounters"]
+position = Vector2(740, 910)
+script = ExtResource("encounter")
+kind = "wanderer"
+sight_range = 170.0
+
+[node name="wanderer28" type="Node2D" parent="Encounters"]
+position = Vector2(2080, 910)
+script = ExtResource("encounter")
+kind = "wanderer"
+sight_range = 170.0
+
+[node name="wanderer29" type="Node2D" parent="Encounters"]
+position = Vector2(-480, 1540)
+script = ExtResource("encounter")
+kind = "wanderer"
+sight_range = 170.0
+
+[node name="wanderer30" type="Node2D" parent="Encounters"]
+position = Vector2(2900, 1200)
+script = ExtResource("encounter")
+kind = "wanderer"
+sight_range = 170.0
+

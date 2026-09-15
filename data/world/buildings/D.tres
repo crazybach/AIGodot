@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="BuildingDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/world/BuildingDefinition.gd" id="1"]
+[ext_resource type="PackedScene" path="res://scenes/world/interiors/Exchange.tscn" id="2"]
+[ext_resource type="PackedScene" path="res://scenes/world/interiors/RoofUtilities.tscn" id="3"]
+
+[resource]
+script = ExtResource("1")
+id = &"D"
+title = "RELAY EXCHANGE"
+footprint = PackedVector2Array(0, 0, 580, 0, 580, 460, 220, 460, 220, 350, 0, 350)
+doors = PackedVector2Array(290, 0)
+door_width = 112.0
+elevator = Vector2(470, 85)
+ground_interior = ExtResource("2")
+roof_interior = ExtResource("3")
+

@@ -21,6 +21,27 @@ var lighting: LightingManager
 var camera: Camera2D
 var overlay: ColorRect
 var material: ShaderMaterial
+var environment_has_mist := true
+var visual_enabled := true
+
+func set_environment_mist(enabled: bool) -> void:
+	environment_has_mist = enabled
+	if overlay:
+		overlay.visible = visual_enabled and enabled
+
+func set_visual_enabled(enabled: bool) -> void:
+	visual_enabled = enabled
+	set_environment_mist(environment_has_mist)
+
+func visibility_at(point: Vector2) -> float:
+	if not environment_has_mist:
+		return 1.0
+	var observer := camera.get_parent() as Node2D
+	if observer == null:
+		return 0.0
+	var radius := lerpf(day_vision_radius, night_vision_radius, lighting.darkness)
+	var nearby := 1.0 - smoothstep(radius * 0.55, radius * 1.65, observer.global_position.distance_to(point))
+	return maxf(nearby, lighting.light_illumination(point))
 
 
 func setup(owner_lighting: LightingManager, owner_camera: Camera2D) -> void:
@@ -31,6 +52,7 @@ func setup(owner_lighting: LightingManager, owner_camera: Camera2D) -> void:
 
 func _ready() -> void:
 
+	add_to_group(&"atmospheric_fog")
 	_build_overlay()
 
 

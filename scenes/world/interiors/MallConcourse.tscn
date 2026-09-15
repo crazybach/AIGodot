@@ -1,0 +1,543 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/world/InteriorProp.gd" id="1"]
+
+[node name="Interior" type="Node2D"]
+
+[node name="Atrium" type="Node2D" parent="."]
+position = Vector2(795, 675)
+script = ExtResource("1")
+title = "Atrium"
+kind = "floor"
+size = Vector2(590, 420)
+tint = Color(0.40, 0.48, 0.47, 1)
+solid = false
+storage_enabled = false
+
+[node name="Concourse" type="Node2D" parent="."]
+position = Vector2(780, 365)
+script = ExtResource("1")
+title = "Concourse"
+kind = "floor"
+size = Vector2(310, 430)
+tint = Color(0.37, 0.44, 0.44, 1)
+solid = false
+storage_enabled = false
+
+[node name="EntryMat" type="Node2D" parent="."]
+position = Vector2(775, 1070)
+script = ExtResource("1")
+title = "EntryMat"
+kind = "floor"
+size = Vector2(180, 150)
+tint = Color(0.28, 0.39, 0.38, 1)
+solid = false
+storage_enabled = false
+
+[node name="Fountain" type="Node2D" parent="."]
+position = Vector2(780, 660)
+script = ExtResource("1")
+title = "Fountain"
+kind = "planter"
+size = Vector2(150, 110)
+tint = Color(0.38, 0.56, 0.58, 1)
+solid = true
+storage_enabled = false
+
+[node name="BenchWest" type="Node2D" parent="."]
+position = Vector2(585, 670)
+script = ExtResource("1")
+title = "BenchWest"
+kind = "bench"
+size = Vector2(32, 120)
+tint = Color(0.40, 0.49, 0.48, 1)
+solid = true
+storage_enabled = false
+
+[node name="BenchEast" type="Node2D" parent="."]
+position = Vector2(995, 670)
+script = ExtResource("1")
+title = "BenchEast"
+kind = "bench"
+size = Vector2(32, 120)
+tint = Color(0.40, 0.49, 0.48, 1)
+solid = true
+storage_enabled = false
+
+[node name="PlantNorth" type="Node2D" parent="."]
+position = Vector2(780, 505)
+script = ExtResource("1")
+title = "PlantNorth"
+kind = "planter"
+size = Vector2(48, 48)
+tint = Color(0.40, 0.49, 0.48, 1)
+solid = true
+storage_enabled = false
+
+[node name="PlantSouth" type="Node2D" parent="."]
+position = Vector2(780, 825)
+script = ExtResource("1")
+title = "PlantSouth"
+kind = "planter"
+size = Vector2(48, 48)
+tint = Color(0.40, 0.49, 0.48, 1)
+solid = true
+storage_enabled = false
+
+[node name="GroceryFloor" type="Node2D" parent="."]
+position = Vector2(225, 245)
+script = ExtResource("1")
+title = "GroceryFloor"
+kind = "floor"
+size = Vector2(370, 290)
+tint = Color(0.47, 0.48, 0.44, 1)
+solid = false
+storage_enabled = false
+
+[node name="GroceryBack" type="Node2D" parent="."]
+position = Vector2(225, 100)
+script = ExtResource("1")
+title = "GroceryBack"
+kind = "wall"
+size = Vector2(370, 10)
+tint = Color(0.64, 0.67, 0.63, 1)
+solid = true
+storage_enabled = false
+
+[node name="GroceryLeft" type="Node2D" parent="."]
+position = Vector2(40, 245)
+script = ExtResource("1")
+title = "GroceryLeft"
+kind = "wall"
+size = Vector2(10, 290)
+tint = Color(0.64, 0.67, 0.63, 1)
+solid = true
+storage_enabled = false
+
+[node name="GroceryRight" type="Node2D" parent="."]
+position = Vector2(410, 245)
+script = ExtResource("1")
+title = "GroceryRight"
+kind = "wall"
+size = Vector2(10, 290)
+tint = Color(0.64, 0.67, 0.63, 1)
+solid = true
+storage_enabled = false
+
+[node name="GroceryFrontLeft" type="Node2D" parent="."]
+position = Vector2(100, 390)
+script = ExtResource("1")
+title = "GroceryFrontLeft"
+kind = "wall"
+size = Vector2(120, 10)
+tint = Color(0.64, 0.67, 0.63, 1)
+solid = true
+storage_enabled = false
+
+[node name="GroceryFrontRight" type="Node2D" parent="."]
+position = Vector2(350, 390)
+script = ExtResource("1")
+title = "GroceryFrontRight"
+kind = "wall"
+size = Vector2(120, 10)
+tint = Color(0.64, 0.67, 0.63, 1)
+solid = true
+storage_enabled = false
+
+[node name="ClothingFloor" type="Node2D" parent="."]
+position = Vector2(725, 192.5)
+script = ExtResource("1")
+title = "ClothingFloor"
+kind = "floor"
+size = Vector2(520, 245)
+tint = Color(0.47, 0.48, 0.44, 1)
+solid = false
+storage_enabled = false
+
+[node name="ClothingBack" type="Node2D" parent="."]
+position = Vector2(725, 70)
+script = ExtResource("1")
+title = "ClothingBack"
+kind = "wall"
+size = Vector2(520, 10)
+tint = Color(0.64, 0.67, 0.63, 1)
+solid = true
+storage_enabled = false
+
+[node name="ClothingLeft" type="Node2D" parent="."]
+position = Vector2(465, 192.5)
+script = ExtResource("1")
+title = "ClothingLeft"
+kind = "wall"
+size = Vector2(10, 245)
+tint = Color(0.64, 0.67, 0.63, 1)
+solid = true
+storage_enabled = false
+
+[node name="ClothingRight" type="Node2D" parent="."]
+position = Vector2(985, 192.5)
+script = ExtResource("1")
+title = "ClothingRight"
+kind = "wall"
+size = Vector2(10, 245)
+tint = Color(0.64, 0.67, 0.63, 1)
+solid = true
+storage_enabled = false
+
+[node name="ClothingFrontLeft" type="Node2D" parent="."]
+position = Vector2(550, 315)
+script = ExtResource("1")
+title = "ClothingFrontLeft"
+kind = "wall"
+size = Vector2(170, 10)
+tint = Color(0.64, 0.67, 0.63, 1)
+solid = true
+storage_enabled = false
+
+[node name="ClothingFrontRight" type="Node2D" parent="."]
+position = Vector2(900, 315)
+script = ExtResource("1")
+title = "ClothingFrontRight"
+kind = "wall"
+size = Vector2(170, 10)
+tint = Color(0.64, 0.67, 0.63, 1)
+solid = true
+storage_enabled = false
+
+[node name="PharmacyFloor" type="Node2D" parent="."]
+position = Vector2(1300, 515)
+script = ExtResource("1")
+title = "PharmacyFloor"
+kind = "floor"
+size = Vector2(380, 300)
+tint = Color(0.47, 0.48, 0.44, 1)
+solid = false
+storage_enabled = false
+
+[node name="PharmacyBack" type="Node2D" parent="."]
+position = Vector2(1300, 365)
+script = ExtResource("1")
+title = "PharmacyBack"
+kind = "wall"
+size = Vector2(380, 10)
+tint = Color(0.64, 0.67, 0.63, 1)
+solid = true
+storage_enabled = false
+
+[node name="PharmacyLeft" type="Node2D" parent="."]
+position = Vector2(1110, 515)
+script = ExtResource("1")
+title = "PharmacyLeft"
+kind = "wall"
+size = Vector2(10, 300)
+tint = Color(0.64, 0.67, 0.63, 1)
+solid = true
+storage_enabled = false
+
+[node name="PharmacyRight" type="Node2D" parent="."]
+position = Vector2(1490, 515)
+script = ExtResource("1")
+title = "PharmacyRight"
+kind = "wall"
+size = Vector2(10, 300)
+tint = Color(0.64, 0.67, 0.63, 1)
+solid = true
+storage_enabled = false
+
+[node name="PharmacyFrontLeft" type="Node2D" parent="."]
+position = Vector2(1172.5, 665)
+script = ExtResource("1")
+title = "PharmacyFrontLeft"
+kind = "wall"
+size = Vector2(125, 10)
+tint = Color(0.64, 0.67, 0.63, 1)
+solid = true
+storage_enabled = false
+
+[node name="PharmacyFrontRight" type="Node2D" parent="."]
+position = Vector2(1427.5, 665)
+script = ExtResource("1")
+title = "PharmacyFrontRight"
+kind = "wall"
+size = Vector2(125, 10)
+tint = Color(0.64, 0.67, 0.63, 1)
+solid = true
+storage_enabled = false
+
+[node name="OutdoorsFloor" type="Node2D" parent="."]
+position = Vector2(235, 910)
+script = ExtResource("1")
+title = "OutdoorsFloor"
+kind = "floor"
+size = Vector2(390, 270)
+tint = Color(0.47, 0.48, 0.44, 1)
+solid = false
+storage_enabled = false
+
+[node name="OutdoorsBack" type="Node2D" parent="."]
+position = Vector2(235, 775)
+script = ExtResource("1")
+title = "OutdoorsBack"
+kind = "wall"
+size = Vector2(390, 10)
+tint = Color(0.64, 0.67, 0.63, 1)
+solid = true
+storage_enabled = false
+
+[node name="OutdoorsLeft" type="Node2D" parent="."]
+position = Vector2(40, 910)
+script = ExtResource("1")
+title = "OutdoorsLeft"
+kind = "wall"
+size = Vector2(10, 270)
+tint = Color(0.64, 0.67, 0.63, 1)
+solid = true
+storage_enabled = false
+
+[node name="OutdoorsRight" type="Node2D" parent="."]
+position = Vector2(430, 910)
+script = ExtResource("1")
+title = "OutdoorsRight"
+kind = "wall"
+size = Vector2(10, 270)
+tint = Color(0.64, 0.67, 0.63, 1)
+solid = true
+storage_enabled = false
+
+[node name="OutdoorsFrontLeft" type="Node2D" parent="."]
+position = Vector2(105, 1045)
+script = ExtResource("1")
+title = "OutdoorsFrontLeft"
+kind = "wall"
+size = Vector2(130, 10)
+tint = Color(0.64, 0.67, 0.63, 1)
+solid = true
+storage_enabled = false
+
+[node name="OutdoorsFrontRight" type="Node2D" parent="."]
+position = Vector2(365, 1045)
+script = ExtResource("1")
+title = "OutdoorsFrontRight"
+kind = "wall"
+size = Vector2(130, 10)
+tint = Color(0.64, 0.67, 0.63, 1)
+solid = true
+storage_enabled = false
+
+[node name="GroceryShelf0" type="Node2D" parent="."]
+position = Vector2(110, 200)
+script = ExtResource("1")
+title = "Grocery shelf"
+kind = "shelf"
+size = Vector2(64, 125)
+tint = Color(0.40, 0.49, 0.48, 1)
+solid = true
+storage_enabled = true
+starting_items = {&"canned_beans": 2, &"apple": 2, &"bottled_water": 2}
+
+[node name="GroceryShelf1" type="Node2D" parent="."]
+position = Vector2(220, 200)
+script = ExtResource("1")
+title = "Grocery shelf"
+kind = "shelf"
+size = Vector2(64, 125)
+tint = Color(0.40, 0.49, 0.48, 1)
+solid = true
+storage_enabled = true
+starting_items = {&"canned_beans": 2, &"apple": 2, &"bottled_water": 2}
+
+[node name="GroceryShelf2" type="Node2D" parent="."]
+position = Vector2(330, 200)
+script = ExtResource("1")
+title = "Grocery shelf"
+kind = "shelf"
+size = Vector2(64, 125)
+tint = Color(0.40, 0.49, 0.48, 1)
+solid = true
+storage_enabled = true
+starting_items = {&"canned_beans": 2, &"apple": 2, &"bottled_water": 2}
+
+[node name="GroceryCounter" type="Node2D" parent="."]
+position = Vector2(125, 330)
+script = ExtResource("1")
+title = "Checkout storage"
+kind = "counter"
+size = Vector2(95, 35)
+tint = Color(0.40, 0.49, 0.48, 1)
+solid = true
+storage_enabled = true
+starting_items = {&"bottled_water": 3}
+
+[node name="ClothesCloset" type="Node2D" parent="."]
+position = Vector2(540, 135)
+script = ExtResource("1")
+title = "Clothing stock cabinet"
+kind = "closet"
+size = Vector2(95, 40)
+tint = Color(0.40, 0.49, 0.48, 1)
+solid = true
+storage_enabled = true
+starting_items = {&"cargo_pants": 1, &"work_boots": 1}
+
+[node name="ClothesRack" type="Node2D" parent="."]
+position = Vector2(760, 160)
+script = ExtResource("1")
+title = "Travel bag rack"
+kind = "shelf"
+size = Vector2(190, 40)
+tint = Color(0.40, 0.49, 0.48, 1)
+solid = true
+storage_enabled = true
+starting_items = {&"canvas_backpack": 1}
+
+[node name="PharmacyCabinet" type="Node2D" parent="."]
+position = Vector2(1190, 435)
+script = ExtResource("1")
+title = "Pharmacy cabinet"
+kind = "closet"
+size = Vector2(100, 45)
+tint = Color(0.40, 0.49, 0.48, 1)
+solid = true
+storage_enabled = true
+starting_items = {&"field_medkit": 2, &"antiseptic": 3, &"painkillers": 2}
+
+[node name="PharmacyCounter" type="Node2D" parent="."]
+position = Vector2(1340, 535)
+script = ExtResource("1")
+title = "Prescription counter"
+kind = "counter"
+size = Vector2(190, 42)
+tint = Color(0.40, 0.49, 0.48, 1)
+solid = true
+storage_enabled = true
+starting_items = {&"field_medkit": 1}
+
+[node name="SportsCabinet" type="Node2D" parent="."]
+position = Vector2(110, 840)
+script = ExtResource("1")
+title = "Outdoor equipment closet"
+kind = "closet"
+size = Vector2(90, 45)
+tint = Color(0.40, 0.49, 0.48, 1)
+solid = true
+storage_enabled = true
+starting_items = {&"arrow": 12, &"portable_ladder": 1}
+
+[node name="SportsRack" type="Node2D" parent="."]
+position = Vector2(305, 850)
+script = ExtResource("1")
+title = "Camping supplies"
+kind = "shelf"
+size = Vector2(120, 42)
+tint = Color(0.40, 0.49, 0.48, 1)
+solid = true
+storage_enabled = true
+starting_items = {&"flashlight": 1, &"battery_cell": 4, &"fire_torch": 1}
+
+[node name="ServiceLocker" type="Node2D" parent="."]
+position = Vector2(1440, 1050)
+script = ExtResource("1")
+title = "Mall maintenance locker"
+kind = "closet"
+size = Vector2(90, 45)
+tint = Color(0.40, 0.49, 0.48, 1)
+solid = true
+storage_enabled = true
+starting_items = {&"scrap_metal": 4, &"battery_cell": 2}
+
+[node name="FoodCourtTable0" type="Node2D" parent="."]
+position = Vector2(1200, 790)
+script = ExtResource("1")
+title = "FoodCourtTable0"
+kind = "table"
+size = Vector2(60, 60)
+tint = Color(0.58, 0.51, 0.39, 1)
+solid = true
+storage_enabled = false
+
+[node name="FoodCourtTable1" type="Node2D" parent="."]
+position = Vector2(1370, 790)
+script = ExtResource("1")
+title = "FoodCourtTable1"
+kind = "table"
+size = Vector2(60, 60)
+tint = Color(0.58, 0.51, 0.39, 1)
+solid = true
+storage_enabled = false
+
+[node name="FoodCourtTable2" type="Node2D" parent="."]
+position = Vector2(1200, 910)
+script = ExtResource("1")
+title = "FoodCourtTable2"
+kind = "table"
+size = Vector2(60, 60)
+tint = Color(0.58, 0.51, 0.39, 1)
+solid = true
+storage_enabled = false
+
+[node name="FoodCourtTable3" type="Node2D" parent="."]
+position = Vector2(1370, 910)
+script = ExtResource("1")
+title = "FoodCourtTable3"
+kind = "table"
+size = Vector2(60, 60)
+tint = Color(0.58, 0.51, 0.39, 1)
+solid = true
+storage_enabled = false
+
+[node name="Sign0" type="Label" parent="."]
+offset_left = 560
+offset_top = 435
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.75, 0.82, 0.77, 1)
+theme_override_font_sizes/font_size = 23
+text = "ASHDOWN GALLERIA / ATRIUM"
+
+[node name="Sign1" type="Label" parent="."]
+offset_left = 70
+offset_top = 110
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.75, 0.82, 0.77, 1)
+theme_override_font_sizes/font_size = 16
+text = "FRESH MART"
+
+[node name="Sign2" type="Label" parent="."]
+offset_left = 490
+offset_top = 80
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.75, 0.82, 0.77, 1)
+theme_override_font_sizes/font_size = 16
+text = "CLOTHING / TRAVEL"
+
+[node name="Sign3" type="Label" parent="."]
+offset_left = 1140
+offset_top = 380
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.75, 0.82, 0.77, 1)
+theme_override_font_sizes/font_size = 16
+text = "PHARMACY"
+
+[node name="Sign4" type="Label" parent="."]
+offset_left = 65
+offset_top = 785
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.75, 0.82, 0.77, 1)
+theme_override_font_sizes/font_size = 16
+text = "OUTDOOR SUPPLY"
+
+[node name="Sign5" type="Label" parent="."]
+offset_left = 1160
+offset_top = 705
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.75, 0.82, 0.77, 1)
+theme_override_font_sizes/font_size = 18
+text = "FOOD COURT"
+
+[node name="Sign6" type="Label" parent="."]
+offset_left = 1080
+offset_top = 1085
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.75, 0.82, 0.77, 1)
+theme_override_font_sizes/font_size = 14
+text = "LIFT / ROOF ACCESS"
+

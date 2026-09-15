@@ -1,0 +1,91 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/world/InteriorProp.gd" id="1"]
+
+[node name="Interior" type="Node2D"]
+
+[node name="Freight0" type="Node2D" parent="."]
+position = Vector2(120, 120)
+script = ExtResource("1")
+title = "Freight crate"
+kind = "crate"
+size = Vector2(95, 75)
+tint = Color(0.40, 0.49, 0.48, 1)
+solid = true
+storage_enabled = true
+starting_items = {&"canned_beans": 3, &"bottled_water": 2}
+
+[node name="Freight1" type="Node2D" parent="."]
+position = Vector2(290, 120)
+script = ExtResource("1")
+title = "Freight crate"
+kind = "crate"
+size = Vector2(95, 75)
+tint = Color(0.40, 0.49, 0.48, 1)
+solid = true
+storage_enabled = true
+starting_items = {&"scrap_metal": 4, &"battery_cell": 2}
+
+[node name="Freight2" type="Node2D" parent="."]
+position = Vector2(460, 120)
+script = ExtResource("1")
+title = "Freight crate"
+kind = "crate"
+size = Vector2(95, 75)
+tint = Color(0.40, 0.49, 0.48, 1)
+solid = true
+storage_enabled = true
+starting_items = {&"canned_beans": 3, &"bottled_water": 2}
+
+[node name="Freight3" type="Node2D" parent="."]
+position = Vector2(630, 120)
+script = ExtResource("1")
+title = "Freight crate"
+kind = "crate"
+size = Vector2(95, 75)
+tint = Color(0.40, 0.49, 0.48, 1)
+solid = true
+storage_enabled = true
+starting_items = {&"scrap_metal": 4, &"battery_cell": 2}
+
+[node name="Supply0" type="Node2D" parent="."]
+position = Vector2(160, 340)
+script = ExtResource("1")
+title = "Maintenance supplies"
+kind = "shelf"
+size = Vector2(135, 42)
+tint = Color(0.40, 0.49, 0.48, 1)
+solid = true
+storage_enabled = true
+starting_items = {&"ammo_9mm": 20, &"portable_ladder": 1}
+
+[node name="Supply1" type="Node2D" parent="."]
+position = Vector2(370, 340)
+script = ExtResource("1")
+title = "Maintenance supplies"
+kind = "shelf"
+size = Vector2(135, 42)
+tint = Color(0.40, 0.49, 0.48, 1)
+solid = true
+storage_enabled = true
+starting_items = {&"ammo_9mm": 20}
+
+[node name="Supply2" type="Node2D" parent="."]
+position = Vector2(580, 340)
+script = ExtResource("1")
+title = "Maintenance supplies"
+kind = "shelf"
+size = Vector2(135, 42)
+tint = Color(0.40, 0.49, 0.48, 1)
+solid = true
+storage_enabled = true
+starting_items = {&"ammo_9mm": 20}
+
+[node name="Sign0" type="Label" parent="."]
+offset_left = 40
+offset_top = 235
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.75, 0.82, 0.77, 1)
+theme_override_font_sizes/font_size = 21
+text = "RECEIVING / LOADING BAY"
+

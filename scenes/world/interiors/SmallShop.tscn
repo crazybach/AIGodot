@@ -1,0 +1,47 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/world/InteriorProp.gd" id="1"]
+
+[node name="Interior" type="Node2D"]
+
+[node name="Counter" type="Node2D" parent="."]
+position = Vector2(110, 95)
+script = ExtResource("1")
+title = "Corner shop counter"
+kind = "counter"
+size = Vector2(160, 40)
+tint = Color(0.40, 0.49, 0.48, 1)
+solid = true
+storage_enabled = true
+starting_items = {&"apple": 3, &"bottled_water": 2}
+
+[node name="Pantry" type="Node2D" parent="."]
+position = Vector2(80, 240)
+script = ExtResource("1")
+title = "Pantry shelves"
+kind = "shelf"
+size = Vector2(100, 44)
+tint = Color(0.40, 0.49, 0.48, 1)
+solid = true
+storage_enabled = true
+starting_items = {&"canned_beans": 3, &"bottled_water": 2}
+
+[node name="Closet" type="Node2D" parent="."]
+position = Vector2(210, 240)
+script = ExtResource("1")
+title = "Store cupboard"
+kind = "closet"
+size = Vector2(65, 38)
+tint = Color(0.40, 0.49, 0.48, 1)
+solid = true
+storage_enabled = true
+starting_items = {&"battery_cell": 2, &"flashlight": 1}
+
+[node name="Sign0" type="Label" parent="."]
+offset_left = 35
+offset_top = 145
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.75, 0.82, 0.77, 1)
+theme_override_font_sizes/font_size = 17
+text = "CORNER MARKET"
+

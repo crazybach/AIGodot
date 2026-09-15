@@ -2,6 +2,11 @@
 Read this before changing items, inventory, equipment, weapons, lights, throwing,
 trade, or their UI. This is an implementation map; the GDDs describe design intent.
 
+World ownership: read [AI_AGENT_WORLD_LAYERS.md](AI_AGENT_WORLD_LAYERS.md) before
+spawning world items/projectiles. Actors now belong to the active WorldLayer;
+elevators reparent the same player. `ConstructionComponent` lets a portable ladder
+be consumed by a matching rooftop crossing. Inactive floors retain state off-tree.
+
 ## Field collection extension (2026-09)
 
 Start with [GDD_FIELD_COLLECTION.md](GDD_FIELD_COLLECTION.md) for the 50-item roster,

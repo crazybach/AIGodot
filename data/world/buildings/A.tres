@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="BuildingDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/world/BuildingDefinition.gd" id="1"]
+[ext_resource type="PackedScene" path="res://scenes/world/interiors/ApartmentLobby.tscn" id="2"]
+[ext_resource type="PackedScene" path="res://scenes/world/interiors/RoofUtilities.tscn" id="3"]
+
+[resource]
+script = ExtResource("1")
+id = &"A"
+title = "ASHDOWN APARTMENTS"
+footprint = PackedVector2Array(0, 0, 420, 0, 420, 300, 190, 300, 190, 390, 0, 390)
+doors = PackedVector2Array(300, 300)
+door_width = 112.0
+elevator = Vector2(333, 87)
+ground_interior = ExtResource("2")
+roof_interior = ExtResource("3")
+

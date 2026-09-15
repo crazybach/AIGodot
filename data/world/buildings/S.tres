@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="BuildingDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/world/BuildingDefinition.gd" id="1"]
+[ext_resource type="PackedScene" path="res://scenes/world/interiors/SmallShop.tscn" id="2"]
+[ext_resource type="PackedScene" path="res://scenes/world/interiors/RoofUtilities.tscn" id="3"]
+
+[resource]
+script = ExtResource("1")
+id = &"S"
+title = "CORNER MARKET"
+footprint = PackedVector2Array(0, 0, 460, 0, 460, 360, 0, 360)
+doors = PackedVector2Array(230, 360)
+door_width = 112.0
+elevator = Vector2(355, 85)
+ground_interior = ExtResource("2")
+roof_interior = ExtResource("3")
+
