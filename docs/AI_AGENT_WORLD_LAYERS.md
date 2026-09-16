@@ -60,7 +60,7 @@ lie exactly on polygon edges. The builder asserts invalid authoring early.
 | `RooftopBridge.gd` | Construction capability → consume item → open crossing |
 | `DistrictHUD.gd` | Scaled irregular-footprint map and contextual prompts |
 | `EnvironmentExposureComponent.gd` | Passive stamina depletion then mist damage |
-| `GameManager.gd` | Services, assembly, encounters, E interaction routing |
+| `GameManager.gd` | Services, assembly, encounters, NPC spawning, E interaction routing |
 
 `GameManager → LayerManager → active WorldLayer → actors/items/props`. Lighting, fog,
 weapon database and HUD remain session services. Spawn bullets, AoEs and dropped items
@@ -74,6 +74,15 @@ Storage reuses `ItemContainerComponent`; no loot-specific item state exists. The
 inventory UI uses the same ItemSlotWidgets as trade, but moves stacks directly without
 currency. Click/drag supports backpack ↔ storage. Containers and their stack instances
 remain on the cached floor through roof travel.
+
+## Rooftop social actors
+
+`GameManager._spawn_rooftop_npcs()` loads ten records from
+`data/npc_rooftop_content.json`, initializes their composed components once, and
+caches them under the detached roof layer. `SurvivorNPC` instances join the same
+`WorldLayer.interactables` list as elevators and containers, so E-routing remains
+distance based. Dialogue, quests, relationship changes, and optional two-pack
+trade are documented in `docs/GDD_NPC_DIALOGUE_QUESTS.md`.
 
 Add a new floor or room as a WorldLayer, assign a unique definition ID and entries,
 register it, then point LayerPortals at `(destination_id, entry_id)`. The player,

@@ -1,0 +1,423 @@
+{
+  "quests": [
+    {
+      "id": "emergency_power",
+      "title": "Emergency Power",
+      "description": "Bring two D-cell batteries to Imani so the rooftop repeater can survive the night.",
+      "objectives": [{"type": "item", "item_id": "battery_cell", "amount": 2, "consume": true}],
+      "rewards": {"scrip": 35, "relationship": 8}
+    },
+    {
+      "id": "roof_clinic",
+      "title": "The Roof Clinic",
+      "description": "Deliver a field medkit to Doctor Park before the rooftop clinic runs dry.",
+      "objectives": [{"type": "item", "item_id": "field_medkit", "amount": 1, "consume": true}],
+      "rewards": {"scrip": 45, "relationship": 10}
+    },
+    {
+      "id": "thin_the_mist",
+      "title": "Thin the Mist",
+      "description": "Destroy three creatures at street level so Mateo can reopen a supply route.",
+      "objectives": [{"type": "event", "event_id": "mist_kill", "label": "Mist creatures stopped", "amount": 3}],
+      "rewards": {"scrip": 70, "relationship": 12}
+    },
+    {
+      "id": "voices_on_roofs",
+      "title": "Voices on the Roofs",
+      "description": "Meet five rooftop survivors and carry their names back to Grace.",
+      "objectives": [{"type": "meet_npcs", "amount": 5}],
+      "rewards": {"scrip": 40, "relationship": 9}
+    },
+    {
+      "id": "bridge_parts",
+      "title": "One More Crossing",
+      "description": "Bring Tomas a portable ladder for a new route between isolated roofs.",
+      "objectives": [{"type": "item", "item_id": "portable_ladder", "amount": 1, "consume": true}],
+      "rewards": {"scrip": 65, "relationship": 9}
+    },
+    {
+      "id": "signal_fire",
+      "title": "Signal Fire",
+      "description": "Find an emergency flare for Malik's rescue signal.",
+      "objectives": [{"type": "item", "item_id": "flare_light", "amount": 1, "consume": true}],
+      "rewards": {"scrip": 30, "relationship": 7}
+    },
+    {
+      "id": "supper_for_two",
+      "title": "Supper for Two",
+      "description": "Bring two cans of food for Nia and her missing brother.",
+      "objectives": [{"type": "item", "item_id": "canned_beans", "amount": 2, "consume": true}],
+      "rewards": {"scrip": 25, "relationship": 10}
+    }
+  ],
+  "npcs": [
+    {
+      "id": "imani_okafor",
+      "name": "Imani Okafor",
+      "role": "Rooftop Quartermaster",
+      "age_group": "adult",
+      "pronouns": "she/her",
+      "position": [-570, -225],
+      "empathy": 0.66,
+      "caution": 0.78,
+      "aggression": 0.14,
+      "can_trade": true,
+      "scrip": 900,
+      "slots": 48,
+      "weight_capacity": 180,
+      "stock": [["ammo_9mm", 30], ["ammo_762", 30], ["ammo_shell", 12], ["field_medkit", 2], ["bottled_water", 4], ["battery_cell", 4], ["portable_ladder", 1]],
+      "quest_id": "emergency_power",
+      "appearance": {"skin": "#70452f", "coat": "#547064", "hair": "#17191d"},
+      "dialogue": {
+        "greetings": {
+          "low": "Stop there. I remember how you spoke to people. Say what you need and keep your hands where I can see them.",
+          "neutral": "You made it above the mist. Good. I am Imani. Everything on these roofs has a name, an owner, and a cost.",
+          "high": "There you are. I kept the useful stock aside; people I trust should not have to bargain with panic."
+        },
+        "progress": [
+          {"min": 0, "text": "The repeater dies whenever the sun drops. Without it, the roofs become ten separate islands."},
+          {"min": 2, "text": "Word is moving again. The roofs know someone is crossing the gaps and coming back alive."},
+          {"min": 5, "text": "We are starting to look like a settlement instead of a collection of last mistakes."}
+        ],
+        "topics": [
+          {"id": "imani_order", "text": "Keeping a ledger now is how people learn to trust tomorrow.", "tone": "positive", "relationship_delta": 3, "response": "Exactly. I count tins and rounds, but what I am really counting is promises. A roof survives when both totals balance."},
+          {"id": "imani_prices", "text": "Your prices are steep for supplies people need.", "tone": "negative", "relationship_delta": -4, "response": "The price stops one frightened person from taking every bandage. Bring me a fairer system that still works at midnight, and I will use it."},
+          {"id": "imani_portal", "text": "What did you see when the breach opened?", "tone": "neutral", "relationship_delta": 0, "response": "A second skyline behind the first. Then the mist folded the street in half. I stopped looking when something looked back."}
+        ],
+        "quest_prompt": "[Quest: Emergency Power] I can bring two D-cell batteries.",
+        "quest_offer": "Take this seriously. Two sealed D-cells will keep the emergency repeater alive through one night. Bring them to me intact.",
+        "quest_active": "The repeater is still coughing static. I need two D-cell batteries, not promises.",
+        "quest_turn_in": "I have the two batteries for the repeater.",
+        "quest_complete": "Good. Tonight every roof will hear the warning if the things in the mist start climbing. Take the scrip; you earned more than that."
+      }
+    },
+    {
+      "id": "lena_park",
+      "name": "Dr. Lena Park",
+      "role": "Emergency Physician",
+      "age_group": "middle-aged",
+      "pronouns": "she/her",
+      "position": [180, -330],
+      "empathy": 0.82,
+      "caution": 0.61,
+      "aggression": 0.08,
+      "can_trade": true,
+      "scrip": 240,
+      "slots": 20,
+      "stock": [["antiseptic", 4], ["painkillers", 5], ["bottled_water", 3]],
+      "quest_id": "roof_clinic",
+      "appearance": {"skin": "#d2a17f", "coat": "#6e8790", "hair": "#24282e"},
+      "dialogue": {
+        "greetings": {
+          "low": "If you are here to shout, do it away from my patients.",
+          "neutral": "I am Doctor Park. I have a tarp, rainwater, and six people pretending their wounds are clean.",
+          "high": "I am glad it is you. Sit for ten seconds and let me see whether the mist has left anything under your skin."
+        },
+        "progress": [
+          {"min": 0, "text": "The first symptom is exhaustion. The second is insisting the whispering is only wind."},
+          {"min": 2, "text": "Fewer patients are arriving. I cannot decide whether that is good news."},
+          {"min": 5, "text": "We have a real clinic now. Small, cold, and real."}
+        ],
+        "topics": [
+          {"id": "lena_help", "text": "Tell me who needs help first.", "tone": "positive", "relationship_delta": 3, "response": "The quiet ones. Panic is loud enough to triage itself. Check the person who says they are fine and cannot stop shaking."},
+          {"id": "lena_truth", "text": "Are the people touched by the mist still human?", "tone": "neutral", "relationship_delta": 0, "response": "That is a moral question wearing a medical coat. Their blood changes. Their memories do not, at least not immediately."},
+          {"id": "lena_abandon", "text": "You cannot save everyone. Stop wasting supplies.", "tone": "negative", "relationship_delta": -5, "response": "I choose who can be saved every hour. You do not get to make that sound easy for me."}
+        ],
+        "quest_prompt": "[Quest: The Roof Clinic] What supplies are you missing?",
+        "quest_offer": "A proper field medkit. One. There is a child with glass near an artery, and my clean gauze is almost gone.",
+        "quest_active": "I can hold the bleeding for now. Bring one field medkit before 'for now' becomes an obituary.",
+        "quest_turn_in": "Here is the field medkit. Use it on the child.",
+        "quest_complete": "Set it here. Good. You bought someone a future; do not let anyone reduce that to inventory."
+      }
+    },
+    {
+      "id": "mateo_ruiz",
+      "name": "Mateo Ruiz",
+      "role": "Bike Courier",
+      "age_group": "young adult",
+      "pronouns": "he/him",
+      "position": [900, -300],
+      "empathy": 0.58,
+      "caution": 0.34,
+      "aggression": 0.47,
+      "can_trade": false,
+      "scrip": 110,
+      "stock": [["apple", 2], ["stone", 3]],
+      "quest_id": "thin_the_mist",
+      "appearance": {"skin": "#a86848", "coat": "#a34e42", "hair": "#1c1716"},
+      "dialogue": {
+        "greetings": {
+          "low": "Great. The rooftop hero. Try not to solve me while you are here.",
+          "neutral": "Mateo. I used to deliver noodles in eleven minutes. Now I deliver bad news across rooftops.",
+          "high": "My favorite impossible delivery. Tell me you found another way through."
+        },
+        "progress": [
+          {"min": 0, "text": "The service alley below is blocked by three of those pale crawlers. They barely see, but they hear everything."},
+          {"min": 2, "text": "The route map is growing. I mark safe crossings in blue and missing people in red."},
+          {"min": 5, "text": "Yesterday this map was mostly red. You are changing the color of the city."}
+        ],
+        "topics": [
+          {"id": "mateo_courage", "text": "Being afraid and running messages anyway is courage.", "tone": "positive", "relationship_delta": 3, "response": "That sounds better than 'too scared to stay still.' I will borrow your version."},
+          {"id": "mateo_route", "text": "Which street route still works?", "tone": "neutral", "relationship_delta": 0, "response": "Cut through the Galleria lobby, stay off the tile near the eggs, then take the loading corridor north. Never sprint blind in fog."},
+          {"id": "mateo_reckless", "text": "If you were faster, those people would already have supplies.", "tone": "negative", "relationship_delta": -5, "response": "Fast does not help when the road grows teeth. You want the route sooner, walk it yourself."}
+        ],
+        "quest_prompt": "[Quest: Thin the Mist] I can clear your service route.",
+        "quest_offer": "Drop three mist creatures near the service alley. Any three. Once the noise stops, I can move medicine between the north roofs.",
+        "quest_active": "The route stays closed until three of them are down. Do not chase them deeper than you can see.",
+        "quest_turn_in": "The service route is clear. Three creatures are down.",
+        "quest_complete": "Then people eat tonight. Here, take my route money. I can earn more once the wheels turn again."
+      }
+    },
+    {
+      "id": "grace_holloway",
+      "name": "Grace Holloway",
+      "role": "Retired Librarian",
+      "age_group": "elder",
+      "pronouns": "she/her",
+      "position": [-1850, -1320],
+      "empathy": 0.91,
+      "caution": 0.72,
+      "aggression": 0.04,
+      "can_trade": false,
+      "scrip": 95,
+      "stock": [["canned_beans", 1], ["bottled_water", 1]],
+      "quest_id": "voices_on_roofs",
+      "appearance": {"skin": "#8b5a43", "coat": "#655a79", "hair": "#c7c4bd"},
+      "dialogue": {
+        "greetings": {
+          "low": "Names matter. Manners do too, though the end of the world has made both unfashionable.",
+          "neutral": "Grace Holloway. I kept the Northbank library for thirty-eight years. Now I keep the names of the living.",
+          "high": "Come here, dear. I saved a dry chair and one story that does not end in fog."
+        },
+        "progress": [
+          {"min": 0, "text": "People vanish twice: once in the mist, and once when nobody remembers their name."},
+          {"min": 2, "text": "Your list has become a web. People who thought they were alone can hear one another."},
+          {"min": 5, "text": "The archive has more living names than dead ones today. That is victory enough."}
+        ],
+        "topics": [
+          {"id": "grace_listen", "text": "Tell me one name I should remember.", "tone": "positive", "relationship_delta": 3, "response": "Daniel Holloway. My husband. He hated heights, loved apricot jam, and went downstairs to hold the lobby door. Remember all of it."},
+          {"id": "grace_history", "text": "Did the old books mention anything like the breach?", "tone": "neutral", "relationship_delta": 0, "response": "Not facts. Patterns. Doors opened by pride, bargains mistaken for experiments, and fog that behaves like a guest invited inside."},
+          {"id": "grace_past", "text": "Lists will not keep anyone alive.", "tone": "negative", "relationship_delta": -4, "response": "No. People keep people alive. A list reminds us who we are doing it for."}
+        ],
+        "quest_prompt": "[Quest: Voices on the Roofs] Whose names are missing?",
+        "quest_offer": "Meet five survivors on these roofs. Look at them when they speak. Bring their names back so no island believes it is alone.",
+        "quest_active": "Five living names. Not descriptions, not headcounts. Speak to them.",
+        "quest_turn_in": "I have met five rooftop survivors. I remember their names.",
+        "quest_complete": "Then write them here. The city is smaller now, in the best possible way."
+      }
+    },
+    {
+      "id": "jun_chen",
+      "name": "Jun Chen",
+      "role": "Radio Hobbyist",
+      "age_group": "teen",
+      "pronouns": "he/him",
+      "position": [-1880, -470],
+      "empathy": 0.52,
+      "caution": 0.48,
+      "aggression": 0.18,
+      "can_trade": true,
+      "scrip": 130,
+      "slots": 16,
+      "stock": [["circuit_board", 3], ["battery_cell", 2], ["radio_beacon", 1], ["cracked_lens", 1]],
+      "appearance": {"skin": "#d0a080", "coat": "#3f687b", "hair": "#15191f"},
+      "dialogue": {
+        "greetings": {
+          "low": "Do not touch the dial. Last person who did erased six hours of signal hunting.",
+          "neutral": "I am Jun. That clicking is not interference. Interference does not count backward in prime numbers.",
+          "high": "Perfect timing. The voice came back, and I need someone who will believe me before it stops."
+        },
+        "progress": [
+          {"min": 0, "text": "Every night at 02:13, someone broadcasts from below the Galleria. The message is only breathing and coordinates."},
+          {"min": 2, "text": "The repeater gave me a second bearing. The signal moves without using the streets."},
+          {"min": 5, "text": "I heard our own call sign answer from the other side of the breach, twelve seconds before I transmitted it."}
+        ],
+        "topics": [
+          {"id": "jun_believe", "text": "I believe you heard something. Save the recording.", "tone": "positive", "relationship_delta": 3, "response": "Already copied three times. Thank you for saying 'something.' Adults keep deciding what it is before they listen."},
+          {"id": "jun_frequency", "text": "Give me the frequency and coordinates.", "tone": "neutral", "relationship_delta": 0, "response": "Fourteen point zero seven megahertz. The coordinates resolve beneath the fountain, but the mall plans show no basement there."},
+          {"id": "jun_child", "text": "You are a kid playing with a broken radio.", "tone": "negative", "relationship_delta": -6, "response": "And you are an adult standing in an invasion pretending age is evidence. We are both disappointed."}
+        ]
+      }
+    },
+    {
+      "id": "nia_brooks",
+      "name": "Nia Brooks",
+      "role": "Rooftop Scout",
+      "age_group": "child",
+      "pronouns": "she/her",
+      "position": [170, 380],
+      "empathy": 0.77,
+      "caution": 0.55,
+      "aggression": 0.12,
+      "can_trade": false,
+      "scrip": 28,
+      "stock": [["stone", 4], ["apple", 1]],
+      "quest_id": "supper_for_two",
+      "appearance": {"skin": "#75472f", "coat": "#d18a43", "hair": "#211611"},
+      "dialogue": {
+        "greetings": {
+          "low": "Mum said not to trust people who make themselves feel tall by talking down to children.",
+          "neutral": "I am Nia. I can see three roofs from here and the monsters cannot see me if I stay behind the water tank.",
+          "high": "You came back! I kept watch like you said. Two crawlers went east and one climbed a bus, then fell off."
+        },
+        "progress": [
+          {"min": 0, "text": "My brother Leon is on another roof. He has a red coat. If you see red moving in the fog, check before you shoot."},
+          {"min": 2, "text": "Grace put Leon's name in her book. That means other people are looking too."},
+          {"min": 5, "text": "We made signal flags from hotel sheets. Mine means safe, danger, and bring chocolate."}
+        ],
+        "topics": [
+          {"id": "nia_scout", "text": "Your observations help everyone. Keep using cover.", "tone": "positive", "relationship_delta": 4, "response": "I write times too. Grown-ups say 'a while ago,' but a while is useless when you are counting monsters."},
+          {"id": "nia_leon", "text": "Tell me exactly where you last saw Leon.", "tone": "neutral", "relationship_delta": 0, "response": "West of the hotel, near the roof with the green chairs. He flashed a mirror twice before the fog got thick."},
+          {"id": "nia_inside", "text": "You should hide and leave scouting to adults.", "tone": "negative", "relationship_delta": -5, "response": "Adults did not notice the eggs until I showed them. I will hide when hiding is the useful job."}
+        ],
+        "quest_prompt": "[Quest: Supper for Two] Do you and Leon have food?",
+        "quest_offer": "I saved my apple, but Leon hates apples. Two cans would be enough if he gets back tonight. I can pay; I found scrip in the laundry room.",
+        "quest_active": "Two cans. One for me and one for Leon. I am not eating his, even if he is late.",
+        "quest_turn_in": "I brought two cans, one for each of you.",
+        "quest_complete": "Thank you. I knew he would need dinner when he comes back. That is not pretending. That is planning."
+      }
+    },
+    {
+      "id": "tomas_varga",
+      "name": "Tomas Varga",
+      "role": "Building Superintendent",
+      "age_group": "elder",
+      "pronouns": "he/him",
+      "position": [2030, 440],
+      "empathy": 0.42,
+      "caution": 0.86,
+      "aggression": 0.21,
+      "can_trade": true,
+      "scrip": 310,
+      "slots": 24,
+      "stock": [["scrap_metal", 8], ["hard_hat", 1], ["fire_torch", 1], ["work_boots", 1]],
+      "quest_id": "bridge_parts",
+      "appearance": {"skin": "#c08c6d", "coat": "#6f6248", "hair": "#b8b3a9"},
+      "dialogue": {
+        "greetings": {
+          "low": "You step over my tools again, you can fix your own elevator.",
+          "neutral": "Varga. Superintendent. The city forgot buildings are machines, so the machines chose today to complain.",
+          "high": "Good hands are rare. Yours keep returning with the same number of fingers, which is promising."
+        },
+        "progress": [
+          {"min": 0, "text": "Elevators still run because I bypassed every safety rule written after 1978."},
+          {"min": 2, "text": "New crossings change the load on old roofs. Walk near beams, not skylights."},
+          {"min": 5, "text": "Give me a week and I can turn these roofs into one ugly, defensible neighborhood."}
+        ],
+        "topics": [
+          {"id": "tomas_respect", "text": "The lifts are keeping people alive. Good work.", "tone": "positive", "relationship_delta": 3, "response": "Machines respond to respect. People too, occasionally. Keep the doors clear and listen for the second clunk."},
+          {"id": "tomas_bridge", "text": "Where should the next bridge go?", "tone": "neutral", "relationship_delta": 0, "response": "Depot to Galleria. Short span, strong parapets, and it joins food to shelter. I marked the brackets in orange."},
+          {"id": "tomas_rules", "text": "Just force every elevator door. We do not have time for caution.", "tone": "negative", "relationship_delta": -5, "response": "Force the wrong interlock and the car becomes a coffin with buttons. Caution is time you get to use later."}
+        ],
+        "quest_prompt": "[Quest: One More Crossing] What do you need for the depot bridge?",
+        "quest_offer": "A portable steel ladder. I will brace it and bolt the ends. Bring one, and two isolated roofs become neighbors.",
+        "quest_active": "One portable ladder. Do not bring rope and optimism; neither has a load rating.",
+        "quest_turn_in": "I have a portable ladder for the crossing.",
+        "quest_complete": "Straight rails, sound locks. This will hold. Stand back while I make it permanent."
+      }
+    },
+    {
+      "id": "asha_singh",
+      "name": "Asha Singh",
+      "role": "Portal Research Engineer",
+      "age_group": "young adult",
+      "pronouns": "she/her",
+      "position": [2150, -950],
+      "empathy": 0.39,
+      "caution": 0.69,
+      "aggression": 0.19,
+      "can_trade": false,
+      "scrip": 170,
+      "stock": [["cracked_lens", 1], ["void_resin", 1], ["circuit_board", 2]],
+      "appearance": {"skin": "#a96f50", "coat": "#465c79", "hair": "#171418"},
+      "dialogue": {
+        "greetings": {
+          "low": "If you came to blame a scientist, take a number. I am busy measuring the apocalypse.",
+          "neutral": "Asha Singh, Breach Dynamics. Before you ask: yes, our experiment opened it. No, it was not supposed to have weather.",
+          "high": "I need your field observations. You notice what instruments miss, and you do not faint when the answer moves."
+        },
+        "progress": [
+          {"min": 0, "text": "The mist is not vapor. It is a boundary condition pretending to be weather."},
+          {"min": 2, "text": "Every cleared route changes its flow. Something on the other side may be learning our map."},
+          {"min": 5, "text": "I can model a way to narrow the breach. Closing it is still a word, not a plan."}
+        ],
+        "topics": [
+          {"id": "asha_truth", "text": "Tell people the whole truth, even if they hate you for it.", "tone": "positive", "relationship_delta": 2, "response": "I released the logs. I left my name on them. Accountability will not close the breach, but secrecy helped open it."},
+          {"id": "asha_model", "text": "What does your model predict next?", "tone": "neutral", "relationship_delta": 0, "response": "A pressure pulse after midnight. The fog rises, electronics fail, and large organisms move toward concentrated heat."},
+          {"id": "asha_fault", "text": "Everyone below is there because of you.", "tone": "negative", "relationship_delta": -4, "response": "Some of them are. I carry that arithmetic every second. If punishment fixes the sky, tell me where to stand."}
+        ]
+      }
+    },
+    {
+      "id": "malik_reed",
+      "name": "Malik Reed",
+      "role": "Fire Captain",
+      "age_group": "adult",
+      "pronouns": "he/him",
+      "position": [-1680, 440],
+      "empathy": 0.73,
+      "caution": 0.63,
+      "aggression": 0.36,
+      "can_trade": true,
+      "scrip": 260,
+      "slots": 20,
+      "stock": [["fire_torch", 2], ["smoke_grenade", 1], ["gas_mask", 1], ["bottled_water", 2]],
+      "quest_id": "signal_fire",
+      "appearance": {"skin": "#623b2b", "coat": "#8b493c", "hair": "#1c1b1c"},
+      "dialogue": {
+        "greetings": {
+          "low": "I need clear answers and clear exits. If you cannot offer either, move.",
+          "neutral": "Captain Reed. We held the west stairwell until the fog started coming up through concrete.",
+          "high": "Good to see you upright. The rescue teams listen when I say your route is safe."
+        },
+        "progress": [
+          {"min": 0, "text": "I have people flashing mirrors from the west roofs. We need a signal they can see through the haze."},
+          {"min": 2, "text": "We pulled seven people across your routes. One had been trapped since the first night."},
+          {"min": 5, "text": "The crews have sectors now. We are responding instead of reacting."}
+        ],
+        "topics": [
+          {"id": "malik_crew", "text": "Your crew held longer than anyone had a right to expect.", "tone": "positive", "relationship_delta": 3, "response": "They held because someone behind them needed another minute. That is the whole job, stripped of uniforms and speeches."},
+          {"id": "malik_fire", "text": "Does fire keep the mist creatures away?", "tone": "neutral", "relationship_delta": 0, "response": "Light draws some and drives off others. Heat definitely changes the fog. Never light a flame without knowing both exits."},
+          {"id": "malik_order", "text": "Your chain of command is gone. Stop giving orders.", "tone": "negative", "relationship_delta": -5, "response": "The badge is gone. The responsibility is not. You are free to ignore me; the fire is free to ignore you too."}
+        ],
+        "quest_prompt": "[Quest: Signal Fire] What can reach the west roofs?",
+        "quest_offer": "An emergency flare. One bright burn from this height tells the trapped teams where our safe stairwell is.",
+        "quest_active": "Bring one emergency flare. A torch is too dim, and gunfire sends the wrong message.",
+        "quest_turn_in": "I found an emergency flare for your signal.",
+        "quest_complete": "That will do. At dusk we fire it east, then west. Anyone still watching gets a direction home."
+      }
+    },
+    {
+      "id": "evelyn_ward",
+      "name": "Evelyn Ward",
+      "role": "Former Council Liaison",
+      "age_group": "middle-aged",
+      "pronouns": "she/her",
+      "position": [-430, 1440],
+      "empathy": 0.47,
+      "caution": 0.81,
+      "aggression": 0.27,
+      "can_trade": false,
+      "scrip": 200,
+      "stock": [["radio_beacon", 1], ["warding_salt", 2]],
+      "appearance": {"skin": "#c68e70", "coat": "#554f68", "hair": "#5a4a46"},
+      "dialogue": {
+        "greetings": {
+          "low": "You have influence and no discipline. That combination buried the old city faster than the mist did.",
+          "neutral": "Evelyn Ward. I used to coordinate emergency policy. Nobody laughs at the word 'coordination' anymore.",
+          "high": "I have been waiting for you. People report what they fear to officials; they tell you what they actually saw."
+        },
+        "progress": [
+          {"min": 0, "text": "Every roof is inventing its own law. By morning, that becomes ten kinds of justice and no shared rescue plan."},
+          {"min": 2, "text": "Imani has supply numbers, Grace has names, and Reed has routes. We can build one plan from all three."},
+          {"min": 5, "text": "The roof council meets at sunset. For the first time, every connected building is sending someone."}
+        ],
+        "topics": [
+          {"id": "evelyn_voice", "text": "A council should include the children and isolated roofs too.", "tone": "positive", "relationship_delta": 3, "response": "Agreed. Survival does not suspend representation; it makes exclusion lethal. Nia gets a seat if she wants one."},
+          {"id": "evelyn_plan", "text": "What decision cannot wait until morning?", "tone": "neutral", "relationship_delta": 0, "response": "Whether to concentrate everyone at the Galleria or keep distributed shelters. One fire favors separation. One coordinated attack favors the mall."},
+          {"id": "evelyn_politics", "text": "Politics caused this. We do not need another official.", "tone": "negative", "relationship_delta": -4, "response": "The experiment caused this. Politics decides who gets the last respirator. Refusing to name that choice does not make it disappear."}
+        ]
+      }
+    }
+  ]
+}

@@ -27,6 +27,9 @@ var effect_status_label: Label
 var charge_bar: ProgressBar
 var light_status_label: Label
 var inventory_panel: InventoryPanel
+var dialogue_panel: DialoguePanel
+var quest_tracker: Panel
+var quest_tracker_label: Label
 var quickbar: Quickbar
 var quickbar_frame: Panel
 var _inventory_key_down := false
@@ -49,6 +52,8 @@ func _ready() -> void:
 	_build_crosshair()
 	_build_game_over_panel()
 	_build_inventory_panel()
+	_build_dialogue_panel()
+	_build_quest_tracker()
 	_build_quickbar()
 	_build_debug_panel()
 
@@ -261,6 +266,54 @@ func _build_inventory_panel() -> void:
 		inventory_panel.setup(game_manager.player)
 
 
+func _build_dialogue_panel() -> void:
+
+	dialogue_panel = DialoguePanel.new()
+	dialogue_panel.name = "DialoguePanel"
+	dialogue_panel.setup(game_manager, inventory_panel)
+	add_child(dialogue_panel)
+
+
+func _build_quest_tracker() -> void:
+
+	quest_tracker = Panel.new()
+	quest_tracker.name = "QuestTracker"
+	quest_tracker.position = Vector2(20, 258)
+	quest_tracker.size = Vector2(306, 132)
+	quest_tracker.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	quest_tracker.add_theme_stylebox_override("panel", SurvivalUI.panel_style())
+	add_child(quest_tracker)
+	quest_tracker_label = Label.new()
+	quest_tracker_label.position = Vector2(12, 10)
+	quest_tracker_label.size = Vector2(282, 112)
+	quest_tracker_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	quest_tracker_label.add_theme_font_size_override("font_size", 11)
+	quest_tracker_label.add_theme_color_override("font_color", SurvivalUI.LAVENDER)
+	quest_tracker.add_child(quest_tracker_label)
+	if game_manager and game_manager.player and game_manager.player.quest_log:
+		game_manager.player.quest_log.quest_changed.connect(func(_id, _state): _update_quest_tracker())
+		game_manager.player.quest_log.quest_progress.connect(_update_quest_tracker)
+		game_manager.player.inventory_comp.inventory_changed.connect(_update_quest_tracker)
+	_update_quest_tracker()
+
+
+func _update_quest_tracker() -> void:
+	if quest_tracker == null or game_manager == null or game_manager.player == null or game_manager.player.quest_log == null:
+		return
+	var log: QuestLogComponent = game_manager.player.quest_log
+	var lines: Array[String] = ["ACTIVE TASKS"]
+	for quest_id in log.states:
+		if log.state_for(quest_id) != QuestLogComponent.ACTIVE:
+			continue
+		var definition: Dictionary = log.definitions.get(quest_id, {})
+		lines.append("• " + String(definition.get("title", quest_id)))
+		lines.append("  " + log.objective_summary(quest_id, game_manager.player.inventory_comp))
+		if lines.size() >= 5:
+			break
+	quest_tracker_label.text = "\n".join(lines)
+	quest_tracker.visible = lines.size() > 1
+
+
 func _build_quickbar() -> void:
 
 	quickbar_frame = Panel.new()
@@ -355,7 +408,7 @@ func _process(delta: float) -> void:
 		debug_panel.toggle()
 	_debug_key_down = debug_pressed
 	if game_manager and game_manager.player and inventory_panel:
-		game_manager.player.set_ui_input_blocked(inventory_panel.is_any_window_open() or (debug_panel and debug_panel.is_open()))
+		game_manager.player.set_ui_input_blocked(is_modal_open())
 	_update_quickbar_keys()
 	# Check for game over restart
 	if game_over_panel.visible and Input.is_key_pressed(KEY_ENTER):
@@ -380,7 +433,7 @@ func _process(delta: float) -> void:
 
 func _update_quickbar_keys() -> void:
 
-	if inventory_panel == null or inventory_panel.is_any_window_open() or game_over_panel.visible or (debug_panel and debug_panel.is_open()):
+	if inventory_panel == null or is_modal_open() or game_over_panel.visible:
 		return
 	var keys: Array[Key] = [KEY_1, KEY_2, KEY_3, KEY_4, KEY_5, KEY_6, KEY_7, KEY_8]
 	for index in keys.size():
@@ -393,7 +446,18 @@ func _update_quickbar_keys() -> void:
 func _update_crosshair() -> void:
 	if crosshair:
 		crosshair.position = get_viewport().get_mouse_position()
-		crosshair.visible = not (game_manager and game_manager.player and ((game_manager.player.aiming_system and game_manager.player.aiming_system.is_lob_aiming()) or (game_manager.player.combat_comp and game_manager.player.combat_comp.is_charging)))
+		crosshair.visible = not is_modal_open() and not (game_manager and game_manager.player and ((game_manager.player.aiming_system and game_manager.player.aiming_system.is_lob_aiming()) or (game_manager.player.combat_comp and game_manager.player.combat_comp.is_charging)))
+
+
+func is_modal_open() -> bool:
+	return (inventory_panel and inventory_panel.is_any_window_open()) or (dialogue_panel and dialogue_panel.is_open()) or (debug_panel and debug_panel.is_open())
+
+
+func close_modal_windows() -> void:
+	if dialogue_panel:
+		dialogue_panel.close_dialogue()
+	if inventory_panel:
+		inventory_panel.close_all()
 
 
 func _update_weapon_status() -> void:

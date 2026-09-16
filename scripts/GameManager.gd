@@ -10,7 +10,10 @@ var hud: HUD
 var lighting: LightingManager
 var weapon_configs: WeaponConfigDatabase
 var fog: FogController
-var merchant: Merchant
+var merchant: SurvivorNPC
+var npc_content: NPCContentDatabase
+var rooftop_npcs: Array[SurvivorNPC] = []
+var story_progress := 0
 var enemy_spawn_timer: Timer
 var enemies_alive: Array = []
 var layer_manager: LayerManager
@@ -59,20 +62,13 @@ func _ready() -> void:
 		layer_manager.register_layer(floor_node)
 	layer_manager.travel(&"ground", district_builder.start_building)
 	_spawn_encounters()
-	# Initialize the trader once before caching it on the safe roof.
-	merchant = Merchant.new()
-	merchant.name = "SafehouseQuartermaster"
-	merchant.position = Vector2(-570, -225)
-	add_child(merchant)
-	player.humanoid_profile.meet(merchant.humanoid_profile.character_id)
-	merchant.humanoid_profile.meet(player.humanoid_profile.character_id)
-	merchant.reparent(layer_manager.layers[&"roofs"], false)
+	_spawn_rooftop_npcs()
 	hud = HUD.new()
 	hud.game_manager = self
 	add_child(hud)
 	hud.debug_panel.add_layer_controls(layer_manager)
 	layer_manager.layer_changed.connect(func(definition):
-		hud.inventory_panel.close_all()
+		hud.close_modal_windows()
 		notice = "Clear air. Stamina is recovering." if not definition.mist_exposure else "Mist exposure. Watch your stamina and find the next elevator."
 		notice_time = 4.0)
 	hud.update_health(player.health_comp.health, player.health_comp.max_health)
@@ -86,6 +82,29 @@ func _ready() -> void:
 	var district_hud := DistrictHUD.new()
 	district_hud.game = self
 	district_overlay.add_child(district_hud)
+
+
+func _spawn_rooftop_npcs() -> void:
+	npc_content = NPCContentDatabase.new()
+	npc_content.name = "NPCContentDatabase"
+	add_child(npc_content)
+	assert(npc_content.last_error.is_empty(), npc_content.last_error)
+	player.quest_log.setup(npc_content.quest_definitions)
+	player.quest_log.quest_completed.connect(func(_quest_id): story_progress = player.quest_log.completed_count())
+	var roofs := layer_manager.layers[&"roofs"] as WorldLayer
+	for row in npc_content.npc_definitions:
+		var survivor := SurvivorNPC.new()
+		survivor.name = String(row.get("id", "RooftopSurvivor")).to_pascal_case()
+		survivor.setup(row)
+		# Enter the tree once so component capacities and authored stock initialize,
+		# then cache the actor on the inactive roof layer.
+		add_child(survivor)
+		survivor.reparent(roofs, false)
+		roofs.interactables.append(survivor)
+		rooftop_npcs.append(survivor)
+		if survivor.humanoid_profile.character_id == &"imani_okafor":
+			merchant = survivor
+	assert(merchant != null, "Rooftop content must define Imani as the compatibility merchant")
 
 func _spawn_encounters() -> void:
 	for encounter in layer_manager.active_layer.encounters:
@@ -110,6 +129,8 @@ func _register_enemy(enemy: MistStalker) -> void:
 func _on_enemy_died(creature: Creature) -> void:
 	enemies_alive.erase(creature)
 	score += 1
+	if player and player.quest_log:
+		player.quest_log.record_event(&"mist_kill")
 	if hud:
 		hud.update_score(score)
 
@@ -130,6 +151,8 @@ func _process(delta: float) -> void:
 	if Input.is_action_just_pressed("ui_cancel"):
 		if hud.debug_panel.visible:
 			hud.debug_panel.hide()
+		elif hud.dialogue_panel.is_open():
+			hud.dialogue_panel.close_dialogue()
 		elif hud.inventory_panel.is_any_window_open():
 			hud.inventory_panel.close_all()
 		else:
@@ -143,7 +166,9 @@ func _update_interaction() -> void:
 	var activate := pressed and not _interact_key_down
 	_interact_key_down = pressed
 	interaction_prompt = ""
-	if state != GameState.PLAYING or hud.inventory_panel.is_any_window_open() or hud.debug_panel.visible:
+	for survivor in rooftop_npcs:
+		survivor.set_interaction_ready(false)
+	if state != GameState.PLAYING or hud.is_modal_open():
 		return
 	var selected: Node2D
 	var closest := INF
@@ -162,13 +187,13 @@ func _update_interaction() -> void:
 			if distance < closest:
 				selected = target
 				closest = distance
-	var trader_near := merchant.is_inside_tree() and merchant.can_interact(player)
-	merchant.set_interaction_ready(trader_near)
-	if trader_near and merchant.position.distance_to(player.position) < closest:
-		interaction_prompt = "[ E ] Trade with the rooftop quartermaster"
-		if activate:
-			hud.inventory_panel.open_trade(merchant)
-	elif selected:
+	if selected:
+		if selected is SurvivorNPC:
+			selected.set_interaction_ready(true)
+			interaction_prompt = "[ E ] Talk to " + selected.display_name()
+			if activate:
+				hud.dialogue_panel.open_dialogue(selected)
+			return
 		interaction_prompt = "[ E ] " + selected.prompt
 		if activate:
 			if selected is InteriorProp:

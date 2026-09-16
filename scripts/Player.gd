@@ -31,6 +31,7 @@ var humanoid_profile
 var weapon_skill: WeaponProficiencyComponent
 var item_light_system: ItemLightSystem
 var consumable_effects: ConsumableEffectSystem
+var quest_log: QuestLogComponent
 var _shoot_flash_timer  # SceneTreeTimer — no Timer type annotation (mismatch)
 
 
@@ -67,6 +68,9 @@ func _setup_creature() -> void:
 	wallet.name = "BreachScripWallet"
 	wallet.balance = 75
 	add_child(wallet)
+	quest_log = QuestLogComponent.new()
+	quest_log.name = "QuestLog"
+	add_child(quest_log)
 
 	equipment_comp = _add_component(EquipmentComponent.new()) as EquipmentComponent
 	equipment_comp.name = "BodyEquipment"

@@ -204,10 +204,11 @@ items.
 
 ### Trade
 
-`MerchantTradeComponent` moves stacks between player and merchant containers and
+`MerchantTradeComponent` moves stacks between player and NPC containers and
 updates `CurrencyWalletComponent`. The trade UI displays two inventories but does
-not duplicate their contents. Give future humanoid NPCs their own inventory,
-equipment, wallet, and stable character ID.
+not duplicate their contents. `SurvivorNPC` composes a persistent backpack and
+wallet for every social actor, then adds the trade component only when its content
+record sets `can_trade`. Dialogue hands off to the same `InventoryPanel` exchange.
 
 ## Add or extend content
 
@@ -243,8 +244,10 @@ the catalog or UI. `data/weapons.cfg` is authoritative and supports live reload.
 ### Add a container or NPC owner
 
 Subclass `ItemContainerComponent` only when policy differs from generic storage.
-Compose inventory/equipment onto the NPC through `Creature._add_component()`.
-Keep interaction authorization/range on the actor or interaction system; keep item
+For social humans, add content in `data/npc_rooftop_content.json` and let
+`SurvivorNPC.setup()` compose profile, inventory, wallet, dialogue, and optional
+trade. Combat NPCs can add equipment through `Creature._add_component()`. Keep
+interaction authorization/range on the actor or interaction system; keep item
 movement in container/trade APIs.
 
 ### Add an equipment slot

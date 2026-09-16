@@ -10,7 +10,7 @@ var player: Player
 var equipment_window: Panel
 var backpack_window: Panel
 var merchant_window: Panel
-var merchant: Merchant
+var merchant
 var loot_prop: InteriorProp
 var source_container: ItemContainerComponent
 var transfer_heading: Label
@@ -59,6 +59,7 @@ func _on_item_endurance_changed(_item_id: StringName, _current: float, _maximum:
 func _ready() -> void:
 
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	z_index = 40
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_build()
 
@@ -333,17 +334,17 @@ func close_backpack() -> void:
 		backpack_window.visible = false
 
 
-func open_trade(trader: Merchant) -> void:
+func open_trade(trader) -> void:
 
 	if trader == null or trader.inventory_comp == null or player == null:
 		return
 	merchant = trader
 	loot_prop = null
 	source_container = merchant.inventory_comp
-	transfer_heading.text = "SAFEHOUSE EXCHANGE"
-	merchant_title.text = "QUARTERMASTER STOCK"
+	transfer_heading.text = trader.humanoid_profile.display_name.to_upper() + " / EXCHANGE"
+	merchant_title.text = trader.inventory_comp.container_title.to_upper()
 	_set_header_text(player_container_header, "YOUR BACKPACK  |  CLICK / DRAG TO SELL")
-	_set_header_text(source_container_header, "QUARTERMASTER STOCK  |  CLICK / DRAG TO BUY")
+	_set_header_text(source_container_header, trader.inventory_comp.container_title.to_upper() + "  |  CLICK / DRAG TO BUY")
 	trade_status.text = "CLICK OR DRAG ITEMS BETWEEN PACKS  •  PRICES APPLY TO THE FULL STACK"
 	if not merchant.inventory_comp.inventory_changed.is_connected(refresh):
 		merchant.inventory_comp.inventory_changed.connect(refresh)
