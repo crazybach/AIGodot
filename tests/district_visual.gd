@@ -13,18 +13,16 @@ func _run() -> void:
 	await process_frame
 	game.player.set_physics_process(false)
 	game.layer_manager.exposure.set_physics_process(false)
-	game.lighting.set_process(false)
+	game.weather.clock.paused = true
 	for enemy in game.enemies_alive:
 		enemy.set_physics_process(false)
 	await _capture("district-lobby")
 	game.player.position = Vector2(-200, 0)
 	game.camera.reset_smoothing()
 	await _capture("district-street")
-	game.lighting.phase = LightingManager.Phase.NIGHT
-	game.lighting._update_cycle(0)
+	game.lighting.force_phase(LightingManager.Phase.NIGHT)
 	await _capture("district-night")
-	game.lighting.phase = LightingManager.Phase.DAY
-	game.lighting._update_cycle(0)
+	game.lighting.force_phase(LightingManager.Phase.DAY)
 	game.player.position = Vector2(-590, 10)
 	game.camera.reset_smoothing()
 	await _capture("district-egg")

@@ -1,7 +1,7 @@
 class_name HUD
 extends CanvasLayer
 
-const FogDebugPanelClass := preload("res://scripts/FogDebugPanel.gd")
+const DebugPanelClass := preload("res://scripts/debug/DebugPanel.gd")
 
 var game_manager: Node2D
 
@@ -20,7 +20,7 @@ var game_over_label: Label
 var reload_indicator: Label
 var controls_label: Label
 var crosshair: Sprite2D
-var time_label: Label
+var environment_hud: EnvironmentHUD
 var weapon_name_label: Label
 var weapon_detail_label: Label
 var effect_status_label: Label
@@ -36,6 +36,7 @@ var _inventory_key_down := false
 var _character_key_down := false
 var _debug_key_down := false
 var debug_panel
+var touch_controls: TouchControls
 var _quickbar_keys_down: Array[bool] = [false, false, false, false, false, false, false, false]
 
 
@@ -56,6 +57,14 @@ func _ready() -> void:
 	_build_quest_tracker()
 	_build_quickbar()
 	_build_debug_panel()
+	_build_touch_controls()
+
+
+func _build_touch_controls() -> void:
+	touch_controls = TouchControls.new()
+	touch_controls.name = "TouchControls"
+	touch_controls.setup(self, game_manager)
+	add_child(touch_controls)
 
 
 func _build_health_bar() -> void:
@@ -157,13 +166,9 @@ func _build_controls_hint() -> void:
 
 
 func _build_time_indicator() -> void:
-	time_label = Label.new()
-	time_label.name = "TimeLabel"
-	time_label.position = Vector2(1160, 20)
-	time_label.text = "TIME: DAY"
-	time_label.add_theme_font_size_override("font_size", 16)
-	time_label.add_theme_color_override("font_color", Color(1.0, 0.9, 0.5))
-	add_child(time_label)
+	environment_hud = EnvironmentHUD.new()
+	environment_hud.weather = game_manager.weather
+	add_child(environment_hud)
 
 
 func _build_weapon_status() -> void:
@@ -333,9 +338,9 @@ func _build_quickbar() -> void:
 
 func _build_debug_panel() -> void:
 
-	debug_panel = FogDebugPanelClass.new()
+	debug_panel = DebugPanelClass.new()
 	debug_panel.name = "DeveloperDebugPanel"
-	debug_panel.setup(game_manager.fog if game_manager else null, game_manager.lighting if game_manager else null, game_manager.weapon_configs if game_manager else null, game_manager.player if game_manager else null)
+	debug_panel.setup(game_manager.fog, game_manager.lighting, game_manager.weapon_configs, game_manager.player, game_manager.weather)
 	add_child(debug_panel)
 
 
@@ -394,6 +399,8 @@ func show_game_over(final_score: int, wave: int) -> void:
 
 
 func _process(delta: float) -> void:
+	if touch_controls:
+		controls_label.visible = not touch_controls.visible
 	var typing := get_viewport().gui_get_focus_owner() is LineEdit
 	var inventory_pressed := Input.is_key_pressed(KEY_I)
 	if inventory_pressed and not _inventory_key_down and inventory_panel and not typing:
@@ -424,7 +431,6 @@ func _process(delta: float) -> void:
 		reload_indicator.text = ""
 
 	_update_crosshair()
-	_update_time_label()
 	_update_weapon_status()
 	_update_light_status()
 	if effect_status_label and game_manager and game_manager.player and game_manager.player.consumable_effects:
@@ -445,6 +451,9 @@ func _update_quickbar_keys() -> void:
 
 func _update_crosshair() -> void:
 	if crosshair:
+		if touch_controls and touch_controls.visible:
+			crosshair.visible = false
+			return
 		crosshair.position = get_viewport().get_mouse_position()
 		crosshair.visible = not is_modal_open() and not (game_manager and game_manager.player and ((game_manager.player.aiming_system and game_manager.player.aiming_system.is_lob_aiming()) or (game_manager.player.combat_comp and game_manager.player.combat_comp.is_charging)))
 
@@ -491,15 +500,3 @@ func _update_light_status() -> void:
 		return
 	var endurance := stack.definition.get_component(EnduranceComponent) as EnduranceComponent
 	light_status_label.text = "LIGHT: %s  %.0f / %.0f" % [stack.definition.display_name.to_upper(), stack.endurance(endurance), endurance.maximum] if endurance else "LIGHT: " + stack.definition.display_name.to_upper()
-
-
-func _update_time_label() -> void:
-	if not time_label:
-		return
-	var phase := "DAY"
-	var night := false
-	if game_manager and game_manager.lighting:
-		phase = String(game_manager.lighting.phase_name())
-		night = game_manager.lighting.darkness > 0.5
-	time_label.text = "TIME: " + phase
-	time_label.add_theme_color_override("font_color", Color(0.4, 0.6, 1.0) if night else Color(1.0, 0.9, 0.5))

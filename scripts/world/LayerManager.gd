@@ -32,7 +32,7 @@ func travel(destination: StringName, entry: StringName) -> bool:
 	exposure.apply_environment(next.definition)
 	fog.set_environment_mist(next.definition.mist_exposure)
 	lighting.environment_night_color = next.definition.night_ambient
-	lighting.canvas_modulate.color = lighting.environment_night_color.lerp(LightingManager.DAY_COLOR, 1.0 - lighting.darkness)
+	lighting.refresh_environment()
 	camera.reset_smoothing()
 	player.set_ui_input_blocked(false)
 	layer_changed.emit(next.definition)
@@ -44,4 +44,3 @@ func _exit_tree() -> void:
 		if is_instance_valid(floor_node) and floor_node.get_parent() == null:
 			floor_node.free()
 	layers.clear()
-

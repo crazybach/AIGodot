@@ -54,6 +54,7 @@ func _floor(id: StringName, title: String, mist: bool) -> WorldLayer:
 	result.definition.id = id
 	result.definition.display_name = title
 	result.definition.mist_exposure = mist
+	result.definition.buildings_shelter_weather = (id == &"ground")
 	result.definition.stamina_drain = config.get_value("district", "stamina_drain", 1.2)
 	result.definition.exhausted_damage = config.get_value("district", "exhausted_damage", 3.0)
 	if not mist:

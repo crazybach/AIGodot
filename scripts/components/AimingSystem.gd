@@ -66,13 +66,13 @@ func handle_input(event: InputEvent) -> bool:
 
 func physics_tick() -> void:
 
-	if actor == null or actor.ui_input_blocked or actor.pointer_over_interactive_ui():
+	if actor == null or actor.ui_input_blocked or (not actor.touch_aim_active and actor.pointer_over_interactive_ui()):
 		return
 	if is_lob_aiming():
 		_update_lob_preview()
 		return
 	if actor.combat_comp and actor.combat_comp.is_charging and actor.combat_comp.active_config:
-		indicator.show_charged(actor.get_global_mouse_position(), actor.combat_comp.active_config, actor.combat_comp.charge_ratio())
+		indicator.show_charged(actor.aim_world_position(), actor.combat_comp.active_config, actor.combat_comp.charge_ratio())
 		return
 	if indicator and indicator.strategy == WeaponConfig.CHARGED:
 		indicator.hide_preview()
@@ -85,7 +85,7 @@ func physics_tick() -> void:
 		indicator.hide_preview()
 		return
 	if actor.combat_comp and actor.combat_comp.active_config:
-		indicator.show_direct(actor.get_global_mouse_position(), actor.combat_comp.active_config, actor.combat_comp.current_spread())
+		indicator.show_direct(actor.aim_world_position(), actor.combat_comp.active_config, actor.combat_comp.current_spread())
 	if Input.is_action_just_pressed("reload"):
 		actor.combat_comp.start_reload()
 		return
@@ -179,7 +179,7 @@ func _update_lob_preview() -> void:
 	if stack == null or active_profile == null:
 		cancel_aim()
 		return
-	indicator.show_lob(actor.get_global_mouse_position(), active_profile, curve_scale)
+	indicator.show_lob(actor.aim_world_position(), active_profile, curve_scale)
 	indicator.area_payload = stack.definition.get_component(AreaEffectComponent) as AreaEffectComponent
 
 

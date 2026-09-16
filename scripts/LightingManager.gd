@@ -1,10 +1,10 @@
 class_name LightingManager
 extends Node2D
-## Global 2D lighting: ambient day/night cycle + light-source registry.
+## Global 2D lighting: projects WorldClock/weather into ambient light and a light registry.
 ##
 ## Created by GameManager. Provides:
 ##   - A CanvasModulate for ambient light (day = normal, night = dark)
-##   - A day/night cycle with smooth dusk/dawn transitions
+##   - Smooth dawn/dusk, weather tint and automatic lamp policy
 ##   - A registry of LightSource2D so entities can query illumination
 ##
 ## Any node can find the manager through the "lighting" group:
@@ -20,16 +20,12 @@ const DAY_COLOR := Color(1.0, 1.0, 1.0)
 const NIGHT_COLOR := Color(0.13, 0.15, 0.24)
 
 
-## ---------- Cycle durations (seconds) ----------
-@export var day_duration := 22.0
-@export var dusk_duration := 4.0
-@export var night_duration := 16.0
-@export var dawn_duration := 4.0
+## ---------- Environment input ----------
+var weather: WeatherSystem
 
 
 var canvas_modulate: CanvasModulate
 var phase: Phase = Phase.DAY
-var phase_time := 0.0
 var darkness := 0.0                  # 0 = day, 1 = night
 var environment_night_color := NIGHT_COLOR
 var _lights: Array[LightSource2D] = []
@@ -46,39 +42,36 @@ func _ready() -> void:
 	add_child(canvas_modulate)
 
 
-func _process(delta: float) -> void:
-	_update_cycle(delta)
+func bind_environment(environment: WeatherSystem) -> void:
+	weather = environment
+	weather.updated.connect(refresh_environment)
+	refresh_environment()
 
 
 ## ---------- Day / night cycle ----------
 
-func _update_cycle(delta: float) -> void:
-	phase_time += delta
-	match phase:
-		Phase.DAY:
-			darkness = 0.0
-			if phase_time >= day_duration:
-				_advance(Phase.DUSK)
-		Phase.DUSK:
-			darkness = clamp(phase_time / dusk_duration, 0.0, 1.0)
-			if phase_time >= dusk_duration:
-				_advance(Phase.NIGHT)
-		Phase.NIGHT:
-			darkness = 1.0
-			if phase_time >= night_duration:
-				_advance(Phase.DAWN)
-		Phase.DAWN:
-			darkness = clamp(1.0 - phase_time / dawn_duration, 0.0, 1.0)
-			if phase_time >= dawn_duration:
-				_advance(Phase.DAY)
-	
-	canvas_modulate.color = environment_night_color.lerp(DAY_COLOR, 1.0 - darkness)
+func refresh_environment() -> void:
+	if weather == null or canvas_modulate == null:
+		return
+	var previous := phase
+	match weather.clock.phase_name():
+		&"DAY": phase = Phase.DAY
+		&"DUSK": phase = Phase.DUSK
+		&"NIGHT": phase = Phase.NIGHT
+		&"DAWN": phase = Phase.DAWN
+	darkness = 1.0 - weather.clock.daylight()
+	var ambient := environment_night_color.lerp(DAY_COLOR, 1.0 - darkness)
+	# Sunset warmth fades at both endpoints, keeping transitions continuous.
+	if phase == Phase.DUSK or phase == Phase.DAWN:
+		ambient *= Color.WHITE.lerp(Color("#ffd0a1"), sin(darkness * PI) * 0.32)
+	canvas_modulate.color = ambient * weather.ambient_tint()
+	if previous != phase:
+		phase_changed.emit(phase_name())
 
 
-func _advance(next: Phase) -> void:
-	phase = next
-	phase_time = 0.0
-	phase_changed.emit(phase_name())
+func force_phase(target: Phase) -> void:
+	if weather:
+		weather.clock.set_hour([12.0, 18.5, 23.0, 6.0][target])
 
 
 func phase_name() -> StringName:
@@ -99,9 +92,9 @@ func is_day() -> bool:
 	return darkness < 0.5
 
 
-## True during dark phases (night + dawn) when dynamic lights should be active.
+## Street lamps switch on through twilight or under heavy rain; carried lamps stay independent.
 func lights_enabled() -> bool:
-	return phase == Phase.NIGHT or phase == Phase.DAWN
+	return darkness >= 0.35 or (weather != null and weather.cloud_cover >= 0.9)
 
 
 ## ---------- Light registry ----------

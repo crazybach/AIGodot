@@ -11,6 +11,16 @@ var encounters: Array[Dictionary] = []
 var solid_rects: Array[Rect2] = []
 var navigation := AStarGrid2D.new()
 
+func is_outdoors_at(point: Vector2) -> bool:
+	if not definition.outdoor_weather:
+		return false
+	# Ground building footprints are covered lobbies; the roof layer is open sky.
+	if definition.buildings_shelter_weather:
+		for polygon in building_polygons:
+			if Geometry2D.is_point_in_polygon(point, polygon):
+				return false
+	return true
+
 func build_navigation(bounds: Rect2) -> void:
 	map_bounds = bounds
 	navigation.region = Rect2i(Vector2i(bounds.position / 20), Vector2i(bounds.size / 20))

@@ -1,0 +1,9 @@
+# Android test build
+
+Run `tools\build_android.bat` from anywhere. It exports a signed arm64 debug APK to `build\android\AIGodot-debug.apk`. The script uses Godot 4.6.2, the Android SDK, and Java 17 already installed on this machine; override their locations with `-GodotExe`, `-AndroidSdk`, and `-JavaHome` arguments. It downloads the matching official Godot export templates on first use and keeps editor settings, the debug keystore, and templates under `.godot_local/`.
+
+Install on an attached device with `adb install -r build\android\AIGodot-debug.apk`. This is a test build, not a release-signing setup.
+
+Touch controls appear on Android. Drag the left wheel to move. Drag the right wheel to aim and fire; releasing it fires a charged bow. Tap **THROW** to select a held throwable, then aim with the right wheel and release to throw. **BAG**, **GEAR**, **ACT**, **RELOAD**, and hold **RUN** provide the other core actions. The existing quickbar and inventory accept normal taps and drags. Android Back closes an open window or exits gameplay; the game handles Godot's [go-back request](https://docs.godotengine.org/en/4.6/classes/class_window.html#class-window-signal-go-back-requested) explicitly. Tap **RESTART** after death.
+
+The exporter uses the prebuilt APK template because this game has no Android plugin or custom Java code. Godot's [Android export guide](https://docs.godotengine.org/en/4.6/tutorials/export/exporting_for_android.html) specifies Java 17, Android SDK Platform 35 and Build Tools 35.0.1. The [command-line export guide](https://docs.godotengine.org/en/4.6/tutorials/export/exporting_projects.html) documents `--export-debug` and the required export preset. If the SDK is absent on another machine, install it with the [Android SDK command-line tools](https://developer.android.com/tools/sdkmanager), then pass its path to the build script.

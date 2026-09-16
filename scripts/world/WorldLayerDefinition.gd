@@ -8,4 +8,6 @@ extends Resource
 @export var stamina_drain := 1.2
 @export var exhausted_damage := 3.0
 @export var entries: Dictionary = {}
-
+## Future indoor-only room layers opt out of precipitation entirely.
+@export var outdoor_weather := true
+@export var buildings_shelter_weather := false

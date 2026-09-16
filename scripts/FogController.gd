@@ -104,7 +104,10 @@ func _time_of_day_color() -> Color:
 	# A dark blue-gray preserves the CanvasModulate night value beneath this
 	# alpha-blended veil. A bright fog color would flatten the whole scene.
 	var night := Color("#354252")
-	return day.lerp(night, lighting.darkness if lighting else 0.5)
+	var color := day.lerp(night, lighting.darkness if lighting else 0.5)
+	if lighting and lighting.weather:
+		color *= lighting.weather.ambient_tint()
+	return color
 
 
 func _update_player_vision(viewport_size: Vector2) -> void:

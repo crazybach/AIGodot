@@ -37,7 +37,7 @@ enum LightType { POINT, SPOT }
 @export var falloff_power := 2.2                    # >1 softer, <1 harsher edge
 @export var cast_shadows := false
 @export var shadow_filter := 0                      # 0 hard, 1 PCF5, 2 PCF13
-@export var auto_day_night := false                 # auto-off day/dusk, on night/dawn
+@export var auto_day_night := false                 # follows twilight and heavy-rain lighting policy
 @export var fog_range_multiplier := 1.0             # fog clearing radius relative to light range
 @export var fog_clear_strength := 0.72              # maximum local fog thinning
 

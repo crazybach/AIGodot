@@ -11,8 +11,10 @@ config_version=5
 [application]
 
 config/name="City Survival - ZERO Sievert-like Demo"
+config/icon="res://icon.svg"
 run/main_scene="res://Main.tscn"
 config/features=PackedStringArray("4.6")
+config/quit_on_go_back=false
 
 [display]
 
@@ -59,5 +61,6 @@ sprint={
 
 [rendering]
 
+textures/vram_compression/import_etc2_astc=true
 textures/canvas_textures/default_texture_filter=0
 quality/2d/use_pixel_snap=true

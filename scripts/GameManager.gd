@@ -8,6 +8,7 @@ var player: Player
 var camera: Camera2D
 var hud: HUD
 var lighting: LightingManager
+var weather: WeatherSystem
 var weapon_configs: WeaponConfigDatabase
 var fog: FogController
 var merchant: SurvivorNPC
@@ -22,14 +23,24 @@ var interaction_prompt := ""
 var notice := "Find LIFT A in the lobby. Press E to reach clear air."
 var notice_time := 9.0
 var _interact_key_down := false
+var _touch_interaction_requested := false
+
+
+func request_touch_interaction() -> void:
+	_touch_interaction_requested = true
 
 func _ready() -> void:
 	get_tree().auto_accept_quit = true
+	get_window().go_back_requested.connect(_handle_back)
 	get_window().title = "AIGodot — Ashdown District"
 	weapon_configs = WeaponConfigDatabase.new()
 	add_child(weapon_configs)
 	lighting = LightingManager.new()
 	add_child(lighting)
+	weather = WeatherSystem.new()
+	weather.name = "WeatherSystem"
+	add_child(weather)
+	lighting.bind_environment(weather)
 	player = Player.new()
 	player.name = "Player"
 	add_child(player)
@@ -67,6 +78,9 @@ func _ready() -> void:
 	hud.game_manager = self
 	add_child(hud)
 	hud.debug_panel.add_layer_controls(layer_manager)
+	var weather_visual := WeatherOverlay.new()
+	weather_visual.game = self
+	add_child(weather_visual)
 	layer_manager.layer_changed.connect(func(definition):
 		hud.close_modal_windows()
 		notice = "Clear air. Stamina is recovering." if not definition.mist_exposure else "Mist exposure. Watch your stamina and find the next elevator."
@@ -149,21 +163,28 @@ func _on_player_ammo_changed(current: int, maximum: int) -> void:
 
 func _process(delta: float) -> void:
 	if Input.is_action_just_pressed("ui_cancel"):
-		if hud.debug_panel.visible:
-			hud.debug_panel.hide()
-		elif hud.dialogue_panel.is_open():
-			hud.dialogue_panel.close_dialogue()
-		elif hud.inventory_panel.is_any_window_open():
-			hud.inventory_panel.close_all()
-		else:
-			get_tree().quit()
+		_handle_back()
 		return
 	notice_time = maxf(0.0, notice_time - delta)
 	_update_interaction()
 
+
+func _handle_back() -> void:
+	if hud == null:
+		return
+	if hud.debug_panel.visible:
+		hud.debug_panel.hide()
+	elif hud.dialogue_panel.is_open():
+		hud.dialogue_panel.close_dialogue()
+	elif hud.inventory_panel.is_any_window_open():
+		hud.inventory_panel.close_all()
+	else:
+		get_tree().quit()
+
 func _update_interaction() -> void:
 	var pressed := Input.is_key_pressed(KEY_E)
-	var activate := pressed and not _interact_key_down
+	var activate := (pressed and not _interact_key_down) or _touch_interaction_requested
+	_touch_interaction_requested = false
 	_interact_key_down = pressed
 	interaction_prompt = ""
 	for survivor in rooftop_npcs:

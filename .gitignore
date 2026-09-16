@@ -9,6 +9,8 @@
 export.cfg
 export_credentials.cfg
 build/*_export_templates.tpz
+build/android/
+build/Godot_v*_export_templates.tpz
 .godot_local/
 *.tmp
 

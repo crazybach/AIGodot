@@ -25,6 +25,10 @@ var active_sprite: Sprite2D
 var frame_index := 0
 var frame_elapsed := 0.0
 var ui_input_blocked := false
+var touch_move_direction := Vector2.ZERO
+var touch_aim_direction := Vector2.ZERO
+var touch_aim_distance := 500.0
+var touch_aim_active := false
 var aiming_system: AimingSystem
 var wallet: CurrencyWalletComponent
 var humanoid_profile
@@ -147,6 +151,8 @@ func _physics_process(delta: float) -> void:
 
 func _input(event: InputEvent) -> void:
 
+	if OS.has_feature("mobile") and event is InputEventMouse and event.device == InputEvent.DEVICE_ID_EMULATION:
+		return
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and not event.pressed and combat_comp and combat_comp.is_charging and (ui_input_blocked or pointer_over_interactive_ui()):
 		combat_comp.cancel_trigger()
 		return
@@ -170,9 +176,14 @@ func pointer_over_interactive_ui() -> bool:
 ## ── Aim ────────────────────────────────────────────────────────
 
 func _update_aim() -> void:
-	var mouse_pos := get_global_mouse_position()
-	facing_angle = get_angle_to(mouse_pos)
+	facing_angle = get_angle_to(aim_world_position())
 	active_sprite.rotation = facing_angle
+
+
+func aim_world_position() -> Vector2:
+	if touch_aim_direction != Vector2.ZERO:
+		return global_position + touch_aim_direction * touch_aim_distance
+	return get_global_mouse_position()
 
 
 ## ── Shooting & reload ──────────────────────────────────────────

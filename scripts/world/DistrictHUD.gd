@@ -53,6 +53,8 @@ func _draw() -> void:
 	var hint: String = game.interaction_prompt
 	if hint.is_empty() and game.notice_time > 0:
 		hint = game.notice
+	if game.hud and game.hud.touch_controls and game.hud.touch_controls.visible:
+		hint = hint.replace("[ E ]", "[ ACT ]").replace("Press E", "Tap ACT")
 	if not hint.is_empty() and game.state == 0:
 		var width := ThemeDB.fallback_font.get_string_size(hint, HORIZONTAL_ALIGNMENT_LEFT, -1, 15).x + 36
 		var y := get_viewport_rect().size.y - 134

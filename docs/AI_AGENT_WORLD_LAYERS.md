@@ -91,6 +91,11 @@ a physics callback. Floor roots currently use identity transform.
 
 ## Environment and limits
 
+Weather/clock/debug ownership and extension APIs: `docs/AI_AGENT_ENVIRONMENT_DEBUG.md`.
+F3 > World controls the 120-second clock, sunny/cloudy/rain fronts and ambient °C.
+Ground building polygons shelter rain; roofs are outdoors. Layer travel preserves
+the shared calendar, front transition and temperature.
+
 Ground defaults: 1.2 stamina/s while idle; 3 HP/s after stamina reaches zero. Natural
 recovery is disabled in mist and restored on roofs; consumables still work. Mist damage
 uses typed `mist` damage and bypasses kinetic armor. Hiding the fog visualization in

@@ -97,9 +97,8 @@ func _run() -> void:
 	var carried_light := player.equipment_comp.get_equipped(&"left_hand")
 	var endurance := carried_light.definition.get_component(EnduranceComponent) as EnduranceComponent
 	carried_light.set_endurance(endurance, 37.0)
-	game.lighting.phase = LightingManager.Phase.NIGHT
-	game.lighting.phase_time = 3.0
-	game.lighting._update_cycle(0.0)
+	game.weather.clock.paused = true
+	game.lighting.force_phase(LightingManager.Phase.NIGHT)
 	var ground_light_count: int = game.lighting.light_count()
 	check(ground_light_count > 10, "district streetlights and carried light registered")
 	check(not manager.travel(&"missing", &"A"), "invalid destination rejected")
@@ -123,7 +122,7 @@ func _run() -> void:
 	check(not game.fog.overlay.visible and not manager.exposure.exposed, "roof clears fog and hazard")
 	check(game.lighting.light_count() == 1, "only carried light remains on rooftop")
 	check(player.equipment_comp.get_equipped(&"left_hand") == carried_light and carried_light.endurance(endurance) == 37.0, "carried light endurance survives floor transition")
-	check(game.lighting.phase == LightingManager.Phase.NIGHT and game.lighting.phase_time >= 3.0, "time of day preserved")
+	check(game.lighting.phase == LightingManager.Phase.NIGHT and game.weather.clock.hour == 23.0, "time of day preserved")
 	check(game.lighting.canvas_modulate.color == roofs.definition.night_ambient, "roof night ambient policy")
 	var hp := player.health_comp.health
 	manager.exposure._physics_process(4.0)
