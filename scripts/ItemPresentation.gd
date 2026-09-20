@@ -22,6 +22,7 @@ static func describe(item: ItemDefinition, database: WeaponConfigDatabase) -> St
 	if launcher and database:
 		var weapon := database.get_config(launcher.weapon_config_id)
 		if weapon:
+			lines.append("BASE WEAPON STATS (character talents shown in Training / HUD)")
 			lines.append("%s  |  %s  |  %d rounds" % [String(weapon.fire_mode).to_upper(), String(weapon.ammo_tag).trim_prefix("ammo_"), weapon.magazine_size])
 			lines.append("%.0f damage/shot (%d pellets)  |  %.1f sustained DPS*" % [weapon.shot_damage(), weapon.pellets_per_shot, weapon.sustained_dps()])
 			lines.append("Shot %.2fs  |  Reload %.2fs  |  Range %.0fm" % [weapon.shot_interval, weapon.reload_time, weapon.max_range / 10.0])

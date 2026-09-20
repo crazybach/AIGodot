@@ -2,6 +2,11 @@
 Read this before changing items, inventory, equipment, weapons, lights, throwing,
 trade, or their UI. This is an implementation map; the GDDs describe design intent.
 
+Character bonuses: read [AI_AGENT_SKILL_SYSTEM.md](AI_AGENT_SKILL_SYSTEM.md).
+SkillTreeComponent supplies per-character CharacterAttributes; CombatComponent
+resolves effective weapon values without modifying shared WeaponConfig resources.
+Inventory tooltips show base values; the HUD and Training window show effective values.
+
 World ownership: read [AI_AGENT_WORLD_LAYERS.md](AI_AGENT_WORLD_LAYERS.md) before
 spawning world items/projectiles. Actors now belong to the active WorldLayer;
 elevators reparent the same player. `ConstructionComponent` lets a portable ladder

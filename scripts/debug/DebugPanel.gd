@@ -54,6 +54,14 @@ func _ready() -> void:
 	items.player = player
 	items.database = weapon_database
 	register_tab(&"items", "Items", items)
+	if player and player.skill_tree:
+		var skills := DebugControls.new()
+		skills.readout(func(): return "Level %d | XP %d / %d | %d points\n%s" % [player.skill_tree.level, player.skill_tree.experience, player.skill_tree.xp_required(), player.skill_tree.points_available(), player.skill_tree.status])
+		skills.action("Grant 100 XP", func(): player.skill_tree.award_xp(100))
+		skills.action("Grant one training point", player.skill_tree.grant_point)
+		skills.action("Refund all talents", player.skill_tree.reset_tree)
+		skills.action("Reload data/skills.json", func(): player.skill_tree.reload_table())
+		register_tab(&"skills", "Skills", skills)
 	visible = false
 
 func register_tab(id: StringName, title: String, control: Control) -> bool:

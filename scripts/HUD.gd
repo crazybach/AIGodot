@@ -37,6 +37,9 @@ var _character_key_down := false
 var _debug_key_down := false
 var debug_panel
 var touch_controls: TouchControls
+var skill_panel: SkillTreePanel
+var skill_button: Button
+var _skill_key_down := false
 var _quickbar_keys_down: Array[bool] = [false, false, false, false, false, false, false, false]
 
 
@@ -58,6 +61,36 @@ func _ready() -> void:
 	_build_quickbar()
 	_build_debug_panel()
 	_build_touch_controls()
+	_build_skill_panel()
+
+
+func _build_skill_panel() -> void:
+	skill_panel = SkillTreePanel.new()
+	skill_panel.name = "SkillTreePanel"
+	skill_panel.setup(game_manager.player)
+	add_child(skill_panel)
+	skill_button = Button.new()
+	skill_button.position = Vector2(20, 402)
+	skill_button.size = Vector2(216, 42)
+	skill_button.add_theme_stylebox_override("normal", SurvivalUI.panel_style())
+	skill_button.add_theme_color_override("font_color", SurvivalUI.GOLD_BRIGHT)
+	skill_button.pressed.connect(toggle_skills)
+	add_child(skill_button)
+	game_manager.player.skill_tree.changed.connect(_update_skill_button)
+	_update_skill_button()
+
+
+func _update_skill_button() -> void:
+	skill_button.text = "TRAINING [K]   +%d" % game_manager.player.skill_tree.points_available()
+
+
+func toggle_skills() -> void:
+	if skill_panel.visible:
+		skill_panel.hide()
+	else:
+		close_modal_windows()
+		debug_panel.hide()
+		skill_panel.show()
 
 
 func _build_touch_controls() -> void:
@@ -402,12 +435,16 @@ func _process(delta: float) -> void:
 	if touch_controls:
 		controls_label.visible = not touch_controls.visible
 	var typing := get_viewport().gui_get_focus_owner() is LineEdit
+	var skill_pressed := Input.is_key_pressed(KEY_K)
+	if skill_pressed and not _skill_key_down and not typing:
+		toggle_skills()
+	_skill_key_down = skill_pressed
 	var inventory_pressed := Input.is_key_pressed(KEY_I)
-	if inventory_pressed and not _inventory_key_down and inventory_panel and not typing:
+	if inventory_pressed and not _inventory_key_down and inventory_panel and not typing and not skill_panel.visible:
 		inventory_panel.toggle_backpack()
 	_inventory_key_down = inventory_pressed
 	var character_pressed := Input.is_key_pressed(KEY_C)
-	if character_pressed and not _character_key_down and inventory_panel and not typing:
+	if character_pressed and not _character_key_down and inventory_panel and not typing and not skill_panel.visible:
 		inventory_panel.toggle_character()
 	_character_key_down = character_pressed
 	var debug_pressed := Input.is_key_pressed(KEY_F3)
@@ -459,10 +496,11 @@ func _update_crosshair() -> void:
 
 
 func is_modal_open() -> bool:
-	return (inventory_panel and inventory_panel.is_any_window_open()) or (dialogue_panel and dialogue_panel.is_open()) or (debug_panel and debug_panel.is_open())
+	return (skill_panel and skill_panel.visible) or (inventory_panel and inventory_panel.is_any_window_open()) or (dialogue_panel and dialogue_panel.is_open()) or (debug_panel and debug_panel.is_open())
 
 
 func close_modal_windows() -> void:
+	if skill_panel: skill_panel.hide()
 	if dialogue_panel:
 		dialogue_panel.close_dialogue()
 	if inventory_panel:
@@ -481,13 +519,13 @@ func _update_weapon_status() -> void:
 		charge_bar.visible = false
 		return
 	var skill: float = game_manager.player.weapon_skill.skill_for(config) if game_manager.player.weapon_skill else config.skill_start
-	var critical: float = game_manager.player.weapon_skill.critical_chance(config) if game_manager.player.weapon_skill else config.critical_chance_min
+	var critical: float = combat.critical_chance()
 	var reserve: int = game_manager.player.inventory_comp.count_tag(config.ammo_tag)
 	weapon_name_label.text = "%s  %d / %d  +%d" % [config.display_name.to_upper(), combat.ammo, combat.max_ammo, reserve]
-	weapon_detail_label.text = "%s  DPS %.0f  CRIT %.1f%%" % [String(config.fire_mode).to_upper(), config.sustained_dps(), critical * 100.0]
-	weapon_detail_label.tooltip_text = "Skill %.1f | Spread %.1f degrees | Reload %.2fs" % [skill, combat.current_spread(), config.reload_time]
+	weapon_detail_label.text = "%s  DPS %.0f  CRIT %.1f%%" % [String(config.fire_mode).to_upper(), combat.effective_dps(), critical * 100.0]
+	weapon_detail_label.tooltip_text = "Skill %.1f | Spread %.1f degrees | Reload %.2fs" % [skill, combat.current_spread(), combat.reload_duration()]
 	charge_bar.visible = combat.is_charging or combat.is_reloading
-	charge_bar.value = combat.reload_elapsed / config.reload_time if combat.is_reloading else combat.charge_ratio()
+	charge_bar.value = combat.reload_elapsed / combat.reload_duration() if combat.is_reloading else combat.charge_ratio()
 
 
 func _update_light_status() -> void:

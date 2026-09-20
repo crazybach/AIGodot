@@ -143,6 +143,8 @@ func _register_enemy(enemy: MistStalker) -> void:
 func _on_enemy_died(creature: Creature) -> void:
 	enemies_alive.erase(creature)
 	score += 1
+	if player and player.skill_tree and player.is_alive:
+		player.skill_tree.award_event("kill")
 	if player and player.quest_log:
 		player.quest_log.record_event(&"mist_kill")
 	if hud:
@@ -174,6 +176,8 @@ func _handle_back() -> void:
 		return
 	if hud.debug_panel.visible:
 		hud.debug_panel.hide()
+	elif hud.skill_panel.visible:
+		hud.skill_panel.hide()
 	elif hud.dialogue_panel.is_open():
 		hud.dialogue_panel.close_dialogue()
 	elif hud.inventory_panel.is_any_window_open():

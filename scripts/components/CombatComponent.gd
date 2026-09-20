@@ -21,6 +21,7 @@ var is_charging := false
 
 var _database: WeaponConfigDatabase
 var _proficiency: WeaponProficiencyComponent
+var attributes: CharacterAttributes
 var _magazines: Dictionary = {}
 var _burst_remaining := 0
 var _burst_timer := 0.0
@@ -105,7 +106,7 @@ func trigger_released() -> bool:
 	_trigger_held = false
 	if not is_charging or active_config == null:
 		return false
-	var ratio := active_config.charge_ratio(charge_elapsed)
+	var ratio := charge_ratio()
 	is_charging = false
 	charge_changed.emit(false, ratio)
 	if not _ready_for_round():
@@ -125,8 +126,9 @@ func cancel_trigger() -> void:
 
 
 func charge_ratio() -> float:
-
-	return active_config.charge_ratio(charge_elapsed) if is_charging and active_config else 0.0
+	if not is_charging or active_config == null: return 0.0
+	var duration := charge_duration()
+	return clampf(charge_elapsed / duration, 0.0, 1.0) if duration > 0.0 else 1.0
 
 
 func can_fire() -> bool:
@@ -158,7 +160,7 @@ func _physics_tick(delta: float) -> void:
 		_proficiency.record_use_time(active_config, delta)
 	if is_charging and active_config:
 		charge_elapsed += delta
-		charge_changed.emit(true, active_config.charge_ratio(charge_elapsed))
+		charge_changed.emit(true, charge_ratio())
 	if _burst_remaining > 0:
 		_burst_timer -= delta
 		if _burst_timer <= 0.0:
@@ -171,7 +173,7 @@ func _physics_tick(delta: float) -> void:
 				start_reload()
 	if is_reloading:
 		reload_elapsed += delta
-		if active_config and reload_elapsed >= active_config.reload_time:
+		if active_config and reload_elapsed >= reload_duration():
 			is_reloading = false
 			_load_magazine()
 
@@ -196,11 +198,10 @@ func _fire_round(power_ratio: float) -> bool:
 	ammo -= 1
 	_magazines[active_config.id] = ammo
 	fire_cooldown = active_config.shot_interval
-	var critical_chance := _proficiency.critical_chance(active_config) if _proficiency else active_config.critical_chance_min
-	var critical := randf() < critical_chance
+	var critical := randf() < critical_chance()
 	var projectile_count := active_config.pellets_per_shot
 	var power := active_config.power_for_charge(power_ratio)
-	var maximum_range := active_config.range_for_charge(power_ratio)
+	var maximum_range := effective_range(power_ratio)
 	for pellet_index in projectile_count:
 		var angle_offset := deg_to_rad(randf_range(-current_spread() * 0.5, current_spread() * 0.5))
 		var bullet := BulletClass.new()
@@ -208,13 +209,13 @@ func _fire_round(power_ratio: float) -> bool:
 		bullet.global_position = creature.global_position
 		bullet.direction = Vector2.RIGHT.rotated(creature.facing_angle + angle_offset)
 		bullet.speed = active_config.projectile_speed * power
-		bullet.damage = active_config.damage * power * (active_config.critical_damage_multiplier if critical else 1.0)
+		bullet.damage = effective_damage() * power * (active_config.critical_damage_multiplier if critical else 1.0)
 		bullet.lifetime = maximum_range / maxf(bullet.speed, 1.0)
 		bullet.shooter = creature
 		bullet.critical_hit = critical
 		bullet.is_arrow = active_config.ammo_tag == &"arrow"
 		bullet.max_range = maximum_range
-		bullet.falloff_start = active_config.falloff_start
+		bullet.falloff_start = _attribute("weapon_range", active_config.falloff_start)
 		bullet.minimum_damage_ratio = active_config.minimum_damage_ratio
 		creature.get_parent().add_child(bullet)
 	recoil = minf(active_config.recoil_max, recoil + active_config.recoil_per_shot)
@@ -230,7 +231,42 @@ func _fire_round(power_ratio: float) -> bool:
 
 
 func current_spread() -> float:
-	return minf(85.0, active_config.spread_degrees + recoil) if active_config else 0.0
+	return clampf(_attribute("weapon_spread", active_config.spread_degrees + recoil), 0.0, 85.0) if active_config else 0.0
+
+
+func _attribute(stat: String, base: float) -> float:
+	return attributes.resolve(stat, base) if attributes else base
+
+
+func effective_range(ratio := 1.0) -> float:
+	return maxf(1.0, _attribute("weapon_range", active_config.range_for_charge(ratio))) if active_config else 0.0
+
+
+func effective_damage() -> float:
+	return maxf(0.0, _attribute("weapon_damage", active_config.damage)) if active_config else 0.0
+
+
+func critical_chance() -> float:
+	if active_config == null: return 0.0
+	var base := _proficiency.critical_chance(active_config) if _proficiency else active_config.critical_chance_min
+	return clampf(_attribute("weapon_crit", base), 0.0, 1.0)
+
+
+func reload_duration() -> float:
+	return maxf(0.05, _attribute("reload_time", active_config.reload_time)) if active_config else 0.0
+
+
+func charge_duration() -> float:
+	return maxf(0.0, _attribute("charge_time", active_config.charge_time)) if active_config else 0.0
+
+
+func effective_dps() -> float:
+	if active_config == null: return 0.0
+	var draw := charge_duration() if active_config.fire_mode == WeaponConfig.CHARGED else 0.0
+	var cadence := active_config.shot_interval + draw
+	var cycle := cadence * maxf(0.0, max_ammo - 1) + maxf(active_config.shot_interval, reload_duration()) + draw
+	var power := active_config.maximum_power if active_config.fire_mode == WeaponConfig.CHARGED else 1.0
+	return effective_damage() * active_config.pellets_per_shot * power * max_ammo / maxf(cycle, 0.01)
 
 
 func _load_magazine() -> void:

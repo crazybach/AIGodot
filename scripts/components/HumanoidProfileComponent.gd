@@ -15,7 +15,8 @@ const MAX_ATTITUDE := 100
 @export var character_id: StringName = &"unnamed_humanoid"
 @export var display_name := "Unknown Survivor"
 @export var max_stamina := 100.0:
-	get: return max_stamina + _stamina_bonus
+	get: return maxf(1.0, attributes.resolve("max_stamina", max_stamina) if attributes else max_stamina) + _stamina_bonus
+var attributes: CharacterAttributes
 var _stamina_bonus := 0.0
 @export var stamina_recovery_per_second := 16.0
 @export var melee_charge_stamina_cost := 10.0
@@ -43,7 +44,7 @@ func _ready() -> void:
 func _physics_process(delta: float) -> void:
 
 	if not _spent_stamina_this_frame and stamina < max_stamina:
-		stamina = minf(max_stamina, stamina + stamina_recovery_per_second * environment_recovery_multiplier * delta)
+		stamina = minf(max_stamina, stamina + recovery_rate() * environment_recovery_multiplier * delta)
 		stamina_changed.emit(stamina, max_stamina)
 	_spent_stamina_this_frame = false
 
@@ -56,6 +57,27 @@ func bind_health(health: HealthComponent) -> void:
 	if not health.health_changed.is_connected(_on_health_changed):
 		health.health_changed.connect(_on_health_changed)
 	_on_health_changed(health.health, health.max_health)
+
+
+func bind_attributes(value: CharacterAttributes) -> void:
+	if attributes and attributes.changed.is_connected(_on_attributes_changed):
+		attributes.changed.disconnect(_on_attributes_changed)
+	attributes = value
+	if attributes: attributes.changed.connect(_on_attributes_changed)
+	_on_attributes_changed()
+
+
+func _on_attributes_changed() -> void:
+	stamina = minf(stamina, max_stamina)
+	stamina_changed.emit(stamina, max_stamina)
+
+
+func recovery_rate() -> float:
+	return maxf(0.0, attributes.resolve("stamina_recovery", stamina_recovery_per_second) if attributes else stamina_recovery_per_second)
+
+
+func action_cost(base: float) -> float:
+	return maxf(base * 0.1, attributes.resolve("action_cost", base) if attributes else base)
 
 
 func _on_health_changed(current: float, maximum: float) -> void:
@@ -99,22 +121,22 @@ func spend_stamina(amount: float) -> bool:
 
 func start_melee_charge() -> bool:
 
-	return spend_stamina(melee_charge_stamina_cost)
+	return spend_stamina(action_cost(melee_charge_stamina_cost))
 
 
 func resolve_melee_hit() -> bool:
 
-	return spend_stamina(melee_hit_stamina_cost)
+	return spend_stamina(action_cost(melee_hit_stamina_cost))
 
 
 func resolve_ranged_hit() -> bool:
 
-	return spend_stamina(ranged_hit_stamina_cost)
+	return spend_stamina(action_cost(ranged_hit_stamina_cost))
 
 
 func resolve_throw() -> bool:
 
-	return spend_stamina(throw_stamina_cost)
+	return spend_stamina(action_cost(throw_stamina_cost))
 
 
 func meet(character: StringName) -> int:

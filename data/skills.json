@@ -1,0 +1,247 @@
+{
+  "settings": {
+    "starting_points": 6,
+    "xp_base": 100,
+    "xp_per_level": 40,
+    "kill_xp": 25,
+    "quest_xp": 150
+  },
+  "nodes": [
+    {
+      "id": "sight",
+      "title": "Sight picture",
+      "branch": "weapons",
+      "row": 0,
+      "column": 0,
+      "ranks": 3,
+      "requires": {},
+      "gate": 0,
+      "icon": "service_pistol",
+      "description": "Read the distance through the mist. Improves firearm and bow reach.",
+      "modifiers": [
+        {
+          "stat": "weapon_range",
+          "percent": 0.08
+        }
+      ]
+    },
+    {
+      "id": "reload",
+      "title": "Magazine drill",
+      "branch": "weapons",
+      "row": 0,
+      "column": 1,
+      "ranks": 3,
+      "requires": {},
+      "gate": 0,
+      "icon": "ammo_556",
+      "description": "Practice reloads until your hands can work without looking.",
+      "modifiers": [
+        {
+          "stat": "reload_time",
+          "percent": -0.08
+        }
+      ]
+    },
+    {
+      "id": "precision",
+      "title": "Weak points",
+      "branch": "weapons",
+      "row": 1,
+      "column": 0,
+      "ranks": 2,
+      "requires": {
+        "sight": 1
+      },
+      "gate": 2,
+      "icon": "assault_rifle",
+      "description": "Recognize exposed joints. Adds to the critical chance earned through weapon use.",
+      "modifiers": [
+        {
+          "stat": "weapon_crit",
+          "flat": 0.015
+        }
+      ]
+    },
+    {
+      "id": "steady",
+      "title": "Steady hands",
+      "branch": "weapons",
+      "row": 1,
+      "column": 1,
+      "ranks": 2,
+      "requires": {
+        "reload": 1
+      },
+      "gate": 2,
+      "icon": "glock_19",
+      "description": "Keep a firm grip under pressure. Tightens spread, including accumulated recoil.",
+      "modifiers": [
+        {
+          "stat": "weapon_spread",
+          "percent": -0.12
+        }
+      ]
+    },
+    {
+      "id": "impact",
+      "title": "Terminal force",
+      "branch": "weapons",
+      "row": 2,
+      "column": 0,
+      "ranks": 2,
+      "requires": {
+        "precision": 1
+      },
+      "gate": 5,
+      "icon": "scar_h",
+      "description": "Make each round count. Improves direct projectile damage from firearms and bows.",
+      "modifiers": [
+        {
+          "stat": "weapon_damage",
+          "percent": 0.08
+        }
+      ]
+    },
+    {
+      "id": "draw",
+      "title": "Patient archer",
+      "branch": "weapons",
+      "row": 2,
+      "column": 1,
+      "ranks": 2,
+      "requires": {
+        "steady": 1
+      },
+      "gate": 5,
+      "icon": "recurve_bow",
+      "description": "A practiced draw reaches full bow power sooner.",
+      "modifiers": [
+        {
+          "stat": "charge_time",
+          "percent": -0.15
+        }
+      ]
+    },
+    {
+      "id": "reserve",
+      "title": "Deep reserves",
+      "branch": "survival",
+      "row": 0,
+      "column": 0,
+      "ranks": 3,
+      "requires": {},
+      "gate": 0,
+      "icon": "adrenaline",
+      "description": "Build the stamina needed for another trip below the rooftops.",
+      "modifiers": [
+        {
+          "stat": "max_stamina",
+          "flat": 10
+        }
+      ]
+    },
+    {
+      "id": "breath",
+      "title": "Controlled breathing",
+      "branch": "survival",
+      "row": 0,
+      "column": 1,
+      "ranks": 3,
+      "requires": {},
+      "gate": 0,
+      "icon": "ration_pack",
+      "description": "Recover more quickly wherever the air allows it. Does not bypass mist suppression.",
+      "modifiers": [
+        {
+          "stat": "stamina_recovery",
+          "percent": 0.1
+        }
+      ]
+    },
+    {
+      "id": "economy",
+      "title": "Measured effort",
+      "branch": "survival",
+      "row": 1,
+      "column": 0,
+      "ranks": 2,
+      "requires": {
+        "reserve": 1
+      },
+      "gate": 2,
+      "icon": "energy_bar",
+      "description": "Use less stamina when firing, throwing, or making melee attacks.",
+      "modifiers": [
+        {
+          "stat": "action_cost",
+          "percent": -0.1
+        }
+      ]
+    },
+    {
+      "id": "recovery",
+      "title": "Second wind",
+      "branch": "survival",
+      "row": 1,
+      "column": 1,
+      "ranks": 2,
+      "requires": {
+        "breath": 1
+      },
+      "gate": 2,
+      "icon": "regen_injector",
+      "description": "Recover a little extra stamina each second before weather and exposure effects.",
+      "modifiers": [
+        {
+          "stat": "stamina_recovery",
+          "flat": 2
+        }
+      ]
+    },
+    {
+      "id": "endurance",
+      "title": "Expedition ready",
+      "branch": "survival",
+      "row": 2,
+      "column": 0,
+      "ranks": 2,
+      "requires": {
+        "economy": 1
+      },
+      "gate": 5,
+      "icon": "longbow",
+      "description": "Condition yourself for longer expeditions. Stacks with temporary consumable bonuses.",
+      "modifiers": [
+        {
+          "stat": "max_stamina",
+          "percent": 0.1
+        }
+      ]
+    },
+    {
+      "id": "composure",
+      "title": "Calm under pressure",
+      "branch": "survival",
+      "row": 2,
+      "column": 1,
+      "ranks": 2,
+      "requires": {
+        "recovery": 1
+      },
+      "gate": 5,
+      "icon": "compound_bow",
+      "description": "Conserve effort and settle your aim even when surrounded.",
+      "modifiers": [
+        {
+          "stat": "action_cost",
+          "percent": -0.05
+        },
+        {
+          "stat": "weapon_spread",
+          "percent": -0.05
+        }
+      ]
+    }
+  ]
+}

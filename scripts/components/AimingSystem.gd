@@ -72,7 +72,7 @@ func physics_tick() -> void:
 		_update_lob_preview()
 		return
 	if actor.combat_comp and actor.combat_comp.is_charging and actor.combat_comp.active_config:
-		indicator.show_charged(actor.aim_world_position(), actor.combat_comp.active_config, actor.combat_comp.charge_ratio())
+		indicator.show_charged(actor.aim_world_position(), actor.combat_comp.active_config, actor.combat_comp.charge_ratio(), actor.combat_comp.effective_range(actor.combat_comp.charge_ratio()))
 		return
 	if indicator and indicator.strategy == WeaponConfig.CHARGED:
 		indicator.hide_preview()
@@ -85,7 +85,7 @@ func physics_tick() -> void:
 		indicator.hide_preview()
 		return
 	if actor.combat_comp and actor.combat_comp.active_config:
-		indicator.show_direct(actor.aim_world_position(), actor.combat_comp.active_config, actor.combat_comp.current_spread())
+		indicator.show_direct(actor.aim_world_position(), actor.combat_comp.active_config, actor.combat_comp.current_spread(), actor.combat_comp.effective_range())
 	if Input.is_action_just_pressed("reload"):
 		actor.combat_comp.start_reload()
 		return

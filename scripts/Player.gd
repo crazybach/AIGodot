@@ -36,6 +36,8 @@ var weapon_skill: WeaponProficiencyComponent
 var item_light_system: ItemLightSystem
 var consumable_effects: ConsumableEffectSystem
 var quest_log: QuestLogComponent
+var attributes: CharacterAttributes
+var skill_tree: SkillTreeComponent
 var _shoot_flash_timer  # SceneTreeTimer — no Timer type annotation (mismatch)
 
 
@@ -47,6 +49,13 @@ var is_reloading: bool:
 ## ── Creature overrides ─────────────────────────────────────────
 
 func _setup_creature() -> void:
+	attributes = CharacterAttributes.new()
+	attributes.name = "CharacterAttributes"
+	add_child(attributes)
+	skill_tree = SkillTreeComponent.new()
+	skill_tree.name = "SkillTree"
+	add_child(skill_tree)
+	skill_tree.setup(attributes)
 	# Add components in tick order
 	movement_comp = _add_component(MovementComponent.new()) as MovementComponent
 	movement_comp.input_control = true
@@ -59,6 +68,7 @@ func _setup_creature() -> void:
 	humanoid_profile.display_name = "Survivor"
 	add_child(humanoid_profile)
 	humanoid_profile.bind_health(health_comp)
+	humanoid_profile.bind_attributes(attributes)
 	consumable_effects = ConsumableEffectSystem.new()
 	consumable_effects.setup(health_comp, humanoid_profile)
 	add_child(consumable_effects)
@@ -75,6 +85,7 @@ func _setup_creature() -> void:
 	quest_log = QuestLogComponent.new()
 	quest_log.name = "QuestLog"
 	add_child(quest_log)
+	quest_log.quest_completed.connect(func(_id): skill_tree.award_event("quest"))
 
 	equipment_comp = _add_component(EquipmentComponent.new()) as EquipmentComponent
 	equipment_comp.name = "BodyEquipment"
@@ -88,6 +99,7 @@ func _setup_creature() -> void:
 	combat_comp = _add_component(CombatComponent.new()) as CombatComponent
 	weapon_skill = _add_component(WeaponProficiencyComponent.new()) as WeaponProficiencyComponent
 	combat_comp.set_proficiency(weapon_skill)
+	combat_comp.attributes = attributes
 	combat_comp.weapon_fired.connect(_on_weapon_fired)
 	_configure_equipped_launcher()
 	_apply_equipment_modifiers()
@@ -167,7 +179,7 @@ func pointer_over_interactive_ui() -> bool:
 	var hovered: Control = get_viewport().gui_get_hovered_control()
 	var current: Node = hovered
 	while current:
-		if current is InventoryPanel or current is Quickbar:
+		if current is InventoryPanel or current is Quickbar or current is BaseButton:
 			return true
 		current = current.get_parent()
 	return false

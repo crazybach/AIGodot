@@ -36,11 +36,11 @@ func show_lob(target_global: Vector2, profile: AimComponent, height_scale: float
 	queue_redraw()
 
 
-func show_charged(target_global: Vector2, config: WeaponConfig, charge: float) -> void:
+func show_charged(target_global: Vector2, config: WeaponConfig, charge: float, range_override := -1.0) -> void:
 
 	active = true
 	strategy = WeaponConfig.CHARGED
-	max_distance = config.range_for_charge(charge)
+	max_distance = range_override if range_override >= 0.0 else config.range_for_charge(charge)
 	requested_endpoint = to_local(target_global)
 	landing_endpoint = requested_endpoint.normalized() * max_distance
 	target_valid = true
@@ -57,12 +57,13 @@ func hide_preview() -> void:
 	queue_redraw()
 
 
-func show_direct(target_global: Vector2, config: WeaponConfig, current_spread: float) -> void:
+func show_direct(target_global: Vector2, config: WeaponConfig, current_spread: float, range_override := -1.0) -> void:
 	active = true
 	strategy = AimComponent.DIRECT
 	requested_endpoint = to_local(target_global)
-	target_valid = requested_endpoint.length() <= config.max_range
-	landing_endpoint = requested_endpoint.limit_length(config.max_range)
+	max_distance = range_override if range_override >= 0.0 else config.max_range
+	target_valid = requested_endpoint.length() <= max_distance
+	landing_endpoint = requested_endpoint.limit_length(max_distance)
 	spread = current_spread
 	queue_redraw()
 
