@@ -24,6 +24,8 @@ var notice := "Find LIFT A in the lobby. Press E to reach clear air."
 var notice_time := 9.0
 var _interact_key_down := false
 var _touch_interaction_requested := false
+var _quest_location := ""
+var _quest_floor := ""
 
 
 func request_touch_interaction() -> void:
@@ -83,6 +85,7 @@ func _ready() -> void:
 	add_child(weather_visual)
 	layer_manager.layer_changed.connect(func(definition):
 		hud.close_modal_windows()
+		_update_quest_location()
 		notice = "Clear air. Stamina is recovering." if not definition.mist_exposure else "Mist exposure. Watch your stamina and find the next elevator."
 		notice_time = 4.0)
 	hud.update_health(player.health_comp.health, player.health_comp.max_health)
@@ -96,6 +99,7 @@ func _ready() -> void:
 	var district_hud := DistrictHUD.new()
 	district_hud.game = self
 	district_overlay.add_child(district_hud)
+	_update_quest_location()
 
 
 func _spawn_rooftop_npcs() -> void:
@@ -103,8 +107,9 @@ func _spawn_rooftop_npcs() -> void:
 	npc_content.name = "NPCContentDatabase"
 	add_child(npc_content)
 	assert(npc_content.last_error.is_empty(), npc_content.last_error)
-	player.quest_log.setup(npc_content.quest_definitions)
-	player.quest_log.quest_completed.connect(func(_quest_id): story_progress = player.quest_log.completed_count())
+	if not player.quest_log.setup(npc_content.quest_definitions):
+		push_error(player.quest_log.last_error)
+	player.quest_log.quest_completed.connect(_on_quest_completed)
 	var roofs := layer_manager.layers[&"roofs"] as WorldLayer
 	for row in npc_content.npc_definitions:
 		var survivor := SurvivorNPC.new()
@@ -168,7 +173,37 @@ func _process(delta: float) -> void:
 		_handle_back()
 		return
 	notice_time = maxf(0.0, notice_time - delta)
+	_update_quest_location()
 	_update_interaction()
+
+
+func _update_quest_location() -> void:
+	if player == null or not player.is_alive or layer_manager == null or layer_manager.active_layer == null: return
+	var floor_node := layer_manager.active_layer
+	var floor_id := str(floor_node.definition.id)
+	if _quest_floor != floor_id:
+		_quest_floor = floor_id
+		player.quest_log.arrive(StringName(floor_id))
+	var location := floor_id + ":streets"
+	for index in floor_node.building_polygons.size():
+		if Geometry2D.is_point_in_polygon(player.position, floor_node.building_polygons[index]):
+			location = floor_id + ":" + str(floor_node.building_ids[index])
+			break
+	if location != _quest_location:
+		_quest_location = location
+		player.quest_log.arrive(StringName(location))
+
+
+func _on_quest_completed(quest_id: StringName) -> void:
+	story_progress = player.quest_log.completed_count()
+	var definition: Dictionary = player.quest_log.definitions.get(quest_id, {})
+	var reward := int(definition.get("rewards", {}).get("relationship", 0))
+	var giver := StringName(definition.get("giver_id", ""))
+	for npc in rooftop_npcs:
+		if npc.humanoid_profile.character_id == giver:
+			player.humanoid_profile.adjust_attitude(giver, reward)
+			npc.humanoid_profile.adjust_attitude(player.humanoid_profile.character_id, reward)
+			break
 
 
 func _handle_back() -> void:
@@ -176,6 +211,8 @@ func _handle_back() -> void:
 		return
 	if hud.debug_panel.visible:
 		hud.debug_panel.hide()
+	elif hud.quest_panel.visible:
+		hud.quest_panel.hide()
 	elif hud.skill_panel.visible:
 		hud.skill_panel.hide()
 	elif hud.dialogue_panel.is_open():

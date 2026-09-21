@@ -85,7 +85,8 @@ func _setup_creature() -> void:
 	quest_log = QuestLogComponent.new()
 	quest_log.name = "QuestLog"
 	add_child(quest_log)
-	quest_log.quest_completed.connect(func(_id): skill_tree.award_event("quest"))
+	quest_log.bind_owner(inventory_comp, wallet)
+	quest_log.quest_completed.connect(func(id): skill_tree.award_xp(int(quest_log.definitions.get(id, {}).get("rewards", {}).get("xp", skill_tree.settings.get("quest_xp", 150)))))
 
 	equipment_comp = _add_component(EquipmentComponent.new()) as EquipmentComponent
 	equipment_comp.name = "BodyEquipment"

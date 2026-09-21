@@ -1,0 +1,480 @@
+{
+  "version": 2,
+  "quests": [
+    {
+      "id": "above_the_mist",
+      "title": "Above the Mist",
+      "category": "main",
+      "description": "The street air is draining your strength. Reach clear air and find someone who understands this district.",
+      "acceptance": {
+        "mode": "auto",
+        "requires": []
+      },
+      "completion": {
+        "mode": "auto"
+      },
+      "rewards": {
+        "scrip": 10,
+        "xp": 100
+      },
+      "stages": [
+        {
+          "id": "clear_air",
+          "title": "Get above the mist",
+          "description": "Find LIFT A inside the starting lobby. Press E to travel to the roof.",
+          "requires": [],
+          "objectives": [
+            {
+              "type": "arrival",
+              "location": "roofs:A",
+              "label": "Reach Ashdown rooftop (A)",
+              "amount": 1
+            }
+          ]
+        },
+        {
+          "id": "find_help",
+          "title": "A name in the fog",
+          "description": "Speak to Imani, the quartermaster on Ashdown rooftop. Press E near her.",
+          "requires": [
+            "clear_air"
+          ],
+          "objectives": [
+            {
+              "type": "talk",
+              "npc_id": "imani_okafor",
+              "npc_name": "Imani Okafor",
+              "amount": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "emergency_power",
+      "title": "Emergency Power",
+      "category": "main",
+      "description": "The rooftop repeater is failing. Supply Imani with batteries and drinking water so the overnight radio watch can stay at its post.",
+      "giver_id": "imani_okafor",
+      "giver_name": "Imani Okafor",
+      "location_hint": "Ashdown rooftop (A)",
+      "acceptance": {
+        "mode": "talk",
+        "npc_id": "imani_okafor",
+        "npc_name": "Imani Okafor",
+        "requires": [
+          "above_the_mist"
+        ]
+      },
+      "completion": {
+        "mode": "talk",
+        "npc_id": "imani_okafor",
+        "npc_name": "Imani Okafor"
+      },
+      "rewards": {
+        "scrip": 35,
+        "relationship": 8,
+        "xp": 150
+      },
+      "stages": [
+        {
+          "id": "supplies",
+          "title": "Supply the radio watch",
+          "requires": [],
+          "objectives": [
+            {
+              "type": "item",
+              "item_id": "battery_cell",
+              "amount": 2,
+              "consume": true
+            },
+            {
+              "type": "item",
+              "item_id": "bottled_water",
+              "amount": 1,
+              "consume": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "roof_clinic",
+      "title": "The Roof Clinic",
+      "category": "side",
+      "description": "Doctor Park needs a medkit and clean drinking water. Keep both in your backpack until you can hand them over.",
+      "giver_id": "lena_park",
+      "giver_name": "Dr. Lena Park",
+      "location_hint": "Rooftop clinic",
+      "acceptance": {
+        "mode": "talk",
+        "npc_id": "lena_park",
+        "npc_name": "Dr. Lena Park"
+      },
+      "completion": {
+        "mode": "talk",
+        "npc_id": "lena_park",
+        "npc_name": "Dr. Lena Park"
+      },
+      "rewards": {
+        "scrip": 45,
+        "relationship": 10,
+        "xp": 150
+      },
+      "stages": [
+        {
+          "id": "supplies",
+          "title": "Restock the clinic",
+          "objectives": [
+            {
+              "type": "item",
+              "item_id": "field_medkit",
+              "amount": 1,
+              "consume": true
+            },
+            {
+              "type": "item",
+              "item_id": "bottled_water",
+              "amount": 1,
+              "consume": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "thin_the_mist",
+      "title": "Thin the Mist",
+      "category": "side",
+      "description": "Mateo needs a route through the Galleria. Scout the lobby, stop three creatures, and keep six 9mm rounds in reserve before returning with your report.",
+      "giver_id": "mateo_ruiz",
+      "giver_name": "Mateo Ruiz",
+      "location_hint": "Mateo on the rooftops / Galleria (M)",
+      "acceptance": {
+        "mode": "talk",
+        "npc_id": "mateo_ruiz",
+        "npc_name": "Mateo Ruiz"
+      },
+      "completion": {
+        "mode": "talk",
+        "npc_id": "mateo_ruiz",
+        "npc_name": "Mateo Ruiz"
+      },
+      "rewards": {
+        "scrip": 70,
+        "relationship": 12,
+        "xp": 200
+      },
+      "stages": [
+        {
+          "id": "scout",
+          "title": "Scout the Galleria lobby",
+          "description": "Reach building M at ground level. Kills before this reconnaissance do not count toward securing the route.",
+          "objectives": [
+            {
+              "type": "arrival",
+              "location": "ground:M",
+              "label": "Enter Galleria lobby (M)",
+              "amount": 1
+            }
+          ]
+        },
+        {
+          "id": "secure",
+          "title": "Secure a supply route",
+          "requires": [
+            "scout"
+          ],
+          "description": "Defeat creatures after scouting. Keep a small ammunition reserve for the return journey; the rounds are not handed in.",
+          "objectives": [
+            {
+              "type": "kill",
+              "amount": 3
+            },
+            {
+              "type": "item",
+              "item_id": "ammo_9mm",
+              "amount": 6,
+              "consume": false
+            }
+          ]
+        },
+        {
+          "id": "report",
+          "title": "Report to Mateo",
+          "requires": [
+            "secure"
+          ],
+          "description": "Return to Mateo and choose the quest hand-in response.",
+          "objectives": [
+            {
+              "type": "talk",
+              "npc_id": "mateo_ruiz",
+              "npc_name": "Mateo Ruiz",
+              "amount": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "voices_on_roofs",
+      "title": "Voices on the Roofs",
+      "category": "side",
+      "description": "Meet five different rooftop survivors and return their names to Grace. People you have already spoken to count.",
+      "giver_id": "grace_holloway",
+      "giver_name": "Grace Holloway",
+      "location_hint": "Grace on the northern rooftops",
+      "acceptance": {
+        "mode": "talk",
+        "npc_id": "grace_holloway",
+        "npc_name": "Grace Holloway"
+      },
+      "completion": {
+        "mode": "talk",
+        "npc_id": "grace_holloway",
+        "npc_name": "Grace Holloway"
+      },
+      "rewards": {
+        "scrip": 40,
+        "relationship": 9,
+        "xp": 150
+      },
+      "stages": [
+        {
+          "id": "names",
+          "title": "Remember the living",
+          "objectives": [
+            {
+              "type": "meet_npcs",
+              "amount": 5,
+              "lifetime": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "bridge_parts",
+      "title": "One More Crossing",
+      "category": "side",
+      "description": "Bring Tomas a portable ladder for a new route between isolated roofs.",
+      "giver_id": "tomas_varga",
+      "giver_name": "Tomas Varga",
+      "location_hint": "Tomas at the rooftop works",
+      "acceptance": {
+        "mode": "talk",
+        "npc_id": "tomas_varga",
+        "npc_name": "Tomas Varga"
+      },
+      "completion": {
+        "mode": "talk",
+        "npc_id": "tomas_varga",
+        "npc_name": "Tomas Varga"
+      },
+      "rewards": {
+        "scrip": 65,
+        "relationship": 9,
+        "xp": 150
+      },
+      "stages": [
+        {
+          "id": "ladder",
+          "title": "Deliver a portable ladder",
+          "objectives": [
+            {
+              "type": "item",
+              "item_id": "portable_ladder",
+              "amount": 1,
+              "consume": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "signal_fire",
+      "title": "Signal Fire",
+      "category": "side",
+      "description": "Find an emergency flare for Malik's rescue signal.",
+      "giver_id": "malik_reed",
+      "giver_name": "Malik Reed",
+      "location_hint": "Malik on the rooftops",
+      "acceptance": {
+        "mode": "talk",
+        "npc_id": "malik_reed",
+        "npc_name": "Malik Reed"
+      },
+      "completion": {
+        "mode": "talk",
+        "npc_id": "malik_reed",
+        "npc_name": "Malik Reed"
+      },
+      "rewards": {
+        "scrip": 30,
+        "relationship": 7,
+        "xp": 150
+      },
+      "stages": [
+        {
+          "id": "flare",
+          "title": "Bring a signal flare",
+          "objectives": [
+            {
+              "type": "item",
+              "item_id": "flare_light",
+              "amount": 1,
+              "consume": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "supper_for_two",
+      "title": "Supper for Two",
+      "category": "side",
+      "description": "Bring two cans of food and a bottle of water for Nia and her missing brother.",
+      "giver_id": "nia_brooks",
+      "giver_name": "Nia Brooks",
+      "location_hint": "Nia on the rooftops",
+      "acceptance": {
+        "mode": "talk",
+        "npc_id": "nia_brooks",
+        "npc_name": "Nia Brooks"
+      },
+      "completion": {
+        "mode": "talk",
+        "npc_id": "nia_brooks",
+        "npc_name": "Nia Brooks"
+      },
+      "rewards": {
+        "scrip": 25,
+        "relationship": 10,
+        "xp": 150
+      },
+      "stages": [
+        {
+          "id": "meal",
+          "title": "Pack supper for two",
+          "objectives": [
+            {
+              "type": "item",
+              "item_id": "canned_beans",
+              "amount": 2,
+              "consume": true
+            },
+            {
+              "type": "item",
+              "item_id": "bottled_water",
+              "amount": 1,
+              "consume": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "galleria_cache",
+      "title": "A Pantry in the Mist",
+      "category": "side",
+      "hidden": true,
+      "description": "The abandoned mall still contains supplies. Search its storage cabinets and carry enough food and water for a short expedition. Keep what you find.",
+      "location_hint": "Galleria ground floor (M)",
+      "acceptance": {
+        "mode": "arrival",
+        "location": "ground:M",
+        "location_name": "Galleria lobby (M)"
+      },
+      "completion": {
+        "mode": "auto"
+      },
+      "rewards": {
+        "scrip": 15,
+        "xp": 100
+      },
+      "stages": [
+        {
+          "id": "provisions",
+          "title": "Assemble an emergency ration",
+          "objectives": [
+            {
+              "type": "item",
+              "item_id": "canned_beans",
+              "amount": 2,
+              "consume": false
+            },
+            {
+              "type": "item",
+              "item_id": "bottled_water",
+              "amount": 2,
+              "consume": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "breach_echo",
+      "title": "An Echo from the Breach",
+      "category": "main",
+      "hidden": true,
+      "description": "Asha's research suggests the mist is learning the district. After restoring the radio watch, ask about her model and investigate the relay site.",
+      "giver_id": "asha_singh",
+      "giver_name": "Asha Singh",
+      "location_hint": "Asha on the rooftops / relay building (T)",
+      "acceptance": {
+        "mode": "event",
+        "event_id": "breach_briefing",
+        "hint": "After Emergency Power, ask Asha what her model predicts.",
+        "requires": [
+          "emergency_power"
+        ]
+      },
+      "completion": {
+        "mode": "talk",
+        "npc_id": "asha_singh",
+        "npc_name": "Asha Singh"
+      },
+      "rewards": {
+        "scrip": 90,
+        "relationship": 8,
+        "xp": 250
+      },
+      "stages": [
+        {
+          "id": "relay",
+          "title": "Investigate the relay building",
+          "objectives": [
+            {
+              "type": "arrival",
+              "location": "ground:T",
+              "label": "Enter relay building (T)",
+              "amount": 1
+            }
+          ]
+        },
+        {
+          "id": "evidence",
+          "title": "Bring Asha evidence",
+          "requires": [
+            "relay"
+          ],
+          "description": "Stop two creatures after entering the relay building. Bring one cracked lens back to Asha; she also trades for salvaged research parts.",
+          "objectives": [
+            {
+              "type": "kill",
+              "amount": 2
+            },
+            {
+              "type": "item",
+              "item_id": "cracked_lens",
+              "amount": 1,
+              "consume": true
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

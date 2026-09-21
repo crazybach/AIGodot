@@ -33,7 +33,7 @@ func _run() -> void:
 	check(ids.size() == 10, "NPC character IDs are stable and unique")
 	check(ages.has("child") and ages.has("teen") and ages.has("young adult") and ages.has("adult") and ages.has("middle-aged") and ages.has("elder"), "roster spans child through elder age groups")
 	check(traders == 5, "five NPCs compose optional trading capability")
-	check(game.npc_content.quest_definitions.size() == 7, "seven data-driven quests loaded")
+	check(game.npc_content.quest_definitions.size() == 10, "ten data-driven quests loaded")
 	check(game.layer_manager.travel(&"roofs", &"A"), "travel to rooftop NPC layer")
 	await process_frame
 	var roofs := game.layer_manager.layers[&"roofs"] as WorldLayer
@@ -58,10 +58,10 @@ func _run() -> void:
 	check(game.hud.dialogue_panel.is_open() and game.player.quest_log.met_characters.has(&"imani_okafor"), "dialogue UI opens and records actual meeting")
 	check(game.hud.dialogue_panel.choices.get_child_count() >= 6, "conversation UI renders topic, quest, trade, and exit choices")
 	var quest_log: QuestLogComponent = game.player.quest_log
-	check(quest_log.accept(&"emergency_power"), "quest can be accepted")
-	check(quest_log.can_complete(&"emergency_power", game.player.inventory_comp), "item objective reads reusable backpack contents")
+	check(quest_log.accept(&"emergency_power", "talk", "imani_okafor"), "quest can be accepted through its giver")
+	check(quest_log.can_turn_in(&"emergency_power", &"imani_okafor"), "item objectives read reusable backpack contents")
 	var old_scrip: int = game.player.wallet.balance
-	check(quest_log.complete(&"emergency_power", game.player.inventory_comp, game.player.wallet), "ready quest completes")
+	check(quest_log.turn_in(&"emergency_power", &"imani_okafor"), "ready quest completes with its giver")
 	check(quest_log.state_for(&"emergency_power") == QuestLogComponent.COMPLETED and game.player.wallet.balance == old_scrip + 35, "completion persists state and grants reward")
 	game.hud.dialogue_panel.close_dialogue()
 	game.hud.inventory_panel.open_trade(imani)

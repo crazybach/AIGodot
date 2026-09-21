@@ -3,6 +3,7 @@ extends Node
 ## Loads human-readable NPC, dialogue, and quest content from one table.
 
 const CONTENT_PATH := "res://data/npc_rooftop_content.json"
+const QUEST_PATH := "res://data/quests.json"
 
 var npc_definitions: Array = []
 var quest_definitions: Dictionary = {}
@@ -24,7 +25,11 @@ func reload_content() -> bool:
 		last_error = "NPC content root must be a JSON object"
 		return false
 	var npc_rows = parsed.get("npcs", [])
-	var quest_rows = parsed.get("quests", [])
+	var quest_data = JSON.parse_string(FileAccess.get_file_as_string(QUEST_PATH))
+	if not quest_data is Dictionary:
+		last_error = "Invalid quest content: " + QUEST_PATH
+		return false
+	var quest_rows = quest_data.get("quests", [])
 	if not npc_rows is Array or not quest_rows is Array:
 		last_error = "NPC and quest tables must be arrays"
 		return false
@@ -32,7 +37,15 @@ func reload_content() -> bool:
 	quest_definitions.clear()
 	for row in quest_rows:
 		if row is Dictionary and not String(row.get("id", "")).is_empty():
+			if quest_definitions.has(StringName(row.id)):
+				last_error = "Duplicate quest ID: " + str(row.id)
+				return false
 			quest_definitions[StringName(row["id"])] = row.duplicate(true)
+	var validator := QuestDefinitions.new()
+	if not validator.parse(quest_definitions):
+		last_error = validator.error
+		return false
+	quest_definitions = validator.definitions
 	return not npc_definitions.is_empty()
 
 

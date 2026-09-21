@@ -7,6 +7,11 @@ SkillTreeComponent supplies per-character CharacterAttributes; CombatComponent
 resolves effective weapon values without modifying shared WeaponConfig resources.
 Inventory tooltips show base values; the HUD and Training window show effective values.
 
+Quest hand-ins: read [AI_AGENT_QUEST_SYSTEM.md](AI_AGENT_QUEST_SYSTEM.md).
+QuestLogComponent checks live backpack contents and consumes delivery items only
+when the configured stage completes; inventory-driven evaluation is deferred
+until the container transaction has finished.
+
 World ownership: read [AI_AGENT_WORLD_LAYERS.md](AI_AGENT_WORLD_LAYERS.md) before
 spawning world items/projectiles. Actors now belong to the active WorldLayer;
 elevators reparent the same player. `ConstructionComponent` lets a portable ladder

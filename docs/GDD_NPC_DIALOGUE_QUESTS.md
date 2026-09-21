@@ -1,5 +1,9 @@
 # Rooftop Survivors: NPC, Dialogue, Trade, and Quest System
 
+Quest schema/UI revision: [AI_AGENT_QUEST_SYSTEM.md](AI_AGENT_QUEST_SYSTEM.md)
+documents multiple requirements, dependent stages, acquisition/hand-in rules,
+main/side categories and the J journal with one selected HUD quest.
+
 ## Player experience
 
 Ten survivors occupy Ashdown's safe rooftops. Approach one and press **E** to
@@ -16,7 +20,7 @@ changes below 35 and at 70 or higher. Story commentary selects the highest phase
 whose `min` value is no greater than current story progress. In this iteration,
 story progress is the number of completed quests.
 
-Some dialogue offers a task. Accepted tasks appear in the compact HUD tracker.
+Some dialogue offers a task. One selected task appears in the compact HUD tracker.
 Returning with the required inventory item, meeting count, or mist-creature kill
 count reveals a turn-in response. Completion consumes requested delivery items,
 pays Breach Scrip, improves the giver's relationship, and advances story
@@ -73,7 +77,7 @@ flowchart LR
   objective checks, item consumption, and rewards.
 - `DialoguePanel.gd` renders conversations and applies chosen actions. It hands
   trade to `InventoryPanel`.
-- `NPCContentDatabase.gd` loads the human-readable JSON table. Each NPC record
+- `NPCContentDatabase.gd` loads separate NPC and quest JSON tables. Each NPC record
   defines identity, traits, roof position, appearance, stock, quest link, and
   dialogue. Quest rows define objectives and rewards.
 
@@ -85,15 +89,16 @@ identity fields, three relationship greetings, progress lines, and topics. Set
 actor to another scene/layer by reusing `SurvivorNPC.setup()`; none of the
 conversation logic depends on rooftops.
 
-Add a quest row and reference its ID from an NPC. Supported objective types are
-`item`, `event`, and `meet_npcs`. New objective types belong in
-`QuestLogComponent._objective_ready()` and `objective_summary()`. World systems
-record progress through `record_event()`; the current mist enemies record
-`mist_kill` on death.
+Add a quest to `data/quests.json`; see the current schema in
+[AI_AGENT_QUEST_SYSTEM.md](AI_AGENT_QUEST_SYSTEM.md). Stage objectives support
+items, kills/events, conversations, arrivals and distinct people met. Dialogue
+uses the acceptance/turn-in NPC IDs; an NPC's legacy `quest_id` selects its
+custom offer/status/completion voice. World systems report `record_event()` or
+`arrive()`; mist enemy deaths report `mist_kill`.
 
-The content loader can be reloaded without changing runtime classes. Future save
-data should serialize quest `states`, `event_counts`, `met_characters`, dialogue
-`used_topic_ids`, and both humanoid relationship maps by stable character ID.
+Definitions load at session setup. Future saves must include quest stage states,
+event baselines, visited locations and tracked quest as well as dialogue
+`used_topic_ids`, rewards, inventory and both humanoid relationship maps.
 
 ## Validation
 

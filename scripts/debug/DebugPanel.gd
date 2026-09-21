@@ -62,6 +62,12 @@ func _ready() -> void:
 		skills.action("Refund all talents", player.skill_tree.reset_tree)
 		skills.action("Reload data/skills.json", func(): player.skill_tree.reload_table())
 		register_tab(&"skills", "Skills", skills)
+	if player and player.quest_log:
+		var quests := DebugControls.new()
+		quests.readout(func(): return "Tracked: %s\nCompleted: %d\n%s" % [player.quest_log.tracked_quest, player.quest_log.completed_count(), player.quest_log.objective_summary(player.quest_log.tracked_quest)])
+		quests.action("Record one test creature defeat", func(): player.quest_log.record_event(&"mist_kill"))
+		quests.action("Stop tracking", func(): player.quest_log.set_tracked(&""))
+		register_tab(&"quests", "Quests", quests)
 	visible = false
 
 func register_tab(id: StringName, title: String, control: Control) -> bool:

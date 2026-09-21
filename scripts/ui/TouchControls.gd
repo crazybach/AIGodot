@@ -62,7 +62,7 @@ func _input(event: InputEvent) -> void:
 
 func _press(index: int, position: Vector2) -> void:
 	# The training window owns its entire surface, including the button cluster.
-	if hud.skill_panel and hud.skill_panel.visible:
+	if (hud.skill_panel and hud.skill_panel.visible) or (hud.quest_panel and hud.quest_panel.visible):
 		return
 	if not game.player.is_alive:
 		if position.distance_to(Vector2(size.x / 2.0, size.y / 2.0 + 70.0)) <= 80.0:

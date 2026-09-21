@@ -1,55 +1,4 @@
 {
-  "quests": [
-    {
-      "id": "emergency_power",
-      "title": "Emergency Power",
-      "description": "Bring two D-cell batteries to Imani so the rooftop repeater can survive the night.",
-      "objectives": [{"type": "item", "item_id": "battery_cell", "amount": 2, "consume": true}],
-      "rewards": {"scrip": 35, "relationship": 8}
-    },
-    {
-      "id": "roof_clinic",
-      "title": "The Roof Clinic",
-      "description": "Deliver a field medkit to Doctor Park before the rooftop clinic runs dry.",
-      "objectives": [{"type": "item", "item_id": "field_medkit", "amount": 1, "consume": true}],
-      "rewards": {"scrip": 45, "relationship": 10}
-    },
-    {
-      "id": "thin_the_mist",
-      "title": "Thin the Mist",
-      "description": "Destroy three creatures at street level so Mateo can reopen a supply route.",
-      "objectives": [{"type": "event", "event_id": "mist_kill", "label": "Mist creatures stopped", "amount": 3}],
-      "rewards": {"scrip": 70, "relationship": 12}
-    },
-    {
-      "id": "voices_on_roofs",
-      "title": "Voices on the Roofs",
-      "description": "Meet five rooftop survivors and carry their names back to Grace.",
-      "objectives": [{"type": "meet_npcs", "amount": 5}],
-      "rewards": {"scrip": 40, "relationship": 9}
-    },
-    {
-      "id": "bridge_parts",
-      "title": "One More Crossing",
-      "description": "Bring Tomas a portable ladder for a new route between isolated roofs.",
-      "objectives": [{"type": "item", "item_id": "portable_ladder", "amount": 1, "consume": true}],
-      "rewards": {"scrip": 65, "relationship": 9}
-    },
-    {
-      "id": "signal_fire",
-      "title": "Signal Fire",
-      "description": "Find an emergency flare for Malik's rescue signal.",
-      "objectives": [{"type": "item", "item_id": "flare_light", "amount": 1, "consume": true}],
-      "rewards": {"scrip": 30, "relationship": 7}
-    },
-    {
-      "id": "supper_for_two",
-      "title": "Supper for Two",
-      "description": "Bring two cans of food for Nia and her missing brother.",
-      "objectives": [{"type": "item", "item_id": "canned_beans", "amount": 2, "consume": true}],
-      "rewards": {"scrip": 25, "relationship": 10}
-    }
-  ],
   "npcs": [
     {
       "id": "imani_okafor",
@@ -85,9 +34,9 @@
           {"id": "imani_portal", "text": "What did you see when the breach opened?", "tone": "neutral", "relationship_delta": 0, "response": "A second skyline behind the first. Then the mist folded the street in half. I stopped looking when something looked back."}
         ],
         "quest_prompt": "[Quest: Emergency Power] I can bring two D-cell batteries.",
-        "quest_offer": "Take this seriously. Two sealed D-cells will keep the emergency repeater alive through one night. Bring them to me intact.",
-        "quest_active": "The repeater is still coughing static. I need two D-cell batteries, not promises.",
-        "quest_turn_in": "I have the two batteries for the repeater.",
+        "quest_offer": "Two sealed D-cells will keep the repeater alive. Bring a bottle of water too; the overnight radio watch cannot leave its post.",
+        "quest_active": "Two D-cell batteries and a bottle of water. Keep them in your backpack until you hand them over.",
+        "quest_turn_in": "I have the batteries and water for the radio watch.",
         "quest_complete": "Good. Tonight every roof will hear the warning if the things in the mist start climbing. Take the scrip; you earned more than that."
       }
     },
@@ -124,9 +73,9 @@
           {"id": "lena_abandon", "text": "You cannot save everyone. Stop wasting supplies.", "tone": "negative", "relationship_delta": -5, "response": "I choose who can be saved every hour. You do not get to make that sound easy for me."}
         ],
         "quest_prompt": "[Quest: The Roof Clinic] What supplies are you missing?",
-        "quest_offer": "A proper field medkit. One. There is a child with glass near an artery, and my clean gauze is almost gone.",
-        "quest_active": "I can hold the bleeding for now. Bring one field medkit before 'for now' becomes an obituary.",
-        "quest_turn_in": "Here is the field medkit. Use it on the child.",
+        "quest_offer": "One field medkit and one bottle of clean water. There is a child with glass near an artery, and my supplies are almost gone.",
+        "quest_active": "A field medkit and bottled water. Bring both before 'for now' becomes an obituary.",
+        "quest_turn_in": "Here are the medkit and clean water. Use them on the child.",
         "quest_complete": "Set it here. Good. You bought someone a future; do not let anyone reduce that to inventory."
       }
     },
@@ -162,8 +111,8 @@
           {"id": "mateo_reckless", "text": "If you were faster, those people would already have supplies.", "tone": "negative", "relationship_delta": -5, "response": "Fast does not help when the road grows teeth. You want the route sooner, walk it yourself."}
         ],
         "quest_prompt": "[Quest: Thin the Mist] I can clear your service route.",
-        "quest_offer": "Drop three mist creatures near the service alley. Any three. Once the noise stops, I can move medicine between the north roofs.",
-        "quest_active": "The route stays closed until three of them are down. Do not chase them deeper than you can see.",
+        "quest_offer": "First scout the Galleria lobby, building M. Then stop three creatures and keep six 9mm rounds in reserve for the return. Come back and report when the route is safe.",
+        "quest_active": "Scout the Galleria, stop three creatures after scouting, and keep six rounds in reserve. Your journal shows what remains.",
         "quest_turn_in": "The service route is clear. Three creatures are down.",
         "quest_complete": "Then people eat tonight. Here, take my route money. I can earn more once the wheels turn again."
       }
@@ -271,9 +220,9 @@
           {"id": "nia_inside", "text": "You should hide and leave scouting to adults.", "tone": "negative", "relationship_delta": -5, "response": "Adults did not notice the eggs until I showed them. I will hide when hiding is the useful job."}
         ],
         "quest_prompt": "[Quest: Supper for Two] Do you and Leon have food?",
-        "quest_offer": "I saved my apple, but Leon hates apples. Two cans would be enough if he gets back tonight. I can pay; I found scrip in the laundry room.",
-        "quest_active": "Two cans. One for me and one for Leon. I am not eating his, even if he is late.",
-        "quest_turn_in": "I brought two cans, one for each of you.",
+        "quest_offer": "Two cans and a bottle of water would be enough if Leon gets back tonight. I can pay; I found scrip in the laundry room.",
+        "quest_active": "Two cans and a bottle of water. One can is Leon's. I am not eating his, even if he is late.",
+        "quest_turn_in": "I brought two cans and water for both of you.",
         "quest_complete": "Thank you. I knew he would need dinner when he comes back. That is not pretending. That is planning."
       }
     },
@@ -343,7 +292,7 @@
         ],
         "topics": [
           {"id": "asha_truth", "text": "Tell people the whole truth, even if they hate you for it.", "tone": "positive", "relationship_delta": 2, "response": "I released the logs. I left my name on them. Accountability will not close the breach, but secrecy helped open it."},
-          {"id": "asha_model", "text": "What does your model predict next?", "tone": "neutral", "relationship_delta": 0, "response": "A pressure pulse after midnight. The fog rises, electronics fail, and large organisms move toward concentrated heat."},
+          {"id": "asha_model", "quest_event": "breach_briefing", "text": "What does your model predict next?", "tone": "neutral", "relationship_delta": 0, "response": "A pressure pulse after midnight. Once Imani has the radio supplies, I need you to investigate the relay building, T. Stop two creatures after reaching it and bring me a cracked lens. The journal will record the investigation."},
           {"id": "asha_fault", "text": "Everyone below is there because of you.", "tone": "negative", "relationship_delta": -4, "response": "Some of them are. I carry that arithmetic every second. If punishment fixes the sky, tell me where to stand."}
         ]
       }

@@ -28,8 +28,10 @@ var charge_bar: ProgressBar
 var light_status_label: Label
 var inventory_panel: InventoryPanel
 var dialogue_panel: DialoguePanel
-var quest_tracker: Panel
-var quest_tracker_label: Label
+var quest_tracker: QuestTrackerPanel
+var quest_panel: QuestJournal
+var journal_button: Button
+var _journal_key_down := false
 var quickbar: Quickbar
 var quickbar_frame: Panel
 var _inventory_key_down := false
@@ -62,6 +64,7 @@ func _ready() -> void:
 	_build_debug_panel()
 	_build_touch_controls()
 	_build_skill_panel()
+	_build_quest_journal()
 
 
 func _build_skill_panel() -> void:
@@ -70,8 +73,8 @@ func _build_skill_panel() -> void:
 	skill_panel.setup(game_manager.player)
 	add_child(skill_panel)
 	skill_button = Button.new()
-	skill_button.position = Vector2(20, 402)
-	skill_button.size = Vector2(216, 42)
+	skill_button.position = Vector2(20, 434)
+	skill_button.size = Vector2(148, 38)
 	skill_button.add_theme_stylebox_override("normal", SurvivalUI.panel_style())
 	skill_button.add_theme_color_override("font_color", SurvivalUI.GOLD_BRIGHT)
 	skill_button.pressed.connect(toggle_skills)
@@ -313,43 +316,36 @@ func _build_dialogue_panel() -> void:
 
 
 func _build_quest_tracker() -> void:
-
-	quest_tracker = Panel.new()
+	quest_tracker = QuestTrackerPanel.new()
 	quest_tracker.name = "QuestTracker"
 	quest_tracker.position = Vector2(20, 258)
-	quest_tracker.size = Vector2(306, 132)
-	quest_tracker.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	quest_tracker.add_theme_stylebox_override("panel", SurvivalUI.panel_style())
+	quest_tracker.log = game_manager.player.quest_log
+	quest_tracker.details_requested.connect(toggle_journal)
 	add_child(quest_tracker)
-	quest_tracker_label = Label.new()
-	quest_tracker_label.position = Vector2(12, 10)
-	quest_tracker_label.size = Vector2(282, 112)
-	quest_tracker_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	quest_tracker_label.add_theme_font_size_override("font_size", 11)
-	quest_tracker_label.add_theme_color_override("font_color", SurvivalUI.LAVENDER)
-	quest_tracker.add_child(quest_tracker_label)
-	if game_manager and game_manager.player and game_manager.player.quest_log:
-		game_manager.player.quest_log.quest_changed.connect(func(_id, _state): _update_quest_tracker())
-		game_manager.player.quest_log.quest_progress.connect(_update_quest_tracker)
-		game_manager.player.inventory_comp.inventory_changed.connect(_update_quest_tracker)
-	_update_quest_tracker()
 
 
-func _update_quest_tracker() -> void:
-	if quest_tracker == null or game_manager == null or game_manager.player == null or game_manager.player.quest_log == null:
-		return
-	var log: QuestLogComponent = game_manager.player.quest_log
-	var lines: Array[String] = ["ACTIVE TASKS"]
-	for quest_id in log.states:
-		if log.state_for(quest_id) != QuestLogComponent.ACTIVE:
-			continue
-		var definition: Dictionary = log.definitions.get(quest_id, {})
-		lines.append("• " + String(definition.get("title", quest_id)))
-		lines.append("  " + log.objective_summary(quest_id, game_manager.player.inventory_comp))
-		if lines.size() >= 5:
-			break
-	quest_tracker_label.text = "\n".join(lines)
-	quest_tracker.visible = lines.size() > 1
+func _build_quest_journal() -> void:
+	quest_panel = QuestJournal.new()
+	quest_panel.name = "QuestJournal"
+	quest_panel.setup(game_manager.player)
+	add_child(quest_panel)
+	journal_button = Button.new()
+	journal_button.position = Vector2(178, 434)
+	journal_button.size = Vector2(148, 38)
+	journal_button.text = "JOURNAL  [ J ]"
+	journal_button.add_theme_stylebox_override("normal", SurvivalUI.panel_style())
+	journal_button.add_theme_color_override("font_color", SurvivalUI.GOLD_BRIGHT)
+	journal_button.pressed.connect(toggle_journal)
+	add_child(journal_button)
+
+
+func toggle_journal() -> void:
+	if quest_panel.visible:
+		quest_panel.hide()
+	else:
+		close_modal_windows()
+		debug_panel.hide()
+		quest_panel.open(game_manager.player.quest_log.tracked_quest)
 
 
 func _build_quickbar() -> void:
@@ -435,16 +431,20 @@ func _process(delta: float) -> void:
 	if touch_controls:
 		controls_label.visible = not touch_controls.visible
 	var typing := get_viewport().gui_get_focus_owner() is LineEdit
+	var journal_pressed := Input.is_key_pressed(KEY_J)
+	if journal_pressed and not _journal_key_down and not typing:
+		toggle_journal()
+	_journal_key_down = journal_pressed
 	var skill_pressed := Input.is_key_pressed(KEY_K)
 	if skill_pressed and not _skill_key_down and not typing:
 		toggle_skills()
 	_skill_key_down = skill_pressed
 	var inventory_pressed := Input.is_key_pressed(KEY_I)
-	if inventory_pressed and not _inventory_key_down and inventory_panel and not typing and not skill_panel.visible:
+	if inventory_pressed and not _inventory_key_down and inventory_panel and not typing and not skill_panel.visible and not quest_panel.visible:
 		inventory_panel.toggle_backpack()
 	_inventory_key_down = inventory_pressed
 	var character_pressed := Input.is_key_pressed(KEY_C)
-	if character_pressed and not _character_key_down and inventory_panel and not typing and not skill_panel.visible:
+	if character_pressed and not _character_key_down and inventory_panel and not typing and not skill_panel.visible and not quest_panel.visible:
 		inventory_panel.toggle_character()
 	_character_key_down = character_pressed
 	var debug_pressed := Input.is_key_pressed(KEY_F3)
@@ -496,10 +496,11 @@ func _update_crosshair() -> void:
 
 
 func is_modal_open() -> bool:
-	return (skill_panel and skill_panel.visible) or (inventory_panel and inventory_panel.is_any_window_open()) or (dialogue_panel and dialogue_panel.is_open()) or (debug_panel and debug_panel.is_open())
+	return (quest_panel and quest_panel.visible) or (skill_panel and skill_panel.visible) or (inventory_panel and inventory_panel.is_any_window_open()) or (dialogue_panel and dialogue_panel.is_open()) or (debug_panel and debug_panel.is_open())
 
 
 func close_modal_windows() -> void:
+	if quest_panel: quest_panel.hide()
 	if skill_panel: skill_panel.hide()
 	if dialogue_panel:
 		dialogue_panel.close_dialogue()

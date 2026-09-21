@@ -64,29 +64,24 @@ func take_relationship_delta(choice: Dictionary) -> int:
 
 
 func _append_quest_choice(choices: Array, player: Player) -> void:
-	var quest_id := actor.quest_id
-	if quest_id == &"" or player.quest_log == null:
-		return
-	var state := player.quest_log.state_for(quest_id)
-	if state == QuestLogComponent.LOCKED:
-		choices.append({
-			"text": String(content.get("quest_prompt", "Do you need help?")),
-			"tone": "positive", "action": "accept_quest", "quest_id": quest_id,
-			"response": String(content.get("quest_offer", "There is something you can do."))
-		})
-	elif state == QuestLogComponent.ACTIVE:
-		if player.quest_log.can_complete(quest_id, player.inventory_comp):
-			choices.append({
-				"text": String(content.get("quest_turn_in", "I have what you asked for.")),
+	if player.quest_log == null: return
+	var log := player.quest_log
+	var npc_id: StringName = actor.humanoid_profile.character_id
+	for quest_id in log.definitions:
+		var quest: Dictionary = log.definitions[quest_id]
+		var primary: bool = quest_id == actor.quest_id
+		if log.acceptance_reason(quest_id, "talk", str(npc_id)).is_empty():
+			choices.append({"text": content.get("quest_prompt", quest.title) if primary else "[Quest] " + str(quest.title),
+				"tone": "positive", "action": "accept_quest", "quest_id": quest_id,
+				"response": content.get("quest_offer", quest.description) if primary else quest.description})
+		elif log.can_turn_in(quest_id, npc_id):
+			choices.append({"text": content.get("quest_turn_in", "Report progress") if primary else "[Report] " + str(quest.title),
 				"tone": "positive", "action": "complete_quest", "quest_id": quest_id,
-				"response": String(content.get("quest_complete", "This will make a difference."))
-			})
-		else:
-			choices.append({
-				"text": "About your request...  " + player.quest_log.objective_summary(quest_id, player.inventory_comp),
+				"response": content.get("quest_complete", "This will make a difference.") if primary else "Thank you. This evidence helps us understand what is happening below."})
+		elif log.state_for(quest_id) == QuestLogComponent.ACTIVE and StringName(quest.get("giver_id", "")) == npc_id:
+			choices.append({"text": "[Quest] " + str(quest.title) + " - progress",
 				"tone": "neutral", "action": "quest_status", "quest_id": quest_id,
-				"response": String(content.get("quest_active", "Come back when it is done."))
-			})
+				"response": str(content.get("quest_active", quest.description)) + "\n\n" + log.objective_summary(quest_id)})
 
 
 func _topic_available(topic: Dictionary, relationship: int, progress: int) -> bool:

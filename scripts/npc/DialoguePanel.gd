@@ -188,19 +188,20 @@ func _choose(choice: Dictionary) -> void:
 			inventory_panel.open_trade(trader)
 		"accept_quest":
 			var quest_id := StringName(choice.get("quest_id", ""))
-			game.player.quest_log.accept(quest_id)
-			_render(npc.dialogue_comp.response_view(choice))
+			if game.player.quest_log.accept(quest_id, "talk", str(npc.humanoid_profile.character_id)):
+				_render(npc.dialogue_comp.response_view(choice))
+			else: _show_root()
 		"complete_quest":
 			var quest_id := StringName(choice.get("quest_id", ""))
-			var definition: Dictionary = game.player.quest_log.definitions.get(quest_id, {})
-			if game.player.quest_log.complete(quest_id, game.player.inventory_comp, game.player.wallet):
-				var reward: Dictionary = definition.get("rewards", {})
-				var reward_relation := int(reward.get("relationship", 0))
-				game.player.humanoid_profile.adjust_attitude(npc.humanoid_profile.character_id, reward_relation)
-				npc.humanoid_profile.adjust_attitude(game.player.humanoid_profile.character_id, reward_relation)
-				game.story_progress = game.player.quest_log.completed_count()
-			_render(npc.dialogue_comp.response_view(choice))
+			if game.player.quest_log.turn_in(quest_id, npc.humanoid_profile.character_id):
+				if game.player.quest_log.state_for(quest_id) == QuestLogComponent.COMPLETED:
+					_render(npc.dialogue_comp.response_view(choice))
+				else:
+					_render(npc.dialogue_comp.response_view({"response": "That part is done. Your journal has the next steps.\n\n" + game.player.quest_log.objective_summary(quest_id)}))
+			else: _show_root()
 		"quest_status", "topic":
+			if choice.has("quest_event"):
+				game.player.quest_log.record_event(StringName(choice.quest_event))
 			_render(npc.dialogue_comp.response_view(choice))
 	_refresh_relationship()
 
