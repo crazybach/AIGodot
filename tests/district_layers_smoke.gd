@@ -35,7 +35,8 @@ func _run() -> void:
 	check(ground.building_polygons.filter(func(points): return points.size() > 4).size() >= 5, "multiple buildings use irregular floor plans")
 	check(ground.encounters.filter(func(row): return row.kind == "egg").size() == 16, "authored egg encounters")
 	check(ground.encounters.filter(func(row): return row.kind == "wanderer").size() == 14, "authored wanderers")
-	check(game.enemies_alive.all(func(enemy): return enemy.slow_wander and enemy.sight_range <= 170.0), "roaming type has slow patrol and low sight")
+	var legacy_wanderers: Array = game.enemies_alive.filter(func(enemy): return enemy.definition.id == &"stalker")
+	check(legacy_wanderers.size() == 14 and legacy_wanderers.all(func(enemy): return enemy.slow_wander and enemy.sight_range <= 170.0), "authored legacy wanderers keep slow patrol and low sight")
 	var egg_nodes := ground.get_children().filter(func(node): return node is MistEgg)
 	check(egg_nodes.size() == 16, "egg encounter actors spawned")
 	var quiet_egg := egg_nodes[1] as MistEgg

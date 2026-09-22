@@ -1,7 +1,10 @@
 @tool
 class_name EncounterMarker
 extends Node2D
-@export_enum("egg", "wanderer") var kind := "egg"
+@export_enum("egg", "wanderer", "monster") var kind := "egg"
+@export_enum("stalker", "skitter", "brute", "charger", "spitter", "root") var enemy_id := "stalker"
+@export_range(1, 12) var count := 1
+@export_range(30, 400) var spread := 100.0
 @export_range(40, 300) var sight_range := 115.0
 @export var hatch_delay := 1.6
 

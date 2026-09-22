@@ -7,6 +7,7 @@ extends Node2D
 @export var density := 0.32
 @export var spread_radius := 640.0
 @export var release_speed := 0.18
+@export var fog_tint := Color(0, 0, 0, 0) # alpha zero preserves atmospheric color
 
 var is_releasing := false
 var release_amount := 0.0

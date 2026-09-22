@@ -162,12 +162,21 @@ func _update_lights() -> void:
 
 
 func _update_spills() -> void:
-
-	var values: Array[Vector4] = [Vector4.ZERO, Vector4.ZERO]
-	var index := 0
-	for node in get_tree().get_nodes_in_group(&"fog_volumes"):
-		if node.has_method(&"shader_data") and index < values.size():
-			values[index] = node.shader_data()
-			index += 1
-	material.set_shader_parameter(&"spill_a", values[0])
-	material.set_shader_parameter(&"spill_b", values[1])
+	var ranked: Array[Dictionary] = []
+	for volume in get_tree().get_nodes_in_group(&"fog_volumes"):
+		if not volume is FogVolume2D or not volume.is_visible_in_tree(): continue
+		var value: Vector4 = volume.shader_data()
+		if value.w <= 0: continue
+		# Local mist follows the same day/night tint as the atmospheric veil.
+		var tint: Color = volume.fog_tint * _time_of_day_color()
+		tint.a = volume.fog_tint.a
+		ranked.append({"value": value, "color": tint, "distance": volume.global_position.distance_to(camera.get_screen_center_position())})
+	ranked.sort_custom(func(a, b): return a.distance < b.distance)
+	var values := PackedVector4Array()
+	var colors := PackedColorArray()
+	for index in 16:
+		values.append(ranked[index].value if index < ranked.size() else Vector4.ZERO)
+		colors.append(ranked[index].color if index < ranked.size() else Color(0, 0, 0, 0))
+	material.set_shader_parameter(&"spills", values)
+	material.set_shader_parameter(&"spill_colors", colors)
+	material.set_shader_parameter(&"spill_count", mini(ranked.size(), 16))

@@ -126,21 +126,12 @@ func _spawn_rooftop_npcs() -> void:
 	assert(merchant != null, "Rooftop content must define Imani as the compatibility merchant")
 
 func _spawn_encounters() -> void:
-	for encounter in layer_manager.active_layer.encounters:
-		if encounter.kind == "egg":
-			var egg := MistEgg.new()
-			egg.position = encounter.position
-			egg.setup(player, float(encounter.sight_range), float(encounter.hatch_delay), _register_enemy)
-			layer_manager.active_layer.add_child(egg)
-		else:
-			var enemy := MistStalker.new()
-			enemy.position = encounter.position
-			layer_manager.active_layer.add_child(enemy)
-			enemy.setup(Enemy.TYPE_ZOMBIE, player)
-			enemy.setup_behavior(float(encounter.sight_range), true)
-			_register_enemy(enemy)
+	var spawner := EnemyEncounterSpawner.new()
+	spawner.player = player
+	spawner.registration = _register_enemy
+	spawner.populate(layer_manager.active_layer)
 
-func _register_enemy(enemy: MistStalker) -> void:
+func _register_enemy(enemy: Enemy) -> void:
 	if not enemy.died.is_connected(_on_enemy_died):
 		enemy.died.connect(_on_enemy_died)
 	enemies_alive.append(enemy)

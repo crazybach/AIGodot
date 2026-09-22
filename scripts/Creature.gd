@@ -112,6 +112,11 @@ func receive_damage(amount: float, damage_type: StringName = &"kinetic") -> void
 		health_comp.take_damage(resolved)
 
 
+## A multi-body creature's own parts must not shield it from area damage.
+func damage_collision_rids() -> Array[RID]:
+	return [get_rid()]
+
+
 ## Override in subclass — sets where damage flash is applied.
 ## Player: self.modulate. Enemy: enemy_sprite.modulate.
 func apply_flash(color: Color) -> void:

@@ -10,6 +10,8 @@ var map_bounds: Rect2
 var encounters: Array[Dictionary] = []
 var solid_rects: Array[Rect2] = []
 var navigation := AStarGrid2D.new()
+var dynamic_obstacles: Dictionary = {}
+var _clearance_grids: Dictionary = {}
 
 func is_outdoors_at(point: Vector2) -> bool:
 	if not definition.outdoor_weather:
@@ -23,21 +25,47 @@ func is_outdoors_at(point: Vector2) -> bool:
 
 func build_navigation(bounds: Rect2) -> void:
 	map_bounds = bounds
-	navigation.region = Rect2i(Vector2i(bounds.position / 20), Vector2i(bounds.size / 20))
-	navigation.cell_size = Vector2(20, 20)
-	navigation.offset = Vector2(10, 10)
-	navigation.diagonal_mode = AStarGrid2D.DIAGONAL_MODE_ONLY_IF_NO_OBSTACLES
-	navigation.update()
+	_clearance_grids.clear()
+	navigation = _make_grid(13)
+	_clearance_grids[13] = navigation
+
+func _make_grid(clearance: int) -> AStarGrid2D:
+	var grid := AStarGrid2D.new()
+	grid.region = Rect2i(Vector2i(map_bounds.position / 20), Vector2i(map_bounds.size / 20))
+	grid.cell_size = Vector2(20, 20)
+	grid.offset = Vector2(10, 10)
+	grid.diagonal_mode = AStarGrid2D.DIAGONAL_MODE_ONLY_IF_NO_OBSTACLES
+	grid.update()
+	var obstacles: Array[Rect2] = solid_rects.duplicate()
+	for group in dynamic_obstacles.values(): obstacles.append_array(group)
 	# Rasterize obstacles only, instead of checking every map cell against every prop.
-	for rect in solid_rects:
-		var expanded := rect.grow(13)
+	for rect in obstacles:
+		var expanded := rect.grow(clearance)
 		var first := Vector2i((expanded.position / 20).floor())
 		var last := Vector2i((expanded.end / 20).ceil())
 		for cell_y in range(first.y, last.y + 1):
 			for cell_x in range(first.x, last.x + 1):
 				var cell := Vector2i(cell_x, cell_y)
-				if navigation.is_in_boundsv(cell) and expanded.has_point(navigation.get_point_position(cell)):
-					navigation.set_point_solid(cell)
+				if grid.is_in_boundsv(cell) and expanded.has_point(grid.get_point_position(cell)):
+					grid.set_point_solid(cell)
+	return grid
+
+func set_dynamic_obstacles(owner_id: int, areas: Array[Rect2]) -> void:
+	dynamic_obstacles[owner_id] = areas
+	build_navigation(map_bounds)
+
+func remove_dynamic_obstacles(owner_id: int) -> void:
+	if dynamic_obstacles.erase(owner_id): build_navigation(map_bounds)
+
+func _grid_for(radius: float) -> AStarGrid2D:
+	var key := ceili(radius)
+	if not _clearance_grids.has(key): _clearance_grids[key] = _make_grid(key)
+	return _clearance_grids[key]
+
+func is_walkable(point: Vector2, radius := 13.0) -> bool:
+	var grid := _grid_for(radius)
+	var cell := Vector2i((point / 20).floor())
+	return grid.is_in_boundsv(cell) and not grid.is_point_solid(cell)
 
 func index_interior(node: Node, transform_to_floor := Transform2D.IDENTITY) -> void:
 	var current := transform_to_floor
@@ -51,11 +79,12 @@ func index_interior(node: Node, transform_to_floor := Transform2D.IDENTITY) -> v
 	for child in node.get_children():
 		index_interior(child, current)
 
-func route(from: Vector2, to: Vector2) -> PackedVector2Array:
+func route(from: Vector2, to: Vector2, clearance := 13.0) -> PackedVector2Array:
+	var grid := _grid_for(clearance)
 	var start := Vector2i((from / 20).floor())
 	var goal := Vector2i((to / 20).floor())
-	if not navigation.is_in_boundsv(start) or not navigation.is_in_boundsv(goal):
+	if not grid.is_in_boundsv(start) or not grid.is_in_boundsv(goal):
 		return PackedVector2Array()
-	if navigation.is_point_solid(start) or navigation.is_point_solid(goal):
+	if grid.is_point_solid(start) or grid.is_point_solid(goal):
 		return PackedVector2Array()
-	return navigation.get_point_path(start, goal)
+	return grid.get_point_path(start, goal)

@@ -1,5 +1,7 @@
 class_name MistEgg
 extends Creature
+signal hatched(enemy: Enemy)
+var autonomous_growth := false
 ## Dormant nest actor. It reacts only inside a short radius, warns, then hatches.
 var player_ref: Player
 var trigger_radius := 115.0
@@ -31,7 +33,7 @@ func _physics_process(delta: float) -> void:
 		return
 	if not disturbed and global_position.distance_to(player_ref.global_position) <= trigger_radius:
 		disturbed = true
-	if disturbed:
+	if disturbed or autonomous_growth:
 		hatch_elapsed += delta
 		if hatch_elapsed >= hatch_delay:
 			_hatch()
@@ -48,6 +50,7 @@ func _hatch() -> void:
 	hatchling.is_chasing = true
 	if register_hatch.is_valid():
 		register_hatch.call(hatchling)
+	hatched.emit(hatchling)
 	queue_free()
 
 func _on_death() -> void:

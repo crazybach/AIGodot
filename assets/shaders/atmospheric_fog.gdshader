@@ -15,8 +15,9 @@ uniform vec4 vision = vec4(640.0, 360.0, 200.0, 0.36);
 uniform vec4 fog_lights[8];
 uniform vec4 fog_light_shapes[8];
 uniform int fog_light_count = 0;
-uniform vec4 spill_a = vec4(0.0);
-uniform vec4 spill_b = vec4(0.0);
+uniform vec4 spills[16];
+uniform vec4 spill_colors[16];
+uniform int spill_count = 0;
 
 float attenuated_clear(vec4 source, vec2 pixel_pos, float falloff) {
 	if (source.z <= 0.0 || source.w <= 0.0) {
@@ -58,7 +59,13 @@ void fragment() {
 	// stable edge lift keeps the corners oppressive without distorting scenery.
 	float edge_distance = clamp(distance(UV, vec2(0.5)) * 1.3, 0.0, 1.0);
 	float coverage = density * mix(0.96, 1.04, edge_distance);
-	coverage += spill_density(spill_a, world_pos) + spill_density(spill_b, world_pos);
+	vec3 local_color = fog_color.rgb;
+	for (int index = 0; index < 16; index++) {
+		if (index >= spill_count) { break; }
+		float fill = spill_density(spills[index], world_pos);
+		coverage += fill;
+		local_color = mix(local_color, spill_colors[index].rgb, clamp(fill * spill_colors[index].a, 0.0, 0.7));
+	}
 
 	// Unaided sight always retains some fog, even at the player's feet, and
 	// falls continuously instead of producing a clear circular plateau.
@@ -72,5 +79,5 @@ void fragment() {
 	light_clearance *= light_response;
 	float cleared = clamp(max(visibility_clear, light_clearance), 0.0, 0.96);
 	float fog_alpha = clamp(coverage * (1.0 - cleared), 0.0, 0.92);
-	COLOR = vec4(fog_color.rgb, fog_alpha);
+	COLOR = vec4(local_color, fog_alpha);
 }

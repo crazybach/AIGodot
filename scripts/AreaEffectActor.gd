@@ -55,7 +55,7 @@ func _apply_damage(seconds: float, impact: bool) -> void:
 
 func _line_of_sight(target: Creature) -> bool:
 	var ray := PhysicsRayQueryParameters2D.create(global_position, target.global_position, 1)
-	ray.exclude = [target.get_rid()]
+	ray.exclude = target.damage_collision_rids()
 	if is_instance_valid(source) and source is CollisionObject2D and source != target:
 		ray.exclude.append(source.get_rid())
 	return get_world_2d().direct_space_state.intersect_ray(ray).is_empty()

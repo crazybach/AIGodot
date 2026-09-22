@@ -272,3 +272,48 @@ script = ExtResource("encounter")
 kind = "wanderer"
 sight_range = 170.0
 
+[node name="StreetSkitterSwarm" type="Node2D" parent="Encounters"]
+position = Vector2(280, 15)
+script = ExtResource("encounter")
+kind = "monster"
+enemy_id = "skitter"
+count = 6
+spread = 110.0
+
+[node name="WestBrute" type="Node2D" parent="Encounters"]
+position = Vector2(-1050, 620)
+script = ExtResource("encounter")
+kind = "monster"
+enemy_id = "brute"
+
+[node name="EastCharger" type="Node2D" parent="Encounters"]
+position = Vector2(1260, 430)
+script = ExtResource("encounter")
+kind = "monster"
+enemy_id = "charger"
+
+[node name="StreetSpitters" type="Node2D" parent="Encounters"]
+position = Vector2(960, 870)
+script = ExtResource("encounter")
+kind = "monster"
+enemy_id = "spitter"
+count = 2
+spread = 130.0
+
+[node name="WestBroodroot" type="Node2D" parent="Encounters"]
+position = Vector2(-1050, 40)
+script = ExtResource("encounter")
+kind = "monster"
+enemy_id = "root"
+
+[node name="SouthBroodroot" type="Node2D" parent="Encounters"]
+position = Vector2(1300, 900)
+script = ExtResource("encounter")
+kind = "monster"
+enemy_id = "root"
+
+[node name="MallBrute" type="Node2D" parent="Encounters"]
+position = Vector2(2450, -1300)
+script = ExtResource("encounter")
+kind = "monster"
+enemy_id = "brute"

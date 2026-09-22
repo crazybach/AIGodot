@@ -14,6 +14,8 @@ var sprint_multiplier := DEFAULT_SPRINT_MULTIPLIER
 
 ## If true, reads Input actions (Player). If false, uses move_direction (Enemy AI).
 var input_control := false
+## Stationary actors must skip move_and_slide, including collision recovery.
+var locomotion_enabled := true
 
 ## AI-driven movement target; set by AIController each frame.
 var move_direction := Vector2.ZERO
@@ -25,6 +27,9 @@ func configure(speed: float, sprint_mul := 1.5) -> void:
 
 
 func _physics_tick(_delta: float) -> void:
+	if not locomotion_enabled:
+		creature.velocity = Vector2.ZERO
+		return
 	var dir: Vector2
 	var speed := base_speed
 

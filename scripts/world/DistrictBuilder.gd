@@ -43,7 +43,7 @@ func _collect(node: Node, markers: Array[BuildingMarker], links: Array[RoofLinkM
 		node.set_meta("district_transform", current)
 		links.append(node)
 	elif node is EncounterMarker:
-		ground.encounters.append({"position": current.origin, "kind": node.kind, "sight_range": node.sight_range, "hatch_delay": node.hatch_delay})
+		ground.encounters.append({"position": current.origin, "kind": node.kind, "sight_range": node.sight_range, "hatch_delay": node.hatch_delay, "enemy_id": node.enemy_id, "count": node.count, "spread": node.spread})
 	for child in node.get_children():
 		_collect(child, markers, links, ground, current)
 
