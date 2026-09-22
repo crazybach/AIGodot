@@ -60,13 +60,39 @@ func configure(id: StringName, player: Player, registration: Callable = Callable
 	queue_redraw()
 
 func _physics_process(delta: float) -> void:
-	super._physics_process(delta)
+	if not get_parent().get_meta(&"debug_enemies_paused", false):
+		super._physics_process(delta)
 	enemy_sprite.rotation = facing_angle
 	var atmosphere := get_tree().get_first_node_in_group(&"atmospheric_fog") as FogController
 	var reveal := atmosphere.visibility_at(global_position) if atmosphere else 1.0
 	_visibility = lerpf(_visibility, reveal, 0.2)
 	modulate.a = _visibility
 	queue_redraw()
+
+## Same-archetype runtime tuning. Preserve health fraction and existing brood.
+func apply_tuning(tuning: EnemyDefinition) -> bool:
+	if not is_alive or tuning.id != definition.id or tuning.attack_mode != definition.attack_mode: return false
+	var fraction := health_comp.health / health_comp.max_health
+	definition = tuning.duplicate(true) as EnemyDefinition
+	brain.config = definition
+	brain.wanders = definition.wander_speed > 0
+	brain.route_points.clear()
+	brain.route_time = 0
+	attack.config = definition
+	attack.state = EnemyAttackComponent.State.IDLE
+	attack.cooldown = 0
+	movement_comp.base_speed = definition.speed
+	movement_comp.move_direction = Vector2.ZERO
+	health_comp.max_health = definition.health
+	health_comp.health = definition.health * fraction
+	health_comp.health_changed.emit(health_comp.health, health_comp.max_health)
+	damage_resistances = definition.resistances.duplicate()
+	(get_node("BodyCollision").shape as CircleShape2D).radius = definition.radius
+	enemy_sprite.scale = Vector2.ONE * definition.radius / 38.0
+	enemy_sprite.self_modulate = definition.tint
+	if colony: colony.apply_tuning(definition)
+	queue_redraw()
+	return true
 
 func apply_flash(color: Color) -> void:
 	enemy_sprite.self_modulate = color

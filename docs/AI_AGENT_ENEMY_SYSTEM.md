@@ -50,13 +50,24 @@ Fog supports the 16 nearest active local volumes, each with density/radius/tint.
 
 Existing stalker SVG is reused with size/tint variations; spitters add spines, attacks draw windup rings/direction lines, roots use antialiased procedural limbs. Replace art in `Enemy`/`RootColonyComponent` without changing damage behavior.
 
-To add an archetype: add a config section, expose its ID in `EncounterMarker`, author a marker. For a new attack mode, extend/replace the attack component; keep targeting, locomotion, spawning and rendering separate. `configure()` is spawn-time setup, not a live type-conversion API.
+To add an archetype: add a config section, expose its ID in `EncounterMarker` and `EnemyDebugService.TYPES`, author a marker. For a new attack mode, extend/replace the attack component; keep targeting, locomotion, spawning and rendering separate. `configure()` is spawn-time setup, not a live type-conversion API.
+
+## Enemy debug tools (PC and Android)
+
+Open **F3 → Enemies** on PC or hold **System → Debug → Enemies** on touch. Testing and Tuning are scrollable subpages.
+
+- Testing: choose type; select nearest on the active floor; spawn one or six near the player's facing direction; freeze/resume floor enemy simulation; lay a selected root's egg; hatch all floor eggs; kill selected; restore player health/stamina. Debug kills count toward normal quest/XP rewards. Rooftop spawning is blocked; travel down with Layers first.
+- Tuning: draft edits for size, HP, speeds, sight, damage, timing, charge, spikes, fog, brood, tendrils and four resistances. Spawn consumes the draft; **Apply** updates only the selected actor. **Copy selected** inspects its current definition; **Reload type defaults** discards edits. Changes are session-only, including on Android; `res://data/enemies.cfg` is never written.
+- `EnemyDebugService` owns operations and a weak selection. `EnemyDebugTab` only binds controls. `Enemy.apply_tuning()` clones a same-archetype draft, preserves health fraction, resets attack/path state and updates visuals/collision. `RootColonyComponent.apply_tuning()` rebuilds fog and navigation geometry without replacing its brood. Existing eggs keep their own hatch timers.
+- Freeze is `debug_enemies_paused` metadata on the active `WorldLayer`, read by Enemy/MistEgg; it also freezes new hatchlings/spawns. Player, environment exposure and in-flight projectiles continue. A manual hatch overrides freeze. Floor travel invalidates cross-floor selection; the floor's freeze state persists until resumed/restart.
 
 ## Validation and manual checks
 
 - `tests/enemy_system_smoke.gd`: authored swarm, size/speed balance, dodging, bounded locked-direction charge, swept ranged hits, floor isolation, stationary root physics, egg growth/cap, resistance, AoE, root cleanup.
 - `tests/district_layers_smoke.gd`: navigation, existing encounters, elevators, loot and floor persistence.
 - `tests/enemy_visual.gd`: day/night root, swarm and charge warning screenshots under `.godot_local/` (run with rendering).
+- `tests/enemy_debug_smoke.gd`: live tuning, collision/nav refresh, health preservation, pause, offspring registration, floor safety and debug kill cleanup.
+- `tests/enemy_debug_visual.gd`: actual System radial and debug-button pointer input, plus Testing/Tuning screenshots; run with `-- --touch-controls` for mobile preview.
 - Regression suites: `weapon_system_smoke`, `field_collection_smoke`, `environment_smoke`, `touch_controls_smoke`, `aim_range_smoke`.
 
 Run tests with `Godot --headless --path <repo> --script res://tests/<name>.gd`. Run normal PC gameplay with `tools/run_pc.bat`.

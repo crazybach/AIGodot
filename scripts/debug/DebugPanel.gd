@@ -100,6 +100,13 @@ func add_layer_controls(manager: LayerManager) -> void:
 	tab.manager = manager
 	register_tab(&"layers", "Layers", tab)
 
+func add_enemy_controls(manager: LayerManager, registration: Callable) -> void:
+	var tab := EnemyDebugTab.new()
+	tab.service = EnemyDebugService.new()
+	tab.service.manager = manager
+	tab.service.registration = registration
+	register_tab(&"enemies", "Enemies", tab)
+
 func _fog_controls() -> DebugControls:
 	var controls := DebugControls.new()
 	controls.toggle_value("Atmospheric mist enabled", func(): return fog.visual_enabled, fog.set_visual_enabled)

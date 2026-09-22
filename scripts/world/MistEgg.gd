@@ -25,7 +25,7 @@ func _setup_creature() -> void:
 	queue_redraw()
 
 func _physics_process(delta: float) -> void:
-	if not is_alive:
+	if not is_alive or get_parent().get_meta(&"debug_enemies_paused", false):
 		return
 	pulse += delta
 	queue_redraw()

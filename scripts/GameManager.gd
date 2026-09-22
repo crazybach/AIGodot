@@ -80,6 +80,7 @@ func _ready() -> void:
 	hud.game_manager = self
 	add_child(hud)
 	hud.debug_panel.add_layer_controls(layer_manager)
+	hud.debug_panel.add_enemy_controls(layer_manager, _register_enemy)
 	var weather_visual := WeatherOverlay.new()
 	weather_visual.game = self
 	add_child(weather_visual)

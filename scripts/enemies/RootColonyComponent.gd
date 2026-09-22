@@ -55,6 +55,23 @@ func _physics_tick(delta: float) -> void:
 		spawn_elapsed = 0
 		spawn_egg()
 
+func apply_tuning(definition: EnemyDefinition) -> void:
+	config = definition
+	fog.radius = config.fog_radius
+	fog.spread_radius = config.fog_radius
+	fog.density = config.fog_density
+	var obstacles: Array[Rect2] = [Rect2(creature.position - Vector2.ONE * config.radius, Vector2.ONE * config.radius * 2)]
+	for index in limbs.size():
+		var direction := Vector2.from_angle(index * PI / 2).round()
+		var limb := limbs[index]
+		var shape := (limb.get_child(0) as CollisionShape2D).shape as RectangleShape2D
+		shape.size = direction.abs() * config.tendril_length + direction.orthogonal().abs() * 20
+		limb.position = direction * config.tendril_length / 2
+		obstacles.append(Rect2(creature.position + limb.position - shape.size / 2, shape.size))
+	var floor_node := creature.get_parent() as WorldLayer
+	if floor_node: floor_node.set_dynamic_obstacles(creature.get_instance_id(), obstacles)
+	queue_redraw()
+
 func spawn_egg() -> MistEgg:
 	brood = brood.filter(func(ref): return is_instance_valid(ref.get_ref()) and ref.get_ref().is_alive)
 	if not active or brood.size() >= config.brood_limit: return null
@@ -98,15 +115,16 @@ func shutdown() -> void:
 
 func _draw() -> void:
 	if config == null: return
+	var length_scale := config.tendril_length / 160.0
 	for index in 4:
 		var direction := Vector2.from_angle(index * PI / 2)
 		var normal := direction.orthogonal()
-		var points := PackedVector2Array([Vector2.ZERO, direction * 50 + normal * 7, direction * 95 - normal * 7, direction * config.tendril_length])
+		var points := PackedVector2Array([Vector2.ZERO, (direction * 50 + normal * 7) * length_scale, (direction * 95 - normal * 7) * length_scale, direction * config.tendril_length])
 		draw_polyline(points, Color("#2b3830"), 21, true)
 		draw_polyline(points, Color("#768265"), 11, true)
 		draw_polyline(points, Color("#a7aa78"), 2, true)
 		for side in [-1, 1]:
-			draw_polyline(PackedVector2Array([direction * 85, direction * 108 + normal * 26 * side, direction * 137 + normal * 35 * side]), Color("#607452"), 5, true)
+			draw_polyline(PackedVector2Array([direction * 85 * length_scale, (direction * 108 + normal * 26 * side) * length_scale, (direction * 137 + normal * 35 * side) * length_scale]), Color("#607452"), 5, true)
 	var pulse := 1.0 + sin(phase * 1.7) * 0.035
 	draw_circle(Vector2.ZERO, config.radius * pulse, Color("#35473b"), true, -1, true)
 	for index in 7:
