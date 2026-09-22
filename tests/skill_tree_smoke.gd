@@ -113,7 +113,7 @@ func _run() -> void:
 	combat.charge_elapsed = 0.0
 	near(combat.charge_ratio(), 1.0, "zero draw config remains instant full power")
 	combat.active_config.charge_time = bow_draw
-	game.hud.skill_button.pressed.emit()
+	game.hud.radial_menus.open_system(3)
 	check(game.hud.skill_panel.visible and game.hud.is_modal_open() and player.ui_input_blocked, "HUD button opens blocking skill panel")
 	game.hud.skill_panel.node_buttons["sight"].pressed.emit()
 	var rank_before := tree.rank_for("sight")

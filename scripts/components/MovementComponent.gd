@@ -38,7 +38,7 @@ func _physics_tick(_delta: float) -> void:
 		).normalized()
 		if creature is Player and creature.touch_move_direction != Vector2.ZERO:
 			dir = creature.touch_move_direction
-		if Input.is_action_pressed("sprint"):
+		if Input.is_action_pressed("sprint") or (creature is Player and creature.mobile_input and creature.mobile_input.enabled and creature.mobile_input.running):
 			speed *= sprint_multiplier
 	else:
 		dir = move_direction

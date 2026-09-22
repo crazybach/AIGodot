@@ -15,7 +15,7 @@ func _run() -> void:
 	game.weather.clock.paused = true
 	game.weather.clock.set_hour(12)
 	var initial_ammo: int = game.player.combat_comp.ammo
-	await click_control(game.hud.skill_button)
+	game.hud.radial_menus.open_system(3)
 	if not game.hud.skill_panel.visible or game.player.combat_comp.ammo != initial_ammo:
 		push_error("Training HUD mouse click failed or fired a weapon")
 		quit(1)

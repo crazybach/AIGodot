@@ -101,6 +101,18 @@ func begin_lob_aim() -> bool:
 	return true
 
 
+func begin_lob_item(id: StringName) -> bool:
+	for slot in _lob_slots():
+		var stack := actor.equipment_comp.get_equipped(slot)
+		if stack.definition.id == id:
+			_select_lob_slot(slot)
+			if actor.touch_aim_active:
+				actor.touch_aim_distance = active_profile.max_distance * 0.8
+				_update_lob_preview()
+			return true
+	return false
+
+
 func cycle_lob_item() -> void:
 
 	var candidates := _lob_slots()

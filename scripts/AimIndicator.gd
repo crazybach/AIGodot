@@ -28,9 +28,9 @@ func show_lob(target_global: Vector2, profile: AimComponent, height_scale: float
 	active = true
 	strategy = AimComponent.LOB
 	max_distance = maxf(profile.max_distance, 1.0)
-	requested_endpoint = to_local(target_global)
+	requested_endpoint = to_local(target_global).limit_length(max_distance)
 	var requested_distance := requested_endpoint.length()
-	target_valid = requested_distance >= profile.min_distance and requested_distance <= max_distance
+	target_valid = requested_distance >= profile.min_distance - 0.001
 	landing_endpoint = requested_endpoint.limit_length(max_distance)
 	arc_height = maxf(16.0, landing_endpoint.length() * profile.arc_height_ratio * height_scale)
 	queue_redraw()
@@ -44,7 +44,7 @@ func show_charged(target_global: Vector2, config: WeaponConfig, charge: float, r
 	requested_endpoint = to_local(target_global)
 	landing_endpoint = requested_endpoint.normalized() * max_distance
 	target_valid = true
-	arc_height = charge
+	arc_height = clampf(charge, 0.0, 1.0)
 	queue_redraw()
 
 

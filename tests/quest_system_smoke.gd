@@ -109,7 +109,7 @@ func _game_ui_checks() -> void:
 	check(log.state_for(&"emergency_power") == log.ACTIVE, "dialogue acceptance uses giver context")
 	check(log.accept(&"thin_the_mist", "talk", "mateo_ruiz"), "second active quest")
 	log.set_tracked(&"thin_the_mist")
-	game.hud.journal_button.pressed.emit()
+	game.hud.radial_menus.open_system(4)
 	check(game.hud.quest_panel.visible and game.hud.is_modal_open() and game.player.ui_input_blocked, "journal button opens modal")
 	check(game.hud.quest_panel.detail.text.contains("Secure a supply route") and game.hud.quest_panel.detail.text.contains("REWARDS"), "journal includes future stages and rewards")
 	game.hud.quest_panel.list_buttons[&"emergency_power"].pressed.emit()

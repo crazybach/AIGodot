@@ -26,11 +26,12 @@ func _ready() -> void:
 
 
 func _physics_process(delta: float) -> void:
-	elapsed += delta
-	if elapsed > lifetime:
+	if _spent or elapsed >= lifetime or traveled >= max_range:
 		queue_free()
 		return
-	var step := direction * speed * delta
+	var travel_time := minf(delta, maxf(0.0, lifetime - elapsed))
+	elapsed += delta
+	var step := direction.normalized() * minf(speed * travel_time, maxf(0.0, max_range - traveled))
 	# Sweep fast projectiles to prevent tunnelling through narrow targets.
 	var query := PhysicsRayQueryParameters2D.create(global_position, global_position + step, collision_mask)
 	if is_instance_valid(shooter) and shooter is CollisionObject2D:
@@ -43,6 +44,9 @@ func _physics_process(delta: float) -> void:
 		return
 	position += step
 	traveled += step.length()
+	if traveled >= max_range - 0.001 or elapsed >= lifetime:
+		_spent = true
+		queue_free()
 
 
 func _build_sprite() -> void:

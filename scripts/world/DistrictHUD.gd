@@ -21,7 +21,21 @@ func _draw() -> void:
 	_text(Vector2(center_x - 217, 41), floor_node.definition.display_name, 17, Color("#e0e9e7"))
 	var status := "MIST  /  -%.1f stamina/s  /  at zero: -%.1f HP/s" % [game.layer_manager.exposure.stamina_drain, game.layer_manager.exposure.exhausted_damage] if exposed else "CLEAR AIR  /  SAFE ROOFTOPS  /  stamina recovering"
 	_text(Vector2(center_x - 217, 65), status, 13, accent)
-	var map_origin := Vector2(get_viewport_rect().size.x - 320, 169)
+	if not (game.hud and game.hud.touch_controls and game.hud.touch_controls.visible):
+		_draw_routes(floor_node)
+	var hint: String = game.interaction_prompt
+	if hint.is_empty() and game.notice_time > 0:
+		hint = game.notice
+	if game.hud and game.hud.touch_controls and game.hud.touch_controls.visible:
+		hint = hint.replace("[ E ]", "[ ACT ]").replace("Press E", "Tap ACT")
+	if not hint.is_empty() and game.state == 0:
+		var width := ThemeDB.fallback_font.get_string_size(hint, HORIZONTAL_ALIGNMENT_LEFT, -1, 15).x + 36
+		var y := get_viewport_rect().size.y - 134
+		_panel(Rect2(center_x - width / 2, y, width, 36))
+		_text(Vector2(center_x - width / 2 + 18, y + 24), hint, 15, Color("#e0e9e7"))
+
+func _draw_routes(floor_node: WorldLayer) -> void:
+	var map_origin := Vector2(get_viewport_rect().size.x - 320, 400)
 	_panel(Rect2(map_origin - Vector2(14, 23), Vector2(314, 222)))
 	_text(map_origin, "DISTRICT ROUTES", 13, Color("#c8d7d4"))
 	var map_area := Rect2(map_origin + Vector2(0, 20), Vector2(286, 150))
@@ -50,16 +64,6 @@ func _draw() -> void:
 	draw_circle(marker, 4, Color("#f4dfa0"), true, -1.0, true)
 	var crossing: RooftopBridge = game.layer_manager.layers[&"roofs"].get_node("crossing_bc")
 	_text(map_origin + Vector2(0, 178), "10 sites  •  A-B ready  •  B-C %s" % ("ready" if crossing.built else "build"), 12, Color("#b5c5c3"))
-	var hint: String = game.interaction_prompt
-	if hint.is_empty() and game.notice_time > 0:
-		hint = game.notice
-	if game.hud and game.hud.touch_controls and game.hud.touch_controls.visible:
-		hint = hint.replace("[ E ]", "[ ACT ]").replace("Press E", "Tap ACT")
-	if not hint.is_empty() and game.state == 0:
-		var width := ThemeDB.fallback_font.get_string_size(hint, HORIZONTAL_ALIGNMENT_LEFT, -1, 15).x + 36
-		var y := get_viewport_rect().size.y - 134
-		_panel(Rect2(center_x - width / 2, y, width, 36))
-		_text(Vector2(center_x - width / 2 + 18, y + 24), hint, 15, Color("#e0e9e7"))
 
 func _panel(rect: Rect2) -> void:
 	var style := StyleBoxFlat.new()

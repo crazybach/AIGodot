@@ -93,6 +93,8 @@ static func _build_catalog() -> void:
 	_register(_item(&"void_resin", "Void Resin", "Viscous material that folds light at the edge of a portal.", 0.2, 8, [&"material", &"anomalous"], [_part([&"binding", &"anomalous"], 3)]))
 	_register(_item(&"phase_battery", "Phase Battery", "Prototype power cell that hums when no one is touching it.", 0.5, 3, [&"material", &"anomalous"], [_part([&"power", &"anomalous"], 3)]))
 	FieldCollection.register_into(_items)
+	var throw_error := ThrowConfig.apply(_items)
+	if throw_error != OK: push_error("Cannot load throw ranges: %s" % error_string(throw_error))
 
 
 static func _register(item: ItemDefinition) -> void:

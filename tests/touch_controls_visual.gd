@@ -22,5 +22,37 @@ func _run() -> void:
 		await process_frame
 	await RenderingServer.frame_post_draw
 	root.get_texture().get_image().save_png("res://.godot_local/touch-controls.png")
+	game.hud.touch_controls._press(1, game.hud.touch_controls._button_center(0))
+	game.player.quick_slots.activate(2)
+	game.hud.touch_controls._drag(1, game.hud.touch_controls._button_center(0) + Vector2(400, -160))
+	game.player.aiming_system.physics_tick()
+	for frame in 4: await process_frame
+	await RenderingServer.frame_post_draw
+	root.get_texture().get_image().save_png("res://.godot_local/touch-aim-stone.png")
+	game.hud.touch_controls.cancel_gestures()
+	var menus: RadialMenuHost = game.hud.radial_menus
+	menus.begin(7, menus.system_button.get_global_rect().get_center())
+	menus._process(0.2)
+	menus.last_position = menus.wheel.point_for(2)
+	for frame in 4: await process_frame
+	await RenderingServer.frame_post_draw
+	root.get_texture().get_image().save_png("res://.godot_local/system-radial.png")
+	menus.finish(menus.wheel.point_for(2))
+	for frame in 4: await process_frame
+	await RenderingServer.frame_post_draw
+	root.get_texture().get_image().save_png("res://.godot_local/quick-slot-editor.png")
+	game.hud.close_modal_windows()
+	for frame in 2: await process_frame
+	menus.begin(8, menus.quick_button.get_global_rect().get_center())
+	menus._process(0.2)
+	menus.last_position = menus.wheel.point_for(2)
+	for frame in 4: await process_frame
+	await RenderingServer.frame_post_draw
+	root.get_texture().get_image().save_png("res://.godot_local/quick-radial.png")
+	menus.cancel()
+	game.hud.touch_controls.visible = false
+	for frame in 4: await process_frame
+	await RenderingServer.frame_post_draw
+	root.get_texture().get_image().save_png("res://.godot_local/desktop-radial-hud.png")
 	print("TOUCH_CONTROLS_VISUAL_OK")
 	quit()

@@ -61,7 +61,19 @@ func set_hotbar_slot(hotbar_index: int, inventory_index: int) -> bool:
 
 	if hotbar_index < 0 or hotbar_index >= hotbar_slots.size() or inventory_index < -1 or inventory_index >= slots.size():
 		return false
+	if inventory_index >= 0 and slots[inventory_index] and not QuickSlotRules.accepts(hotbar_index, slots[inventory_index].definition):
+		return false
 	hotbar_slots[hotbar_index] = slots[inventory_index].definition.id if inventory_index >= 0 and slots[inventory_index] else &""
+	notify_changed()
+	return true
+
+
+func swap_hotbar_slots(first: int, second: int) -> bool:
+	if first < 0 or second < 0 or first >= hotbar_slots.size() or second >= hotbar_slots.size(): return false
+	if not QuickSlotRules.accepts(first, ItemCatalog.get_item(hotbar_slots[second])) or not QuickSlotRules.accepts(second, ItemCatalog.get_item(hotbar_slots[first])): return false
+	var previous := hotbar_slots[first]
+	hotbar_slots[first] = hotbar_slots[second]
+	hotbar_slots[second] = previous
 	notify_changed()
 	return true
 

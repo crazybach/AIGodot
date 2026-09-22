@@ -30,17 +30,15 @@ var inventory_panel: InventoryPanel
 var dialogue_panel: DialoguePanel
 var quest_tracker: QuestTrackerPanel
 var quest_panel: QuestJournal
-var journal_button: Button
 var _journal_key_down := false
-var quickbar: Quickbar
-var quickbar_frame: Panel
+var quick_slot_panel: QuickSlotPanel
+var radial_menus: RadialMenuHost
 var _inventory_key_down := false
 var _character_key_down := false
 var _debug_key_down := false
 var debug_panel
 var touch_controls: TouchControls
 var skill_panel: SkillTreePanel
-var skill_button: Button
 var _skill_key_down := false
 var _quickbar_keys_down: Array[bool] = [false, false, false, false, false, false, false, false]
 
@@ -60,11 +58,11 @@ func _ready() -> void:
 	_build_inventory_panel()
 	_build_dialogue_panel()
 	_build_quest_tracker()
-	_build_quickbar()
 	_build_debug_panel()
 	_build_touch_controls()
 	_build_skill_panel()
 	_build_quest_journal()
+	_build_radial_controls()
 
 
 func _build_skill_panel() -> void:
@@ -72,19 +70,6 @@ func _build_skill_panel() -> void:
 	skill_panel.name = "SkillTreePanel"
 	skill_panel.setup(game_manager.player)
 	add_child(skill_panel)
-	skill_button = Button.new()
-	skill_button.position = Vector2(20, 434)
-	skill_button.size = Vector2(148, 38)
-	skill_button.add_theme_stylebox_override("normal", SurvivalUI.panel_style())
-	skill_button.add_theme_color_override("font_color", SurvivalUI.GOLD_BRIGHT)
-	skill_button.pressed.connect(toggle_skills)
-	add_child(skill_button)
-	game_manager.player.skill_tree.changed.connect(_update_skill_button)
-	_update_skill_button()
-
-
-func _update_skill_button() -> void:
-	skill_button.text = "TRAINING [K]   +%d" % game_manager.player.skill_tree.points_available()
 
 
 func toggle_skills() -> void:
@@ -329,14 +314,6 @@ func _build_quest_journal() -> void:
 	quest_panel.name = "QuestJournal"
 	quest_panel.setup(game_manager.player)
 	add_child(quest_panel)
-	journal_button = Button.new()
-	journal_button.position = Vector2(178, 434)
-	journal_button.size = Vector2(148, 38)
-	journal_button.text = "JOURNAL  [ J ]"
-	journal_button.add_theme_stylebox_override("normal", SurvivalUI.panel_style())
-	journal_button.add_theme_color_override("font_color", SurvivalUI.GOLD_BRIGHT)
-	journal_button.pressed.connect(toggle_journal)
-	add_child(journal_button)
 
 
 func toggle_journal() -> void:
@@ -348,21 +325,13 @@ func toggle_journal() -> void:
 		quest_panel.open(game_manager.player.quest_log.tracked_quest)
 
 
-func _build_quickbar() -> void:
-
-	quickbar_frame = Panel.new()
-	quickbar_frame.name = "QuickbarFrame"
-	quickbar_frame.position = Vector2(360, 628)
-	quickbar_frame.size = Vector2(560, 84)
-	quickbar_frame.mouse_filter = Control.MOUSE_FILTER_STOP
-	quickbar_frame.add_theme_stylebox_override("panel", SurvivalUI.panel_style())
-	add_child(quickbar_frame)
-	quickbar = Quickbar.new()
-	quickbar.position = Vector2(14, 11)
-	quickbar.size = Vector2(532, 62)
-	quickbar_frame.add_child(quickbar)
-	quickbar.setup(inventory_panel)
-	inventory_panel.presentation_changed.connect(quickbar.refresh)
+func _build_radial_controls() -> void:
+	quick_slot_panel = QuickSlotPanel.new()
+	quick_slot_panel.actor = game_manager.player
+	add_child(quick_slot_panel)
+	radial_menus = RadialMenuHost.new()
+	radial_menus.hud = self
+	add_child(radial_menus)
 
 
 func _build_debug_panel() -> void:
@@ -430,6 +399,9 @@ func show_game_over(final_score: int, wave: int) -> void:
 func _process(delta: float) -> void:
 	if touch_controls:
 		controls_label.visible = not touch_controls.visible
+		quest_tracker.position = Vector2(360, 100)
+		quest_tracker.details_button.visible = not touch_controls.visible
+		quest_tracker.size.y = 126 if touch_controls.visible else 164
 	var typing := get_viewport().gui_get_focus_owner() is LineEdit
 	var journal_pressed := Input.is_key_pressed(KEY_J)
 	if journal_pressed and not _journal_key_down and not typing:
@@ -475,14 +447,12 @@ func _process(delta: float) -> void:
 
 
 func _update_quickbar_keys() -> void:
-
-	if inventory_panel == null or is_modal_open() or game_over_panel.visible:
-		return
 	var keys: Array[Key] = [KEY_1, KEY_2, KEY_3, KEY_4, KEY_5, KEY_6, KEY_7, KEY_8]
+	var available := not is_modal_open() and not game_over_panel.visible
 	for index in keys.size():
 		var pressed := Input.is_key_pressed(keys[index])
-		if pressed and not _quickbar_keys_down[index] and game_manager and game_manager.player:
-			inventory_panel.activate_slot(&"hotbar", index)
+		if pressed and not _quickbar_keys_down[index] and available:
+			game_manager.player.activate_hotbar_slot(index)
 		_quickbar_keys_down[index] = pressed
 
 
@@ -496,10 +466,19 @@ func _update_crosshair() -> void:
 
 
 func is_modal_open() -> bool:
+	return is_window_open() or (radial_menus and (radial_menus.is_active() or radial_menus.help_panel.visible))
+
+
+func is_window_open() -> bool:
+	if quick_slot_panel and quick_slot_panel.visible: return true
 	return (quest_panel and quest_panel.visible) or (skill_panel and skill_panel.visible) or (inventory_panel and inventory_panel.is_any_window_open()) or (dialogue_panel and dialogue_panel.is_open()) or (debug_panel and debug_panel.is_open())
 
 
 func close_modal_windows() -> void:
+	if quick_slot_panel: quick_slot_panel.hide()
+	if radial_menus:
+		radial_menus.cancel()
+		radial_menus.help_panel.hide()
 	if quest_panel: quest_panel.hide()
 	if skill_panel: skill_panel.hide()
 	if dialogue_panel:

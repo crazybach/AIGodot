@@ -24,7 +24,7 @@ func _run() -> void:
 	log.set_tracked(&"thin_the_mist")
 	await capture("quest-tracker")
 	var ammo: int = game.player.combat_comp.ammo
-	await click_control(game.hud.journal_button)
+	game.hud.radial_menus.open_system(4)
 	if not game.hud.quest_panel.visible or game.player.combat_comp.ammo != ammo:
 		push_error("Journal mouse click failed or fired weapon")
 		quit(1)

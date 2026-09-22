@@ -79,7 +79,7 @@ Keep these layers separate:
 | World/deployed/thrown item | `scripts/WorldItemActor.gd` |
 | Weapon config schema/load/hot reload | `scripts/weapons/`, `data/weapons.cfg` |
 | Actor composition | `scripts/Creature.gd`, `scripts/Player.gd`, `scripts/Merchant.gd` |
-| Inventory/equipment/trade UI | `scripts/InventoryPanel.gd`, `ItemSlotWidget.gd`, `Quickbar.gd` |
+| Inventory/equipment/trade UI | `scripts/InventoryPanel.gd`, `ItemSlotWidget.gd`; shortcuts: [radial controls](AI_AGENT_RADIAL_CONTROLS.md) |
 | Runtime config UI | `scripts/WeaponDebugTab.gd` |
 
 ## Data types and ownership
@@ -151,6 +151,9 @@ Critical invariants:
 
 `InventoryComponent` adds tag queries/consumption and eight hotbar item-ID
 bindings. A hotbar binding is a stable definition ID, not an inventory index.
+Current slot policy is two weapons, one throwable, five usable items. Numeric
+keys delegate to `QuickSlotController`; assignment uses the Quick slots screen.
+See [radial control architecture](AI_AGENT_RADIAL_CONTROLS.md) before changing input or shortcuts.
 
 `EquipmentComponent` is a specialized container with named slots:
 

@@ -1,6 +1,10 @@
 # City Survival: Item, Equipment, and Inventory GDD
 
 > AI implementation guide: [`AI_AGENT_ITEM_SYSTEM.md`](AI_AGENT_ITEM_SYSTEM.md)
+>
+> Current UI revision: [`AI_AGENT_RADIAL_CONTROLS.md`](AI_AGENT_RADIAL_CONTROLS.md).
+> The bottom quickbar described in the historical iterations below has been
+> replaced by an eight-section radial menu and a dedicated binding editor.
 
 ## High concept
 

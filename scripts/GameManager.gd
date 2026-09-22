@@ -209,7 +209,13 @@ func _on_quest_completed(quest_id: StringName) -> void:
 func _handle_back() -> void:
 	if hud == null:
 		return
-	if hud.debug_panel.visible:
+	if hud.radial_menus.is_active():
+		hud.radial_menus.cancel()
+	elif hud.radial_menus.help_panel.visible:
+		hud.radial_menus.help_panel.hide()
+	elif hud.quick_slot_panel.visible:
+		hud.quick_slot_panel.hide()
+	elif hud.debug_panel.visible:
 		hud.debug_panel.hide()
 	elif hud.quest_panel.visible:
 		hud.quest_panel.hide()

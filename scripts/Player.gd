@@ -38,6 +38,8 @@ var consumable_effects: ConsumableEffectSystem
 var quest_log: QuestLogComponent
 var attributes: CharacterAttributes
 var skill_tree: SkillTreeComponent
+var quick_slots: QuickSlotController
+var mobile_input: MobileInputAdapter
 var _shoot_flash_timer  # SceneTreeTimer — no Timer type annotation (mismatch)
 
 
@@ -113,6 +115,12 @@ func _setup_creature() -> void:
 	item_light_system.setup(equipment_comp, inventory_comp)
 	_apply_equipment_modifiers()
 	_build_aiming_system()
+	quick_slots = QuickSlotController.new()
+	quick_slots.actor = self
+	add_child(quick_slots)
+	mobile_input = MobileInputAdapter.new()
+	mobile_input.actor = self
+	add_child(mobile_input)
 	z_index = 10
 
 
@@ -164,7 +172,9 @@ func _physics_process(delta: float) -> void:
 
 func _input(event: InputEvent) -> void:
 
-	if OS.has_feature("mobile") and event is InputEventMouse and event.device == InputEvent.DEVICE_ID_EMULATION:
+	if mobile_input and mobile_input.enabled and mobile_input.mouse_preview and event is InputEventMouse:
+		return
+	if event is InputEventMouse and event.device == InputEvent.DEVICE_ID_EMULATION:
 		return
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and not event.pressed and combat_comp and combat_comp.is_charging and (ui_input_blocked or pointer_over_interactive_ui()):
 		combat_comp.cancel_trigger()
@@ -180,7 +190,7 @@ func pointer_over_interactive_ui() -> bool:
 	var hovered: Control = get_viewport().gui_get_hovered_control()
 	var current: Node = hovered
 	while current:
-		if current is InventoryPanel or current is Quickbar or current is BaseButton:
+		if current is InventoryPanel or current is BaseButton:
 			return true
 		current = current.get_parent()
 	return false
@@ -252,18 +262,7 @@ func activate_inventory_slot(index: int, throw_item := false) -> bool:
 
 
 func activate_hotbar_slot(index: int, throw_item := false) -> bool:
-
-	if inventory_comp == null or index < 0 or index >= inventory_comp.hotbar_slots.size():
-		return false
-	var inventory_index := inventory_comp.get_hotbar_inventory_index(index)
-	if inventory_index >= 0:
-		return activate_inventory_slot(inventory_index, throw_item)
-	var item_id := inventory_comp.hotbar_slots[index]
-	if equipment_comp and item_id != &"":
-		for stack in equipment_comp.slots:
-			if stack and stack.definition.id == item_id:
-				return true
-	return false
+	return quick_slots.activate(index) if quick_slots else false
 
 
 func set_ui_input_blocked(blocked: bool) -> void:
@@ -278,8 +277,8 @@ func set_ui_input_blocked(blocked: bool) -> void:
 func _bind_starter_hotbar() -> void:
 
 	var item_ids: Array[StringName] = [
-		&"service_pistol", &"assault_rifle", &"pump_shotgun", &"recurve_bow",
-		&"field_medkit", &"flashlight", &"fire_torch", &"flare_light"
+		&"service_pistol", &"assault_rifle", &"stone", &"field_medkit",
+		&"canned_beans", &"bottled_water", &"flashlight", &"battery_cell"
 	]
 	for index in item_ids.size():
 		inventory_comp.set_hotbar_slot(index, inventory_comp.find_first(item_ids[index]))

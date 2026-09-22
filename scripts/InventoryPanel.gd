@@ -630,10 +630,7 @@ func drop_on(target_context: StringName, target_index: int, target_body_slot: St
 		if source_context == &"inventory":
 			player.inventory_comp.set_hotbar_slot(target_index, source_index)
 		elif source_context == &"hotbar":
-			var previous := player.inventory_comp.hotbar_slots[target_index]
-			player.inventory_comp.hotbar_slots[target_index] = player.inventory_comp.hotbar_slots[source_index]
-			player.inventory_comp.hotbar_slots[source_index] = previous
-			player.inventory_comp.inventory_changed.emit()
+			player.inventory_comp.swap_hotbar_slots(target_index, source_index)
 	elif target_context == &"inventory":
 		if source_context == &"inventory":
 			player.inventory_comp.swap_slots(source_index, target_index)
