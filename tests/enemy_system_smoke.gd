@@ -131,8 +131,13 @@ func _run() -> void:
 	colony.brain._physics_tick(1)
 	check(colony.movement_comp.move_direction == Vector2.ZERO, "root remains stationary")
 	hp = player.health_comp.health
-	colony.colony._physics_tick(1.0)
-	check(player.health_comp.health < hp and colony.colony.fog.shader_data().w > 0, "root creates damaging local acid fog")
+	game.layer_manager.exposure._physics_process(1.0)
+	check(game.layer_manager.exposure.root_damage_per_second > 0 and colony.colony.fog.shader_data().w > 0, "root contributes a local acid load and visible fog")
+	for slot in [&"torso", &"legs", &"feet"]:
+		var gear := player.equipment_comp.get_equipped(slot)
+		if gear: gear.set_endurance(gear.definition.get_component(EnduranceComponent), 0)
+	game.layer_manager.exposure._physics_process(1.0)
+	check(player.health_comp.health < hp, "depleted outfit exposes skin to root acid")
 	check(not arena.is_walkable(Vector2(100, 0)), "root tendril blocks navigation")
 	var query := PhysicsRayQueryParameters2D.create(arena.to_global(Vector2(100, -60)), arena.to_global(Vector2(100, 60)), 1)
 	var hit := arena.get_world_2d().direct_space_state.intersect_ray(query)

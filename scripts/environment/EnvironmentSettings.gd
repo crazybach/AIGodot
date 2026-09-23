@@ -27,10 +27,22 @@ func read_config(path := PATH) -> bool:
 			error = "Invalid environment setting: " + row[1]
 			return false
 		next[row[1]] = float(value)
+	for row in [
+		["temperature", "snow_offset", -27.0, -40.0, 0.0],
+		["acid", "rain_multiplier", 0.55, 0.0, 1.0],
+		["acid", "bare_stamina_multiplier", 4.0, 1.0, 20.0],
+		["acid", "bare_health_per_second", 3.5, 0.0, 50.0],
+		["acid", "outfit_wear_per_second", 0.25, 0.0, 10.0],
+		["acid", "root_wear_per_damage", 0.28, 0.0, 10.0]]:
+		var value = cfg.get_value(row[0], row[1], row[2])
+		if not (value is float or value is int) or not is_finite(float(value)) or float(value) < row[3] or float(value) > row[4]:
+			error = "Invalid environment setting: " + row[1]
+			return false
+		next[row[1]] = float(value)
 	next.initial = cfg.get_value("weather", "initial", "sunny")
 	next.automatic = cfg.get_value("weather", "automatic", true)
 	next.seed = cfg.get_value("weather", "seed", 4815)
-	if not next.initial in ["sunny", "cloudy", "rain"] or not next.automatic is bool or not next.seed is int or next.night_celsius > next.day_celsius:
+	if not next.initial in ["sunny", "cloudy", "rain", "snow"] or not next.automatic is bool or not next.seed is int or next.night_celsius > next.day_celsius:
 		error = "Invalid weather type, automatic flag, seed, or temperature range"
 		return false
 	values = next

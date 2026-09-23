@@ -21,6 +21,7 @@ var reload_indicator: Label
 var controls_label: Label
 var crosshair: Sprite2D
 var environment_hud: EnvironmentHUD
+var acid_status_hud: AcidStatusHUD
 var weapon_name_label: Label
 var weapon_detail_label: Label
 var effect_status_label: Label
@@ -51,6 +52,7 @@ func _ready() -> void:
 	_build_wave_display()
 	_build_controls_hint()
 	_build_time_indicator()
+	_build_acid_status()
 	_build_weapon_status()
 	_build_light_status()
 	_build_crosshair()
@@ -190,6 +192,12 @@ func _build_time_indicator() -> void:
 	environment_hud = EnvironmentHUD.new()
 	environment_hud.weather = game_manager.weather
 	add_child(environment_hud)
+
+func _build_acid_status() -> void:
+	acid_status_hud = AcidStatusHUD.new()
+	acid_status_hud.exposure = game_manager.layer_manager.exposure
+	acid_status_hud.weather = game_manager.weather
+	add_child(acid_status_hud)
 
 
 func _build_weapon_status() -> void:

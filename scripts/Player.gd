@@ -40,6 +40,7 @@ var attributes: CharacterAttributes
 var skill_tree: SkillTreeComponent
 var quick_slots: QuickSlotController
 var mobile_input: MobileInputAdapter
+var environment_exposure: EnvironmentExposureComponent
 var _shoot_flash_timer  # SceneTreeTimer — no Timer type annotation (mismatch)
 
 
@@ -98,6 +99,16 @@ func _setup_creature() -> void:
 	# Equip both starter test items so shooting and throwing work immediately.
 	equipment_comp.equip_from_inventory(inventory_comp, inventory_comp.find_first(&"service_pistol"))
 	equipment_comp.equip_from_inventory(inventory_comp, inventory_comp.find_first(&"stone"))
+	# Start with a complete but erodible outfit; advanced breathing gear remains
+	# in the backpack for manual comparison and swapping in the equipment UI.
+	for id in [&"canvas_backpack", &"cargo_pants", &"work_boots"]:
+		equipment_comp.equip_from_inventory(inventory_comp, inventory_comp.find_first(id))
+	for id in [&"acid_jacket", &"filter_scarf", &"oxygen_mask", &"oxygen_backpack"]:
+		inventory_comp.add_item(ItemCatalog.get_item(id))
+	inventory_comp.add_item(ItemCatalog.get_item(&"oxygen_canister"), 2)
+	inventory_comp.add_item(ItemCatalog.get_item(&"decon_patch"), 2)
+	for id in [&"acid_jacket", &"filter_scarf"]:
+		equipment_comp.equip_from_inventory(inventory_comp, inventory_comp.find_first(id))
 
 	combat_comp = _add_component(CombatComponent.new()) as CombatComponent
 	weapon_skill = _add_component(WeaponProficiencyComponent.new()) as WeaponProficiencyComponent
@@ -252,6 +263,10 @@ func activate_inventory_slot(index: int, throw_item := false) -> bool:
 		return throw_inventory_slot(index)
 	if stack.definition.has_tag(&"battery") and item_light_system:
 		return item_light_system.refill_equipped_from_inventory(index)
+	if stack.definition.has_tag(&"oxygen") and environment_exposure:
+		return environment_exposure.refill_oxygen(index)
+	if stack.definition.has_tag(&"decon") and environment_exposure:
+		return environment_exposure.repair_outfit(index)
 	if stack.definition.get_component(ConsumableComponent):
 		return use_inventory_slot(index)
 	if stack.definition.get_component(EquippableComponent):

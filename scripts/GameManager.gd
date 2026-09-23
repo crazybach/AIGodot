@@ -68,6 +68,9 @@ func _ready() -> void:
 	layer_manager.fog = fog
 	layer_manager.exposure = EnvironmentExposureComponent.new()
 	layer_manager.exposure.actor = player
+	layer_manager.exposure.weather = weather
+	player.environment_exposure = layer_manager.exposure
+	layer_manager.exposure.name = "EnvironmentExposure"
 	player.add_child(layer_manager.exposure)
 	add_child(layer_manager)
 	district_builder = DistrictBuilder.new()

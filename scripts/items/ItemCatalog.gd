@@ -43,6 +43,9 @@ static func merchant_stock(inventory: ItemContainerComponent) -> void:
 		var item := get_item(id)
 		var amount := mini(item.max_stack, 30) if item.has_tag(&"projectile") else mini(item.max_stack, 3)
 		inventory.add_item(item, amount)
+	for id in [&"acid_jacket", &"filter_scarf", &"oxygen_mask", &"oxygen_backpack", &"oxygen_canister", &"decon_patch"]:
+		var item := get_item(id)
+		inventory.add_item(item, mini(item.max_stack, 3))
 
 
 static func _build_catalog() -> void:
@@ -74,11 +77,17 @@ static func _build_catalog() -> void:
 
 	# Wearables and carried gear
 	_register(_item(&"hard_hat", "Construction Hard Hat", "Dented, but better than meeting falling masonry bareheaded.", 0.6, 1, [&"armor"], [_equip(&"head", {"armor": 3.0}), _trade(22, 11)]))
-	_register(_item(&"gas_mask", "Filter Gas Mask", "Filters spore fog around the breach perimeter.", 0.9, 1, [&"armor"], [_equip(&"face", {"spore_resist": 0.55}), _trade(36, 18)]))
-	_register(_item(&"ballistic_vest", "Ballistic Vest", "Police surplus plate carrier.", 4.5, 1, [&"armor"], [_equip(&"torso", {"armor": 12.0, "move_speed": -0.08})]))
-	_register(_item(&"cargo_pants", "Cargo Pants", "Extra pockets for parts that do not belong together.", 0.8, 1, [&"armor"], [_equip(&"legs", {"inventory_slots": 4.0})]))
-	_register(_item(&"work_boots", "Work Boots", "Steel toes and a stable grip on broken streets.", 1.3, 1, [&"armor"], [_equip(&"feet", {"move_speed": 0.05})]))
+	_register(_item(&"gas_mask", "Filter Gas Mask", "Partially filters acid vapor, without an oxygen supply.", 0.9, 1, [&"armor"], [_equip(&"face", {"spore_resist": 0.55}), _breathing(0.45), _trade(36, 18)]))
+	_register(_item(&"ballistic_vest", "Ballistic Vest", "Police plate carrier. Its acid-resistant shell gradually corrodes.", 4.5, 1, [&"armor"], [_equip(&"torso", {"armor": 12.0, "move_speed": -0.08}), _endurance(100, 0, &"", &"decon", 50), _barrier(0.5, 1.0, 1.25)]))
+	_register(_item(&"cargo_pants", "Cargo Pants", "Extra pockets and treated fabric; acid eventually eats through it.", 0.8, 1, [&"armor"], [_equip(&"legs", {"inventory_slots": 4.0}), _endurance(100, 0, &"", &"decon", 50), _barrier(0.3)]))
+	_register(_item(&"work_boots", "Work Boots", "Steel toes and treated soles that endure limited acid exposure.", 1.3, 1, [&"armor"], [_equip(&"feet", {"move_speed": 0.05}), _endurance(100, 0, &"", &"decon", 50), _barrier(0.2)]))
 	_register(_item(&"canvas_backpack", "Canvas Backpack", "A worn survivor pack with modular straps.", 1.1, 1, [&"container"], [_equip(&"backpack", {"inventory_slots": 8.0, "weight_capacity": 12.0}), _trade(42, 21)]))
+	_register(_item(&"acid_jacket", "Treated Rain Jacket", "A chemically treated outer layer covering the torso. Its barrier wears away in acid fog.", 1.5, 1, [&"armor", &"acid_gear"], [_equip(&"torso"), _endurance(100, 0, &"", &"decon", 50), _barrier(0.5), _trade(48, 22)]))
+	_register(_item(&"filter_scarf", "Filter Scarf", "Cloth and charcoal reduce acid vapor breathed in, but cannot stop it.", 0.2, 1, [&"armor", &"breathing_gear"], [_equip(&"face"), _breathing(0.72), _trade(14, 7)]))
+	_register(_item(&"oxygen_mask", "Sealed Oxygen Mask", "Breathing is safe while its oxygen reserve or a connected oxygen backpack lasts.", 0.8, 1, [&"armor", &"breathing_gear"], [_equip(&"face"), _endurance(80, 0, &"", &"oxygen", 60), _breathing(0.0, 0.28), _trade(75, 36)]))
+	_register(_item(&"oxygen_backpack", "Field Oxygen Backpack", "A large reserve feeds an equipped oxygen mask before the mask's own bottle.", 3.0, 1, [&"container", &"oxygen_gear"], [_equip(&"backpack", {"inventory_slots": 8.0, "weight_capacity": 12.0}), _endurance(320, 0, &"", &"oxygen", 120), _oxygen_reserve(), _trade(130, 65)]))
+	_register(_item(&"oxygen_canister", "Oxygen Canister", "A sealed replacement bottle. Tap it in the backpack to refill equipped oxygen gear.", 0.65, 4, [&"oxygen", &"supply"], [_trade(26, 12)]))
+	_register(_item(&"decon_patch", "Decon Patch Kit", "Restores integrity to the most corroded equipped jacket, pants or boots.", 0.35, 4, [&"decon", &"supply"], [_trade(23, 11)]))
 	_register(_item(&"flashlight", "Survivor Flashlight", "A focused battery lamp. Its beam fails when endurance reaches zero.", 0.4, 1, [&"tool", &"light"], [_equip(&"left_hand"), _endurance(100.0, 0.8, &"", &"battery", 55.0), _light(LightSource2D.LightType.SPOT, Color("#e9f1dc"), 430.0, 1.65, 22.0, false), _world_actor(), _projectile(0.0, 330.0, 350.0, &"noise"), _aim_lob(350.0, 0.58, 0.13), _trade(38, 19)]))
 	_register(_item(&"battery_cell", "D-Cell Battery", "A sealed battery that restores flashlight endurance.", 0.14, 8, [&"battery", &"power"], [_trade(8, 4)], &"phase_battery"))
 	_register(_item(&"fire_torch", "Fire Torch", "An improvised oil-wrapped torch with a warm circular light.", 0.7, 1, [&"tool", &"light", &"fire", &"throwable"], [_equip(&"left_hand"), _endurance(100.0, 0.42, &"ash"), _light(LightSource2D.LightType.POINT, Color("#ff9b45"), 275.0, 1.7, 40.0, true), _world_actor(), _projectile(0.0, 350.0, 330.0, &"fire"), _aim_lob(350.0, 0.62, 0.15), _trade(14, 6)], &"flashlight"))
@@ -161,6 +170,26 @@ static func _endurance(maximum: float, drain: float, depleted_item_id: StringNam
 	component.depleted_item_id = depleted_item_id
 	component.refill_item_tag = refill_tag
 	component.refill_amount = refill_amount
+	return component
+
+static func _barrier(coverage: float, strength := 1.0, wear := 1.0) -> AcidBarrierComponent:
+	var component := AcidBarrierComponent.new()
+	component.component_id = &"acid_barrier"
+	component.body_coverage = coverage
+	component.acid_block = strength
+	component.wear_multiplier = wear
+	return component
+
+static func _breathing(multiplier: float, oxygen_rate := 0.0) -> BreathingProtectionComponent:
+	var component := BreathingProtectionComponent.new()
+	component.component_id = &"breathing_protection"
+	component.stamina_multiplier = multiplier
+	component.oxygen_per_second = oxygen_rate
+	return component
+
+static func _oxygen_reserve() -> OxygenReserveComponent:
+	var component := OxygenReserveComponent.new()
+	component.component_id = &"oxygen_reserve"
 	return component
 
 

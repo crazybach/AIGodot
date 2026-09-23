@@ -41,7 +41,12 @@ func visibility_at(point: Vector2) -> float:
 		return 0.0
 	var radius := lerpf(day_vision_radius, night_vision_radius, lighting.darkness)
 	var nearby := 1.0 - smoothstep(radius * 0.55, radius * 1.65, observer.global_position.distance_to(point))
-	return maxf(nearby, lighting.light_illumination(point))
+	var ambient: float = lighting.weather.ambient_acid_factor() if lighting and lighting.weather else 1.0
+	var local_block := 0.0
+	for volume in get_tree().get_nodes_in_group(&"fog_volumes"):
+		if volume is FogVolume2D and volume.fog_tint.a > 0.0 and volume.is_visible_in_tree():
+			local_block = maxf(local_block, volume.shader_data().w * (1.0 - smoothstep(0.0, volume.radius, volume.global_position.distance_to(point))))
+	return clampf(maxf(maxf(nearby, lighting.light_illumination(point)), 1.0 - ambient) * (1.0 - local_block * 0.65), 0.0, 1.0)
 
 
 func setup(owner_lighting: LightingManager, owner_camera: Camera2D) -> void:
@@ -95,7 +100,8 @@ func _time_of_day_density() -> float:
 
 	if lighting == null:
 		return dusk_density
-	return lerpf(day_density, night_density, lighting.darkness)
+	var weather_factor: float = lighting.weather.ambient_acid_factor() if lighting.weather else 1.0
+	return lerpf(day_density, night_density, lighting.darkness) * weather_factor
 
 
 func _time_of_day_color() -> Color:
@@ -166,6 +172,8 @@ func _update_spills() -> void:
 	for volume in get_tree().get_nodes_in_group(&"fog_volumes"):
 		if not volume is FogVolume2D or not volume.is_visible_in_tree(): continue
 		var value: Vector4 = volume.shader_data()
+		if volume.fog_tint.a <= 0.0 and lighting and lighting.weather:
+			value.w *= lighting.weather.ambient_acid_factor()
 		if value.w <= 0: continue
 		# Local mist follows the same day/night tint as the atmospheric veil.
 		var tint: Color = volume.fog_tint * _time_of_day_color()

@@ -36,6 +36,7 @@ Distances are world pixels; speed is px/s; times are seconds. Melee `attack_rang
 ## Root lifecycle and ownership
 
 - Root owns a `FogVolume2D` and four solid `RootTendril` bodies. Tendril bullet hits transfer half damage to the root, then apply its resistances. Only the root belongs to `damage_receivers`, preventing duplicate AoE damage and kills.
+- `RootColonyComponent.acid_damage_at()` supplies a same-floor local hazard to `EnvironmentExposureComponent`. The colony does not damage the player directly; outfit and oxygen resolve all acid exposure in one place. Root config's `acid_dps` is 10 at its center, attenuating to zero at `fog_radius`.
 - `Creature.damage_collision_rids()` defines owned bodies excluded from area-damage visibility rays. Enemy adds its root limbs; unrelated walls still block blasts.
 - Root registers body/limb rectangles in `WorldLayer.dynamic_obstacles` under its instance ID. Navigation grids cache each actor radius and invalidate when blockers change.
 - Every 14 s, a root attempts to lay an egg on a free nearby point. Eggs hatch autonomously after 6 s while their floor is active. Weak references count both live eggs and hatchlings against the default cap of six; deaths free capacity.

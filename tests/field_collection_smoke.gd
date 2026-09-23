@@ -30,6 +30,8 @@ func _run() -> void:
 	ItemCatalog.merchant_stock(stock)
 	for id in FieldCollection.ids():
 		check(stock.find_first(id) >= 0, "merchant missing " + String(id))
+	for id in [&"acid_jacket", &"filter_scarf", &"oxygen_mask", &"oxygen_backpack", &"oxygen_canister", &"decon_patch"]:
+		check(stock.find_first(id) >= 0, "merchant missing acid gear " + String(id))
 	var player := Player.new()
 	world.add_child(player)
 	player.set_physics_process(false)

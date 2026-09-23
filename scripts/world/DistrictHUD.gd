@@ -19,7 +19,17 @@ func _draw() -> void:
 	var center_x := get_viewport_rect().size.x / 2
 	_panel(Rect2(center_x - 235, 17, 470, 65))
 	_text(Vector2(center_x - 217, 41), floor_node.definition.display_name, 17, Color("#e0e9e7"))
-	var status := "MIST  /  -%.1f stamina/s  /  at zero: -%.1f HP/s" % [game.layer_manager.exposure.stamina_drain, game.layer_manager.exposure.exhausted_damage] if exposed else "CLEAR AIR  /  SAFE ROOFTOPS  /  stamina recovering"
+	var status := "CLEAR AIR  /  SAFE ROOFTOPS  /  stamina recovering"
+	if exposed:
+		var hazard: EnvironmentExposureComponent = game.layer_manager.exposure
+		if hazard.root_damage_per_second > 0.1:
+			status = "ROOT ACID  /  %.1f skin HP/s before protection  /  suit eroding" % hazard.root_damage_per_second
+		elif hazard.ambient_load <= 0.01:
+			status = "SNOW  /  ACID MIST CLEARED  /  stamina recovering"
+		elif game.weather.rain_intensity > 0.05:
+			status = "RAIN  /  acid diluted to %.0f%%  /  suit still eroding" % (hazard.ambient_load * 100)
+		else:
+			status = "ACID MIST  /  suit eroding  /  breathing costs stamina"
 	_text(Vector2(center_x - 217, 65), status, 13, accent)
 	if not (game.hud and game.hud.touch_controls and game.hud.touch_controls.visible):
 		_draw_routes(floor_node)

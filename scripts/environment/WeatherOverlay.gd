@@ -9,17 +9,18 @@ func _ready() -> void:
 	layer = 50
 	surface = Node2D.new()
 	add_child(surface)
-	surface.draw.connect(_draw_rain)
+	surface.draw.connect(_draw_precipitation)
 
 func _process(delta: float) -> void:
 	if not game.weather.clock.paused:
 		elapsed = fposmod(elapsed + delta * game.weather.clock.time_scale, 3600.0)
 	surface.queue_redraw()
 
-func _draw_rain() -> void:
+func _draw_precipitation() -> void:
 	var intensity: float = game.weather.rain_intensity
+	var snow: float = game.weather.snow_intensity
 	var floor_node: WorldLayer = game.layer_manager.active_layer
-	if intensity < 0.01 or not floor_node.definition.outdoor_weather:
+	if maxf(intensity, snow) < 0.01 or not floor_node.definition.outdoor_weather:
 		return
 	var canvas := floor_node.get_global_transform_with_canvas()
 	var inverse := canvas.affine_inverse()
@@ -31,7 +32,7 @@ func _draw_rain() -> void:
 	for y in range(int(floor(start.y / 58.0)), int(ceil(end.y / 58.0))):
 		for x in range(int(floor(start.x / 58.0)), int(ceil(end.x / 58.0))):
 			var seed_value := fposmod(sin(float(x * 127 + y * 311)) * 43758.5453, 1.0)
-			if seed_value > intensity:
+			if seed_value > maxf(intensity, snow):
 				continue
 			var phase_value := fposmod(elapsed * 1.8 + seed_value, 1.0)
 			var landing := Vector2(x * 58 + seed_value * 53, y * 58 + fposmod(seed_value * 17, 1.0) * 53)
@@ -39,7 +40,12 @@ func _draw_rain() -> void:
 			if not floor_node.is_outdoors_at(landing) or not floor_node.is_outdoors_at(head):
 				continue
 			var point := canvas * head
-			if phase_value < 0.82:
+			if snow > intensity:
+				var flake := canvas * (landing + Vector2(sin(elapsed * 2.0 + seed_value * TAU) * 11, -38 * (1.0 - phase_value)))
+				var snow_color := Color("#edf7fc")
+				snow_color.a = 0.48 * snow
+				surface.draw_circle(flake, 1.6 * game.camera.zoom.x, snow_color, true, -1, true)
+			elif phase_value < 0.82:
 				surface.draw_line(point, canvas * (head + Vector2(3, -10)), tint, 1.1, true)
 			else:
 				var splash := (phase_value - 0.82) / 0.18

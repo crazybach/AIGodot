@@ -41,15 +41,20 @@ func configure(definition: EnemyDefinition, player: Player, registration: Callab
 	if floor_node: floor_node.set_dynamic_obstacles(creature.get_instance_id(), obstacles)
 	queue_redraw()
 
+func _ready() -> void:
+	add_to_group(&"acid_emitters")
+
+func acid_damage_at(world_point: Vector2) -> float:
+	if not active or not creature.is_alive or creature.get_parent().get_meta(&"debug_enemies_paused", false): return 0.0
+	var distance := global_position.distance_to(world_point)
+	if distance >= config.fog_radius: return 0.0
+	return config.acid_dps * (1.0 - smoothstep(config.fog_radius * 0.28, config.fog_radius, distance))
+
 func _physics_tick(delta: float) -> void:
 	if not active or config == null: return
 	phase += delta
 	queue_redraw()
 	if not is_instance_valid(target) or not target.is_alive or target.get_parent() != creature.get_parent(): return
-	var distance := creature.global_position.distance_to(target.global_position)
-	if distance < config.fog_radius:
-		var strength := 1.0 - smoothstep(config.fog_radius * 0.28, config.fog_radius, distance)
-		target.receive_damage(config.acid_dps * strength * delta, &"acid")
 	spawn_elapsed += delta
 	if spawn_elapsed >= config.spawn_interval:
 		spawn_elapsed = 0

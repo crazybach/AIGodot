@@ -145,9 +145,15 @@ func _world_controls() -> DebugControls:
 	controls.toggle_value("Automatic weather fronts", func(): return weather.automatic, func(value): weather.automatic = value)
 	for kind in WeatherSystem.KINDS:
 		controls.action("SET " + String(kind).to_upper(), _force_weather.bind(kind))
+	if player and player.environment_exposure:
+		var exposure := player.environment_exposure
+		controls.readout(func(): return "Ground acid %.0f%% | Root acid %.1f HP/s\nSkin exposure %.0f%% | Outfit integrity %.0f%% | O2 %.0f / %.0f" % [exposure.ambient_load * 100, exposure.root_damage_per_second, exposure.skin_exposure * 100, exposure.outfit_integrity() * 100, exposure.oxygen_current, exposure.oxygen_maximum])
+		for row in [["Rain acid factor", &"rain_acid_multiplier", 0, 1, 0.05], ["Bare stamina multiplier", &"bare_stamina_multiplier", 1, 20, 0.5], ["Bare acid HP / sec", &"bare_health_per_second", 0, 50, 0.5], ["Outfit wear / sec", &"outfit_wear_per_second", 0, 10, 0.05], ["Root wear / acid HP", &"root_wear_per_damage", 0, 10, 0.05]]:
+			_bind_property(controls, weather, row)
+		controls.action("RESTORE EQUIPPED SUIT AND OXYGEN", exposure.restore_gear)
 	_bind_property(controls, weather, ["Weather hold (seconds)", &"hold_seconds", 1, 3600, 1])
 	_bind_property(controls, weather, ["Weather blend (seconds)", &"transition_seconds", 0, 120, 0.5])
-	for row in [["Night temperature (°C)", &"night_celsius", -50, 60, 1], ["Day temperature (°C)", &"day_celsius", -50, 60, 1], ["Cloud cooling (°C)", &"cloudy_offset", -30, 30, 1], ["Rain cooling (°C)", &"rain_offset", -30, 30, 1]]:
+	for row in [["Night temperature (°C)", &"night_celsius", -50, 60, 1], ["Day temperature (°C)", &"day_celsius", -50, 60, 1], ["Cloud cooling (°C)", &"cloudy_offset", -30, 30, 1], ["Rain cooling (°C)", &"rain_offset", -30, 30, 1], ["Snow cooling (°C)", &"snow_offset", -40, 0, 1]]:
 		var property: StringName = row[1]
 		controls.number(row[0], func(): return weather.get(property), _set_temperature.bind(property), row[2], row[3], row[4])
 	controls.action("RELOAD ENVIRONMENT CONFIG (KEEP TIME)", func():

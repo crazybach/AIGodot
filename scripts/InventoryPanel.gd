@@ -46,6 +46,8 @@ func setup(owner_player: Player) -> void:
 		player.equipment_comp.equipment_changed.connect(refresh)
 	if player.item_light_system and not player.item_light_system.endurance_changed.is_connected(_on_item_endurance_changed):
 		player.item_light_system.endurance_changed.connect(_on_item_endurance_changed)
+	if player.environment_exposure and not player.environment_exposure.protection_changed.is_connected(_on_protection_changed):
+		player.environment_exposure.protection_changed.connect(_on_protection_changed)
 	_ensure_inventory_widgets()
 	refresh()
 
@@ -54,6 +56,9 @@ func _on_item_endurance_changed(_item_id: StringName, _current: float, _maximum:
 
 	if is_any_window_open():
 		refresh()
+
+func _on_protection_changed() -> void:
+	if is_any_window_open(): refresh()
 
 
 func _ready() -> void:
@@ -557,7 +562,7 @@ func describe_slot(context: StringName, index: int, body_slot: StringName = &"")
 	var parts: Array[String] = [ItemPresentation.describe(stack.definition, database)]
 	var endurance := stack.definition.get_component(EnduranceComponent) as EnduranceComponent
 	if endurance:
-		parts.append("Endurance: %.1f / %.1f  Drain: %.2f/s" % [stack.endurance(endurance), endurance.maximum, endurance.drain_per_second])
+		parts.append("%s: %.1f / %.1f%s" % ["Oxygen" if stack.definition.id in [&"oxygen_mask", &"oxygen_backpack"] else "Integrity" if stack.definition.get_component(AcidBarrierComponent) else "Endurance", stack.endurance(endurance), endurance.maximum, "  Drain: %.2f/s" % endurance.drain_per_second if endurance.drain_per_second > 0 else ""])
 		if endurance.refill_item_tag != &"":
 			parts.append("Use a %s item to restore %.0f endurance" % [String(endurance.refill_item_tag), endurance.refill_amount])
 	return "\n".join(parts)

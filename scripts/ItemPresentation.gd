@@ -14,6 +14,13 @@ static func short_stats(item: ItemDefinition, database: WeaponConfigDatabase) ->
 	var use := item.get_component(ConsumableComponent) as ConsumableComponent
 	if use:
 		return "+%.0f HP / +%.0f STM / %.0fs EFFECT" % [use.health_restore, use.stamina_restore, use.duration]
+	var barrier := item.get_component(AcidBarrierComponent) as AcidBarrierComponent
+	if barrier:
+		return "ACID COVER %.0f%% / INTEGRITY" % (barrier.body_coverage * barrier.acid_block * 100)
+	var breath := item.get_component(BreathingProtectionComponent) as BreathingProtectionComponent
+	if breath:
+		return "O2 MASK" if breath.oxygen_per_second > 0 else "BREATH DRAIN %.0f%%" % (breath.stamina_multiplier * 100)
+	if item.get_component(OxygenReserveComponent): return "O2 RESERVE / MASK FEED"
 	return "EQUIP / DRAG TO MOVE" if item.get_component(EquippableComponent) else "DRAG TO MOVE"
 
 static func describe(item: ItemDefinition, database: WeaponConfigDatabase) -> String:
@@ -42,4 +49,11 @@ static func describe(item: ItemDefinition, database: WeaponConfigDatabase) -> St
 		if use.duration > 0:
 			lines.append("For %.0fs: +%.1f HP/s / +%.1f stamina/s / +%.0f max stamina" % [use.duration, use.health_per_second, use.stamina_per_second, use.stamina_max_bonus])
 		lines.append("Click to consume. Same item refreshes duration.")
+	var barrier := item.get_component(AcidBarrierComponent) as AcidBarrierComponent
+	if barrier:
+		lines.append("Acid coverage %.0f%% of body. Protection lasts while integrity remains." % (barrier.body_coverage * barrier.acid_block * 100))
+	var breath := item.get_component(BreathingProtectionComponent) as BreathingProtectionComponent
+	if breath:
+		lines.append("Sealed oxygen breathing: %.2f O2/s in acid air." % breath.oxygen_per_second if breath.oxygen_per_second > 0 else "Acid-air stamina drain: %.0f%% of normal." % (breath.stamina_multiplier * 100))
+	if item.get_component(OxygenReserveComponent): lines.append("Feeds an equipped oxygen mask before its own reserve is used.")
 	return "\n".join(lines)

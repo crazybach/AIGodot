@@ -31,6 +31,9 @@ func _draw() -> void:
 		if weather.current == &"rain":
 			for x in [-6, 0, 6]:
 				draw_line(center + Vector2(x, 8), center + Vector2(x - 2, 12), Color("#80b9d6"), 1.0, true)
+		elif weather.current == &"snow":
+			for offset in [Vector2(-7, 10), Vector2(0, 13), Vector2(7, 9)]:
+				draw_circle(center + offset, 1.8, Color("#e7f4ff"), true, -1, true)
 	var title := "DAY %02d  /  %s  /  %s" % [weather.clock.day, weather.clock.time_text(), weather.clock.phase_name()]
 	var label := "CLEAR" if weather.current == &"sunny" and weather.clock.daylight() < 0.5 else String(weather.current).to_upper()
 	draw_string(ThemeDB.fallback_font, Vector2(44, 17), title, HORIZONTAL_ALIGNMENT_LEFT, 255, 12, color)

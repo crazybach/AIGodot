@@ -87,12 +87,13 @@ func _run() -> void:
 	player.health_comp.health = 100.0
 	manager.exposure._physics_process(1.0)
 	check(is_zero_approx(player.humanoid_profile.stamina), "partial stamina depletion reaches zero")
-	check(is_equal_approx(player.health_comp.health, 98.5), "health damage only for exhausted half of frame")
+	var first_hp := player.health_comp.health
+	check(first_hp < 100 and first_hp > 97, "breathing through the starter scarf still costs stamina and exhausted-frame health")
 	player.humanoid_profile._physics_process(1.0)
 	check(is_zero_approx(player.humanoid_profile.stamina), "no passive recovery in mist")
 	game.fog.set_visual_enabled(false)
 	manager.exposure._physics_process(1.0)
-	check(is_equal_approx(player.health_comp.health, 95.5), "visual fog toggle does not disable hazard")
+	check(is_equal_approx(player.health_comp.health, first_hp - 3.0), "visual fog toggle does not disable hazard")
 	game.fog.set_visual_enabled(true)
 	check(player.equip_inventory_slot(player.inventory_comp.find_first(&"flashlight")), "equip carried light before travel")
 	var carried_light := player.equipment_comp.get_equipped(&"left_hand")
