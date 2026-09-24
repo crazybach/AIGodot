@@ -15,6 +15,10 @@ func _run() -> void:
 	await process_frame
 	game.set_process(false)
 	var manager: LayerManager = game.layer_manager
+	# This test checks the authored hub's floor semantics. The streaming-specific
+	# test exercises neighbor activation and its changing light population.
+	game.district_streamer.set_process(false)
+	manager.streamer = null
 	var player: Player = game.player
 	player.set_physics_process(false)
 	player.humanoid_profile.set_physics_process(false)

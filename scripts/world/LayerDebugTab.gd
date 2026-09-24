@@ -11,6 +11,16 @@ func _ready() -> void:
 	status = Label.new()
 	status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	add_child(status)
+	var refresh_stream := Button.new()
+	refresh_stream.text = "SYNC NEARBY MAP CELLS"
+	refresh_stream.pressed.connect(func():
+		if manager.streamer: manager.streamer.refresh_now())
+	add_child(refresh_stream)
+	var reload_stream := Button.new()
+	reload_stream.text = "RELOAD STREAMING CONFIG"
+	reload_stream.pressed.connect(func():
+		if manager.streamer: manager.streamer.reload_config())
+	add_child(reload_stream)
 	destination = OptionButton.new()
 	for floor_node in manager.layers.values():
 		for entry in floor_node.definition.entries:
@@ -36,14 +46,14 @@ func _ready() -> void:
 		manager.player.humanoid_profile.restore_stamina(100.0))
 	add_child(restore)
 	var note := Label.new()
-	note.text = "Runtime controls. Defaults: data/district.cfg.\nFloors and crossings persist until restart.\nInactive floors pause; the day/night clock continues."
+	note.text = "Runtime controls: data/district.cfg and data/district_streaming.cfg.\nOuter cells detach when distant; loot state survives eviction.\nGrid radius applies after restart. Inactive floors pause."
 	note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	note.add_theme_font_size_override("font_size", 12)
 	add_child(note)
 
 func _process(_delta: float) -> void:
 	if status and manager.active_layer:
-		status.text = "%s\n%s" % [manager.active_layer.definition.display_name, "Hazardous mist / no natural stamina recovery" if manager.exposure.exposed else "Clear air / natural stamina recovery"]
+		status.text = "%s\n%s\n%s" % [manager.active_layer.definition.display_name, "Hazardous mist / no natural stamina recovery" if manager.exposure.exposed else "Clear air / natural stamina recovery", manager.streamer.status_line() + "\nLast build %.1f ms / nav %.1f ms / %d evictions / %d saved cells" % [manager.streamer.last_build_ms, manager.streamer.last_navigation_ms, manager.streamer.eviction_count, manager.streamer.saved_states.size()] if manager.streamer else "Streaming unavailable"]
 
 func _number(title: String, property: String, low: float, high: float) -> void:
 	var label := Label.new()

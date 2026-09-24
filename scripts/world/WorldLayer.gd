@@ -7,11 +7,38 @@ var building_rects: Array[Rect2] = []
 var building_polygons: Array[PackedVector2Array] = []
 var building_ids: Array[StringName] = []
 var map_bounds: Rect2
+var navigation_bounds: Rect2
 var encounters: Array[Dictionary] = []
 var solid_rects: Array[Rect2] = []
 var navigation := AStarGrid2D.new()
 var dynamic_obstacles: Dictionary = {}
 var _clearance_grids: Dictionary = {}
+var streamed_sectors: Dictionary = {}
+
+func register_solid(area: Rect2) -> void:
+	solid_rects.append(area)
+
+func attach_sector(sector: WorldSector) -> void:
+	if streamed_sectors.has(sector.coord): return
+	add_child(sector)
+	streamed_sectors[sector.coord] = sector
+	interactables.append_array(sector.interactables)
+	building_rects.append_array(sector.building_rects)
+	building_polygons.append_array(sector.building_polygons)
+	building_ids.append_array(sector.building_ids)
+	solid_rects.append_array(sector.solid_rects)
+	encounters.append_array(sector.encounters)
+
+func detach_sector(sector: WorldSector) -> void:
+	if not streamed_sectors.has(sector.coord): return
+	streamed_sectors.erase(sector.coord)
+	for node in sector.interactables: interactables.erase(node)
+	for rect in sector.building_rects: building_rects.erase(rect)
+	for points in sector.building_polygons: building_polygons.erase(points)
+	for id in sector.building_ids: building_ids.erase(id)
+	for rect in sector.solid_rects: solid_rects.erase(rect)
+	for encounter in sector.encounters: encounters.erase(encounter)
+	remove_child(sector)
 
 func is_outdoors_at(point: Vector2) -> bool:
 	if not definition.outdoor_weather:
@@ -24,14 +51,14 @@ func is_outdoors_at(point: Vector2) -> bool:
 	return true
 
 func build_navigation(bounds: Rect2) -> void:
-	map_bounds = bounds
+	navigation_bounds = bounds
 	_clearance_grids.clear()
 	navigation = _make_grid(13)
 	_clearance_grids[13] = navigation
 
 func _make_grid(clearance: int) -> AStarGrid2D:
 	var grid := AStarGrid2D.new()
-	grid.region = Rect2i(Vector2i(map_bounds.position / 20), Vector2i(map_bounds.size / 20))
+	grid.region = Rect2i(Vector2i(navigation_bounds.position / 20), Vector2i(navigation_bounds.size / 20))
 	grid.cell_size = Vector2(20, 20)
 	grid.offset = Vector2(10, 10)
 	grid.diagonal_mode = AStarGrid2D.DIAGONAL_MODE_ONLY_IF_NO_OBSTACLES
@@ -41,6 +68,7 @@ func _make_grid(clearance: int) -> AStarGrid2D:
 	# Rasterize obstacles only, instead of checking every map cell against every prop.
 	for rect in obstacles:
 		var expanded := rect.grow(clearance)
+		if not expanded.intersects(navigation_bounds): continue
 		var first := Vector2i((expanded.position / 20).floor())
 		var last := Vector2i((expanded.end / 20).ceil())
 		for cell_y in range(first.y, last.y + 1):
@@ -52,10 +80,10 @@ func _make_grid(clearance: int) -> AStarGrid2D:
 
 func set_dynamic_obstacles(owner_id: int, areas: Array[Rect2]) -> void:
 	dynamic_obstacles[owner_id] = areas
-	build_navigation(map_bounds)
+	build_navigation(navigation_bounds)
 
 func remove_dynamic_obstacles(owner_id: int) -> void:
-	if dynamic_obstacles.erase(owner_id): build_navigation(map_bounds)
+	if dynamic_obstacles.erase(owner_id): build_navigation(navigation_bounds)
 
 func _grid_for(radius: float) -> AStarGrid2D:
 	var key := ceili(radius)

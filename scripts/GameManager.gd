@@ -19,6 +19,7 @@ var enemy_spawn_timer: Timer
 var enemies_alive: Array = []
 var layer_manager: LayerManager
 var district_builder: DistrictBuilder
+var district_streamer: DistrictStreamManager
 var interaction_prompt := ""
 var notice := "Find LIFT A in the lobby. Press E to reach clear air."
 var notice_time := 9.0
@@ -77,6 +78,11 @@ func _ready() -> void:
 	for floor_node in district_builder.build():
 		layer_manager.register_layer(floor_node)
 	layer_manager.travel(&"ground", district_builder.start_building)
+	district_streamer = DistrictStreamManager.new()
+	district_streamer.name = "DistrictStreamManager"
+	add_child(district_streamer)
+	district_streamer.configure(layer_manager, district_builder, player)
+	layer_manager.streamer = district_streamer
 	_spawn_encounters()
 	_spawn_rooftop_npcs()
 	hud = HUD.new()

@@ -11,7 +11,7 @@ static func polygon(parent: Node2D, points: PackedVector2Array, color: Color) ->
 static func rect(parent: Node2D, area: Rect2, color: Color) -> Polygon2D:
 	return polygon(parent, PackedVector2Array([area.position, Vector2(area.end.x, area.position.y), area.end, Vector2(area.position.x, area.end.y)]), color)
 
-static func wall(floor_node: WorldLayer, area: Rect2, color := Color("#929f9e")) -> StaticBody2D:
+static func wall(floor_node: Node2D, area: Rect2, color := Color("#929f9e")) -> StaticBody2D:
 	var body := StaticBody2D.new()
 	body.position = area.get_center()
 	floor_node.add_child(body)
@@ -28,7 +28,7 @@ static func wall(floor_node: WorldLayer, area: Rect2, color := Color("#929f9e"))
 	poly.polygon = PackedVector2Array([local.position, Vector2(local.end.x, local.position.y), local.end, Vector2(local.position.x, local.end.y)])
 	occluder.occluder = poly
 	body.add_child(occluder)
-	floor_node.solid_rects.append(area)
+	floor_node.call("register_solid", area)
 	return body
 
 static func label(parent: Node2D, point: Vector2, title: String, font_size := 14, color := Color("#bed0cd")) -> Label:

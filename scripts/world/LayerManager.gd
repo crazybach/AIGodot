@@ -10,6 +10,7 @@ var lighting: LightingManager
 var fog: FogController
 var camera: Camera2D
 var exposure: EnvironmentExposureComponent
+var streamer: DistrictStreamManager
 
 func register_layer(floor_node: WorldLayer) -> void:
 	assert(not layers.has(floor_node.definition.id))
@@ -19,6 +20,7 @@ func travel(destination: StringName, entry: StringName) -> bool:
 	var next: WorldLayer = layers.get(destination)
 	if next == null or not next.definition.entries.has(entry) or not player.is_alive:
 		return false
+	if streamer: streamer.ensure_at(next.definition.entries[entry])
 	player.set_ui_input_blocked(true)
 	var old := active_layer
 	if next != old:
@@ -29,6 +31,7 @@ func travel(destination: StringName, entry: StringName) -> bool:
 	active_layer = next
 	player.position = next.definition.entries[entry]
 	player.velocity = Vector2.ZERO
+	if streamer: streamer.refresh_now()
 	exposure.apply_environment(next.definition)
 	fog.set_environment_mist(next.definition.mist_exposure)
 	lighting.environment_night_color = next.definition.night_ambient

@@ -52,6 +52,23 @@ func can_interact(actor: Node2D) -> bool:
 	var hit := get_world_2d().direct_space_state.intersect_ray(query)
 	return hit.is_empty() or hit.get("collider") == body
 
+func stream_snapshot() -> Dictionary:
+	var saved: Array = []
+	if inventory:
+		for stack in inventory.slots:
+			saved.append(null if stack == null else {"id": stack.definition.id, "quantity": stack.quantity, "values": stack.runtime_values.duplicate(true)})
+	return {"slots": saved}
+
+func stream_restore(saved: Dictionary) -> void:
+	if inventory == null or not saved.has("slots"): return
+	var entries: Array = saved.slots
+	inventory.slots.fill(null)
+	for index in mini(entries.size(), inventory.slots.size()):
+		var row = entries[index]
+		if row != null:
+			inventory.slots[index] = ItemStack.new(ItemCatalog.get_item(StringName(row.id)), int(row.quantity), row.values)
+	inventory.notify_changed()
+
 func _draw() -> void:
 	var rect := Rect2(-size / 2, size)
 	draw_rect(Rect2(rect.position + Vector2(4, 5), rect.size), Color(0.035, 0.055, 0.065, 0.7))

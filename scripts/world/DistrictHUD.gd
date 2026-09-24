@@ -17,7 +17,7 @@ func _draw() -> void:
 	var exposed := floor_node.definition.mist_exposure
 	var accent := Color("#d7b68c") if exposed else Color("#8de0be")
 	var center_x := get_viewport_rect().size.x / 2
-	_panel(Rect2(center_x - 235, 17, 470, 65))
+	_panel(Rect2(center_x - 235, 17, 470, 86))
 	_text(Vector2(center_x - 217, 41), floor_node.definition.display_name, 17, Color("#e0e9e7"))
 	var status := "CLEAR AIR  /  SAFE ROOFTOPS  /  stamina recovering"
 	if exposed:
@@ -31,6 +31,8 @@ func _draw() -> void:
 		else:
 			status = "ACID MIST  /  suit eroding  /  breathing costs stamina"
 	_text(Vector2(center_x - 217, 65), status, 13, accent)
+	if game.district_streamer:
+		_text(Vector2(center_x - 217, 88), game.district_streamer.status_line(), 11, Color("#90c8d1"))
 	if not (game.hud and game.hud.touch_controls and game.hud.touch_controls.visible):
 		_draw_routes(floor_node)
 	var hint: String = game.interaction_prompt
@@ -48,10 +50,21 @@ func _draw_routes(floor_node: WorldLayer) -> void:
 	var map_origin := Vector2(get_viewport_rect().size.x - 320, 400)
 	_panel(Rect2(map_origin - Vector2(14, 23), Vector2(314, 222)))
 	_text(map_origin, "DISTRICT ROUTES", 13, Color("#c8d7d4"))
-	var map_area := Rect2(map_origin + Vector2(0, 20), Vector2(286, 150))
+	var map_area := Rect2(map_origin + Vector2(0, 20), Vector2(286, 132))
 	var scale_value := minf(map_area.size.x / floor_node.map_bounds.size.x, map_area.size.y / floor_node.map_bounds.size.y)
 	var content_size := floor_node.map_bounds.size * scale_value
 	var offset := map_area.position + (map_area.size - content_size) / 2.0 - floor_node.map_bounds.position * scale_value
+	if game.district_streamer:
+		for y in range(-game.district_builder.cell_radius, game.district_builder.cell_radius + 1):
+			for x in range(-game.district_builder.cell_radius, game.district_builder.cell_radius + 1):
+				var coord := Vector2i(x, y)
+				var area: Rect2 = game.district_streamer.cell_bounds(coord)
+				var rect := Rect2(offset + area.position * scale_value, area.size * scale_value)
+				if coord == game.district_streamer.focus:
+					draw_rect(rect, Color(0.26, 0.48, 0.48, 0.3))
+				elif game.district_streamer.active.has(coord) or coord == Vector2i.ZERO:
+					draw_rect(rect, Color(0.18, 0.33, 0.36, 0.2))
+				draw_rect(rect, Color("#6e989c") if game.district_streamer.active.has(coord) or coord == Vector2i.ZERO else Color("#34454b"), false, 1.0)
 	for index in floor_node.building_polygons.size():
 		var map_polygon := PackedVector2Array()
 		for point in floor_node.building_polygons[index]:
@@ -61,7 +74,8 @@ func _draw_routes(floor_node: WorldLayer) -> void:
 		outline.append(outline[0])
 		draw_polyline(outline, Color("#8caaa9"), 1.0, true)
 		var center := floor_node.building_rects[index].get_center()
-		_text(offset + center * scale_value + Vector2(-4, 4), String(floor_node.building_ids[index]), 10, Color.WHITE)
+		if floor_node.building_ids[index] in [&"A", &"M"]:
+			_text(offset + center * scale_value + Vector2(-4, 4), String(floor_node.building_ids[index]), 10, Color.WHITE)
 	for target in (game.layer_manager.layers[&"roofs"] as WorldLayer).interactables:
 		if target is RooftopBridge:
 			var from: Vector2 = offset + target.end_points[0] * scale_value
@@ -73,7 +87,7 @@ func _draw_routes(floor_node: WorldLayer) -> void:
 	var marker: Vector2 = offset + game.player.position * scale_value
 	draw_circle(marker, 4, Color("#f4dfa0"), true, -1.0, true)
 	var crossing: RooftopBridge = game.layer_manager.layers[&"roofs"].get_node("crossing_bc")
-	_text(map_origin + Vector2(0, 178), "10 sites  •  A-B ready  •  B-C %s" % ("ready" if crossing.built else "build"), 12, Color("#b5c5c3"))
+	_text(map_origin + Vector2(0, 178), "%d active sites  •  A-B ready  •  B-C %s" % [floor_node.building_ids.size(), "ready" if crossing.built else "build"], 12, Color("#b5c5c3"))
 
 func _panel(rect: Rect2) -> void:
 	var style := StyleBoxFlat.new()
